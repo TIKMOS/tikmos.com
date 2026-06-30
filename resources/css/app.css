@@ -1,0 +1,197 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views';
+
+/* Stratégie dark mode = classe .dark (opt-in), pas auto — voir docs/01-charte-graphique.md */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    /* ---------- Typographie ---------- */
+    /* Display = Archivo (variante géométrique validée par la charte ; Fraunces en option future). */
+    --font-display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* ---------- Socle ---------- */
+    --color-ink: #0b0b0c;
+    --color-black: #000000;
+    --color-paper: #ffffff;
+    --color-ivory: #faf8f3;   /* fond d'app premium (ivoire doux) */
+
+    /* ---------- Accent OR champagne (signature luxe) — alias 'accent-*' conservé pour compat ---------- */
+    --color-gold: #b9975b;
+    --color-gold-600: #a07f44; /* or foncé — texte sur fond clair (AA) */
+    --color-gold-100: #f4ecdd; /* or pâle — fonds de zone/carte premium */
+    --color-accent-50: #f7f1e6;
+    --color-accent-100: #f4ecdd;
+    --color-accent-500: #b9975b;
+    --color-accent-600: #a07f44;
+    --color-accent-ink: #6e5524;
+
+    /* ---------- Indigo nuit (data / IA / liens / focus) — = marine du logo ---------- */
+    --color-indigo: #1e2a52;
+    --color-indigo-600: #2b3a6b;
+    --color-indigo-50: #eef1f8;
+
+    /* ---------- Pastels doux — fonds de zones/cartes (très légers) ---------- */
+    --color-sand: #f6f1e8;
+    --color-mist: #eef1f6;
+    --color-sage: #eef3ee;
+
+    /* ---------- Neutres tk ---------- */
+    --color-tk-50: #fbfaf7;
+    --color-tk-100: #f3f1ea;
+    --color-tk-200: #e4e1d9;
+    --color-tk-300: #cfcabd;
+    --color-tk-400: #9a958a;
+    --color-tk-500: #6f6f76;
+    --color-tk-600: #54514a;
+    --color-tk-700: #3a3a40;
+    --color-tk-800: #26262a;
+    --color-tk-900: #161618;
+    --color-tk-950: #0b0b0c;
+
+    /* ---------- Couleurs de signal (statut) ---------- */
+    --color-success: #157f52;
+    --color-success-soft: #e7f2ec;
+    --color-success-ink: #0f5d3c;
+    --color-warning: #b5840a;
+    --color-warning-soft: #f6efd9;
+    --color-warning-ink: #7a5806;
+    --color-danger: #c0362c;
+    --color-danger-soft: #fbeae8;
+    --color-danger-ink: #8a211a;
+    --color-info: #1e2a52;
+    --color-info-soft: #eef1f8;
+    --color-info-ink: #16203f;
+
+    /* ---------- WhatsApp (imposé) ---------- */
+    --color-whatsapp: #25D366;
+
+    /* ---------- Sémantiques (dark-aware via .dark) ---------- */
+    --color-canvas: #faf8f3;   /* fond d'app = ivoire */
+    --color-surface: #ffffff;
+    --color-content: #0b0b0c;
+    --color-muted: #6f6f76;
+    --color-line: #e4e1d9;
+
+    /* ---------- Rayons (modérés, cohérents) ---------- */
+    --radius-tile: 8px;
+    --radius-btn: 10px;
+    --radius-input: 10px;
+    --radius-card: 16px;
+    --radius-pill: 9999px;
+
+    /* ---------- Ombres (neutres, sobres) ---------- */
+    --shadow-card: 0 1px 2px rgb(11 11 12 / 0.06);
+    --shadow-pop: 0 8px 28px -10px rgb(11 11 12 / 0.16);
+    --shadow-lift: 0 28px 70px -24px rgb(11 11 12 / 0.26);
+
+    /* ---------- Mouvement ---------- */
+    --ease-smooth: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Override des tokens sémantiques en mode sombre */
+.dark {
+    --color-canvas: #0b0b0c;
+    --color-surface: #161618;
+    --color-content: #f6f6f7;
+    --color-muted: #9a958a;
+    --color-line: color-mix(in srgb, #ffffff 8%, transparent);
+    --color-accent-500: #cdb07a;
+    color-scheme: dark;
+}
+
+@layer base {
+    html {
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        scroll-behavior: smooth;
+    }
+
+    body {
+        background-color: var(--color-canvas);
+        color: var(--color-content);
+        font-family: var(--font-sans);
+    }
+
+    h1, h2, h3, h4 {
+        font-family: var(--font-display);
+        letter-spacing: -0.02em;
+    }
+
+    /* Sélection = or champagne (signature) */
+    ::selection {
+        background-color: var(--color-gold);
+        color: #fff;
+    }
+
+    /* Cible de focus = indigo nuit (a11y) */
+    :focus-visible {
+        outline: 2px solid var(--color-indigo);
+        outline-offset: 2px;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+@layer utilities {
+    /* Filet or — signature premium (séparateurs, soulignés) */
+    .filet-gold {
+        background-image: linear-gradient(90deg, var(--color-gold), color-mix(in srgb, var(--color-gold) 30%, transparent));
+    }
+
+    /* Effet "shimmer" pour les skeletons */
+    @keyframes tk-shimmer {
+        100% { transform: translateX(100%); }
+    }
+    .tk-shimmer {
+        position: relative;
+        overflow: hidden;
+    }
+    .tk-shimmer::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+        animation: tk-shimmer 1.5s infinite;
+    }
+    .dark .tk-shimmer::after {
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+    }
+
+    /* Safe-area (PWA / notch iOS) */
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    .pt-safe { padding-top: env(safe-area-inset-top); }
+
+    /* Reveal au scroll (couplé à Alpine x-intersect) */
+    .reveal {
+        opacity: 0;
+        transform: translateY(22px);
+        transition: opacity 0.6s var(--ease-smooth), transform 0.6s var(--ease-smooth);
+        will-change: opacity, transform;
+    }
+    .reveal.is-revealed { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+        .reveal { opacity: 1; transform: none; transition: none; }
+    }
+
+    /* Marquee (défilement logos marques) */
+    @keyframes tk-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .tk-marquee { display: flex; width: max-content; animation: tk-marquee 28s linear infinite; }
+    @media (prefers-reduced-motion: reduce) { .tk-marquee { animation: none; } }
+}

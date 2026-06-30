@@ -1,0 +1,33 @@
+# ───────────────────────────────────────────────────────────────────────────
+# .htaccess RACINE du projet (sezy.alinkka.net pointe sur ce dossier).
+# Définit public/ comme unique point d'entrée Laravel, sans toucher au
+# public/.htaccess (qui gère le routage interne vers index.php).
+#
+# ⚠️ Plus propre si possible : régler le Document Root du sous-domaine sur
+#    .../sezy/public dans cPanel. Ce fichier est le filet quand la racine = projet.
+# ───────────────────────────────────────────────────────────────────────────
+
+# Pas de listing des répertoires
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # --- Forcer HTTPS (PWA + cookies sécurisés) ---
+    # Commenter ce bloc si cPanel impose déjà la redirection HTTPS (évite une boucle).
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # --- Tout est servi depuis public/ ---
+    # Ne pas re-préfixer si la requête vise déjà public/ (évite la boucle).
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Filet de sécurité si mod_rewrite est indisponible : bloquer les fichiers sensibles
+# de la racine (Apache 2.4). Le .env reste de toute façon hors d'atteinte via la
+# réécriture ci-dessus (/.env → /public/.env → 404).
+<FilesMatch "(?i)^(\.env.*|\.git.*|composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml|vite\.config\.js|.*\.(sh|sql|log))$">
+    Require all denied
+</FilesMatch>

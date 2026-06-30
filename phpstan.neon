@@ -1,0 +1,14 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - app
+    # Monter le niveau progressivement (cible 6-8) au fil des lots — voir docs/prompts/09.
+    ignoreErrors:
+        # Réglages spatie/laravel-settings : les listes structurées doivent rester en `array`
+        # nu (sans value-type) sinon le cast factory tente un cast d'élément interne et échoue.
+        -
+            message: '#has no value type specified in iterable type array#'
+            path: app/Settings/*
