@@ -60,9 +60,9 @@
         class="sticky top-0 z-30 transition-colors duration-300"
         :class="scrolled ? 'border-b border-line bg-surface/85 backdrop-blur' : ''"
     >
-        <div class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-6 lg:px-8">
+        <div class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-6 md:h-20 lg:px-8">
             <a href="{{ url('/') }}" wire:navigate aria-label="Accueil Tikmos">
-                <x-tk.logo class="h-12 md:h-14" />
+                <x-tk.logo class="h-14 md:h-16" />
             </a>
 
             @php
@@ -172,7 +172,7 @@
     <footer class="bg-ink text-paper">
         <div class="mx-auto grid w-full max-w-6xl gap-10 px-5 py-16 sm:px-6 md:grid-cols-12 lg:px-8">
             <div class="md:col-span-4">
-                <x-tk.logo invert />
+                <span class="inline-flex rounded-xl bg-white p-3 shadow-sm"><x-tk.logo class="h-10" /></span>
                 <p class="mt-4 max-w-xs text-sm leading-relaxed text-tk-400">{{ $general->footer_tagline }}</p>
                 <div class="mt-5 flex items-center gap-2.5">
                     @foreach ($general->socials as $social)

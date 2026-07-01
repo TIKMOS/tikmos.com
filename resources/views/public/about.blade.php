@@ -31,7 +31,7 @@
             <x-tk.kicker>Mon parcours</x-tk.kicker>
             <x-tk.divider-gold class="mt-3" />
             <div class="mt-5 space-y-5 text-lg leading-relaxed text-content/80">
-                <p>Tout commence par les <strong class="text-content">mathématiques</strong> : la rigueur, la preuve, l'art de décomposer un problème complexe en étapes claires. Cet état d'esprit, je l'ai porté de l'enseignement vers l'<strong class="text-content">ingénierie data &amp; IA</strong>.</p>
+                <p>Je suis <strong class="text-content">Moïse TIKO</strong>, fondateur de Tikmos. Tout commence par les <strong class="text-content">mathématiques</strong> : la rigueur, la preuve, l'art de décomposer un problème complexe en étapes claires. Cet état d'esprit, je l'ai porté de l'enseignement vers l'<strong class="text-content">ingénierie data &amp; IA</strong>.</p>
                 <p>Aujourd'hui, je conçois et pilote des <strong class="text-content">solutions informatiques sur mesure</strong>, je <strong class="text-content">forme</strong> les équipes, et j'accompagne entreprises comme particuliers — installation, gestion administrative, orientation. En parallèle, je sélectionne des <strong class="text-content">chaussures de luxe</strong> pour celles et ceux qui aiment l'exigence du beau.</p>
                 <p>Et je ne travaille jamais seul : une <strong class="text-content">équipe</strong> de confiance m'épaule sur chaque projet. Ma promesse : <strong class="text-content">comprendre votre besoin, et le livrer.</strong></p>
             </div>
