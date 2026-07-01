@@ -6,7 +6,7 @@
 
 <x-layouts.public>
     <x-slot:head>
-        <x-tk.seo :title="$doc->title" description="Politique de confidentialité et protection des données chez SEZY." />
+        <x-tk.seo :title="$doc->title" description="Politique de confidentialité et protection des données chez Tikmos." />
     </x-slot:head>
 
     <x-tk.legal :title="$doc->title" :updated="$doc->updated_at->translatedFormat('F Y')" :toc="$parsed['toc']" :body="$parsed['html']">

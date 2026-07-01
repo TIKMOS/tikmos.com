@@ -47,6 +47,40 @@ new #[Layout('components.layouts.app')] class extends Component
         $this->redirect('/', navigate: true);
     }
 
+    /** RGPD — portabilité : téléchargement de mes données au format JSON. */
+    public function exportData(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $user = auth()->user();
+
+        $data = [
+            'profil' => [
+                'nom' => $user->name,
+                'email' => $user->email,
+                'telephone' => $user->phone,
+                'ville' => $user->city,
+                'inscrit_le' => $user->created_at?->toDateTimeString(),
+            ],
+            'demandes' => \App\Models\ServiceRequest::forUser($user)->with('quote')->get()->map(fn ($r) => [
+                'reference' => $r->reference,
+                'service' => $r->service?->title,
+                'statut' => $r->status->label(),
+                'message' => $r->message,
+                'devis' => $r->quote ? ['reference' => $r->quote->reference, 'montant' => $r->quote->amount, 'statut' => $r->quote->status->label()] : null,
+                'cree_le' => $r->created_at?->toDateTimeString(),
+            ])->all(),
+            'commandes' => \App\Models\Order::where('user_id', $user->id)->with('items')->get()->map(fn ($o) => [
+                'numero' => $o->number,
+                'statut' => $o->status->label(),
+                'total' => $o->total,
+                'articles' => $o->items->map(fn ($i) => ['nom' => $i->name, 'taille' => $i->size, 'quantite' => $i->quantity])->all(),
+            ])->all(),
+        ];
+
+        $json = (string) json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return response()->streamDownload(fn () => print($json), 'mes-donnees-tikmos.json', ['Content-Type' => 'application/json']);
+    }
+
     /** @return array<string, mixed> */
     public function with(): array
     {
@@ -118,16 +152,27 @@ new #[Layout('components.layouts.app')] class extends Component
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
                 <h2 class="font-display text-lg font-bold text-content">Installer l'application</h2>
-                <p class="mt-1 text-sm text-muted">Accédez à SEZY depuis votre écran d'accueil, comme une vraie app.</p>
+                <p class="mt-1 text-sm text-muted">Accédez à {{ config('app.name') }} depuis votre écran d'accueil, comme une vraie app.</p>
             </div>
             <x-tk.install-button variant="accent" />
+        </div>
+    </x-tk.card>
+
+    {{-- Mes données (RGPD) --}}
+    <x-tk.card class="mt-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h2 class="font-display text-lg font-bold text-content">Mes données</h2>
+                <p class="mt-1 text-sm text-muted">Téléchargez une copie de vos données (profil, demandes, commandes) au format JSON.</p>
+            </div>
+            <x-tk.button wire:click="exportData" variant="secondary" icon="download">Exporter mes données</x-tk.button>
         </div>
     </x-tk.card>
 
     {{-- Zone danger --}}
     <x-tk.card class="mt-6 border-danger/30" x-data="{ confirm: false }">
         <h2 class="font-display text-lg font-bold text-danger">Supprimer mon compte</h2>
-        <p class="mt-2 text-sm text-muted">Cette action supprime votre compte et vos accès. Vos colis restent archivés chez SEZY.</p>
+        <p class="mt-2 text-sm text-muted">Cette action supprime définitivement votre compte et vos accès, conformément à votre droit à l'effacement.</p>
         <div class="mt-4">
             <button x-show="!confirm" @click="confirm = true" class="text-sm font-medium text-danger hover:underline">Je veux supprimer mon compte</button>
             <div x-show="confirm" x-cloak class="flex flex-wrap items-center gap-3">

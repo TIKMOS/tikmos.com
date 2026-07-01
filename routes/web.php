@@ -25,6 +25,7 @@ Route::middleware('shop.enabled')->group(function (): void {
     Volt::route('commander', 'pages.public.checkout')->middleware(['auth', 'approved'])->name('checkout');
 });
 Route::view('cgu', 'public.cgu')->name('cgu');
+Route::view('cgv', 'public.cgv')->name('cgv');
 Route::view('confidentialite', 'public.privacy')->name('privacy');
 Route::view('cookies', 'public.cookies')->name('cookies');
 

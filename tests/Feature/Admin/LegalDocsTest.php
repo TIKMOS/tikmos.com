@@ -24,7 +24,7 @@ it('affiche les CGU avec sommaire et contenu', function (): void {
         ->assertSee('Conditions générales')
         ->assertSee('Sommaire')
         ->assertSee('Objet')
-        ->assertSee('Colis acceptés');
+        ->assertSee('Devis &amp; prestations', false);
 });
 
 it('génère des ancres sur les titres', function (): void {
