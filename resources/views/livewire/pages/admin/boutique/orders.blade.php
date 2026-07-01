@@ -157,7 +157,7 @@ new #[Layout('components.layouts.admin')] class extends Component
                 <div class="mt-4 divide-y divide-line">
                     @foreach ($order->items as $item)
                         <div class="flex justify-between gap-3 py-2 text-sm" wire:key="aoi-{{ $item->id }}">
-                            <span class="text-content">{{ $item->quantity }} × {{ $item->name }}</span>
+                            <span class="text-content">{{ $item->quantity }} × {{ $item->name }}@if ($item->size) <span class="text-muted">· Taille {{ $item->size }}</span>@endif</span>
                             <span class="font-medium text-content">{{ $item->lineTotalLabel() }}</span>
                         </div>
                     @endforeach

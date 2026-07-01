@@ -14,12 +14,26 @@ new #[Layout('components.layouts.public')] class extends Component
         $this->product = $product->load('category', 'media');
     }
 
-    public function addToCart(\App\Services\CartService $cart): void
+    public function addToCart(?string $size = null): void
     {
         abort_if($this->product->isOutOfStock(), 422);
-        $cart->add($this->product->id);
+
+        $size = $size !== null ? trim($size) : null;
+
+        // Produit à pointures : une taille valide est obligatoire.
+        if ($this->product->hasSizes()) {
+            if ($size === null || $size === '' || ! in_array($size, $this->product->sizeList(), true)) {
+                $this->dispatch('sz-toast', type: 'error', message: 'Veuillez choisir une taille.');
+
+                return;
+            }
+        } else {
+            $size = null;
+        }
+
+        app(\App\Services\CartService::class)->add($this->product->id, 1, $size);
         $this->dispatch('cart-updated');
-        $this->dispatch('sz-toast', type: 'success', message: 'Ajouté au panier.');
+        $this->dispatch('sz-toast', type: 'success', message: 'Ajouté au panier.'.($size ? ' (Taille '.$size.')' : ''));
     }
 
     /** @return array<string, mixed> */
@@ -110,7 +124,7 @@ new #[Layout('components.layouts.public')] class extends Component
                     @if ($product->isOutOfStock())
                         <x-tk.button variant="secondary" size="lg" icon="shopping-cart" class="pointer-events-none opacity-50">Indisponible</x-tk.button>
                     @else
-                        <x-tk.button wire:click="addToCart" variant="primary" size="lg" icon="shopping-cart">Ajouter au panier</x-tk.button>
+                        <x-tk.button x-on:click="$wire.addToCart(size)" variant="primary" size="lg" icon="shopping-cart">Ajouter au panier</x-tk.button>
                     @endif
                     <x-tk.whatsapp-button :floating="false" :message="'Bonjour '.config('app.name').', je suis intéressé(e) par : '.$product->name" />
                 </div>

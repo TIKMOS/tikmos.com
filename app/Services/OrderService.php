@@ -53,6 +53,7 @@ class OrderService
                 $order->items()->create([
                     'product_id' => $item['product']->id,
                     'name' => $item['product']->name,
+                    'size' => $item['size'] ?? null,
                     'unit_price' => $item['product']->price,
                     'quantity' => $item['qty'],
                     'line_total' => $item['line_total'],

@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $quantity
  * @property int $line_total
  */
-#[Fillable(['order_id', 'product_id', 'name', 'unit_price', 'quantity', 'line_total'])]
+#[Fillable(['order_id', 'product_id', 'name', 'size', 'unit_price', 'quantity', 'line_total'])]
 class OrderItem extends Model
 {
     protected function casts(): array
