@@ -86,11 +86,18 @@ app/Media/
 
 ---
 
-## 8. Definition of Done (lot d'implémentation)
-- [ ] Trait `HasStandardImages` + conversions WebP/AVIF + responsive images.
-- [ ] `x-tk.media-gallery` (multi + drag + alt + couverture) et `x-tk.media-picker` (médiathèque).
-- [ ] `x-tk.image` (srcset/sizes/lazy/blur-up) utilisé sur toute la vitrine.
-- [ ] `ImageService` (validation, recadrage, purge) + `MediaSettings` + écran admin.
-- [ ] Branché sur services, réalisations, produits, blog, équipe, CMS accueil, partenaires.
-- [ ] Tests : upload valide/refusé, conversions générées, alt persisté, URLs signées privées,
-      réordonnancement, purge orphelins. Lighthouse images ≥ 90.
+## 8. Definition of Done (lot d'implémentation) — ✅ socle livré (lot 20)
+- [x] Trait `HasStandardImages` (WebP thumb/card/full, `Fit::Max`) → adopté sur Product,
+      Project, Service, Post, TeamMember, Partner. → `app/Media/HasStandardImages.php`
+- [x] `x-tk.media-gallery` (multi + drag + alt + couverture) branché sur l'admin **Produits**.
+      → `resources/views/components/tk/media-gallery.blade.php`
+- [x] `x-tk.image` (srcset/sizes/lazy/eager+fetchpriority/blur-up) → utilisé sur `x-tk.product-card`.
+      → `resources/views/components/tk/image.blade.php`
+- [x] `ImageService` (validation dérivée des réglages, attache+alt, réordonnancement, purge) +
+      `MediaSettings` + écran **Réglages → Médias** + commande planifiée `media:prune`.
+- [x] Tests Pest (9) : upload valide/refusé, conversions WebP générées, alt persisté,
+      réordonnancement/couverture, purge orphelins, rendu `x-tk.image` (srcset + lazy + priorité).
+- [ ] **Restant (itératif)** : brancher `x-tk.media-gallery`/`x-tk.image` sur les autres CRUD
+      (réalisations, blog, équipe, services, partenaires, CMS accueil) ; `x-tk.media-picker`
+      (médiathèque anti-doublons) ; recadrage **client** (cropper.js) ; AVIF (GD sans libavif ici) ;
+      URLs signées pour médias privés (justificatifs devis) ; audit Lighthouse ≥ 90.

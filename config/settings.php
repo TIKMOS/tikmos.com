@@ -3,6 +3,7 @@
 use App\Settings\FeatureSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\HomepageSettings;
+use App\Settings\MediaSettings;
 use App\Settings\PaymentSettings;
 use App\Settings\ReviewsSettings;
 use App\Settings\SeoSettings;
@@ -28,6 +29,7 @@ return [
         SeoSettings::class,
         FeatureSettings::class,
         PaymentSettings::class,
+        MediaSettings::class,
     ],
 
     /*

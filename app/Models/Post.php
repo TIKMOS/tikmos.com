@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Publication;
+use App\Media\HasStandardImages;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,7 +16,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * @property Publication $status
@@ -29,7 +29,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class Post extends Model implements HasMedia
 {
     /** @use HasFactory<PostFactory> */
-    use HasFactory, InteractsWithMedia, SoftDeletes;
+    use HasFactory, HasStandardImages, InteractsWithMedia, SoftDeletes {
+        HasStandardImages::registerMediaConversions insteadof InteractsWithMedia;
+    }
 
     protected function casts(): array
     {
@@ -48,11 +50,6 @@ class Post extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('cover')->singleFile();
-    }
-
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        $this->addMediaConversion('card')->nonQueued()->width(900)->height(560);
     }
 
     public function coverUrl(?string $conversion = 'card'): ?string

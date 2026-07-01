@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Media\HasStandardImages;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * @property bool $is_active
@@ -18,7 +18,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 #[Fillable(['name', 'url', 'blurb', 'position', 'is_active'])]
 class Partner extends Model implements HasMedia
 {
-    use InteractsWithMedia;
+    use HasStandardImages, InteractsWithMedia {
+        HasStandardImages::registerMediaConversions insteadof InteractsWithMedia;
+    }
 
     protected function casts(): array
     {
@@ -28,11 +30,6 @@ class Partner extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('logo')->singleFile();
-    }
-
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        $this->addMediaConversion('thumb')->nonQueued()->width(220)->height(120);
     }
 
     public function logoUrl(): ?string

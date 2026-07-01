@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Media\HasStandardImages;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -27,7 +28,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 ])]
 class Product extends Model implements HasMedia
 {
-    use InteractsWithMedia, SoftDeletes;
+    use HasStandardImages, InteractsWithMedia, SoftDeletes {
+        HasStandardImages::registerMediaConversions insteadof InteractsWithMedia;
+    }
 
     protected function casts(): array
     {
@@ -69,12 +72,6 @@ class Product extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('gallery');
-    }
-
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        $this->addMediaConversion('card')->nonQueued()->width(700)->height(700);
-        $this->addMediaConversion('thumb')->nonQueued()->width(160)->height(160);
     }
 
     /** @return BelongsTo<ProductCategory, $this> */

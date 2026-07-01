@@ -26,3 +26,7 @@ Schedule::call(fn () => Artisan::call('queue:work', [
 // Purge des modèles « prunable » (appareils de confiance 2FA expirés).
 Schedule::call(fn () => Artisan::call('model:prune'))
     ->daily()->name('tk-model-prune')->withoutOverlapping();
+
+// Purge des médias orphelins (fichiers sans modèle parent).
+Schedule::call(fn () => Artisan::call('media:prune'))
+    ->weekly()->name('tk-media-prune')->withoutOverlapping();

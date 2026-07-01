@@ -5,8 +5,10 @@
 <a href="{{ route('shop.show', $product->slug) }}" wire:navigate
    {{ $attributes->merge(['class' => 'group flex flex-col overflow-hidden rounded-card border border-line/60 bg-surface transition-all hover:-translate-y-1 hover:shadow-pop']) }}>
     <div class="relative aspect-square overflow-hidden bg-canvas">
-        @if ($product->mainImageUrl())
-            <img src="{{ $product->mainImageUrl() }}" alt="{{ $product->name }}" loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105">
+        @php($cover = $product->getFirstMedia('gallery'))
+        @if ($cover)
+            <x-tk.image :media="$cover" :alt="$product->name" sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
+                        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" :fallback="false" />
         @else
             <div class="grid h-full place-items-center"><x-lucide-package class="h-10 w-10 text-tk-300" /></div>
         @endif

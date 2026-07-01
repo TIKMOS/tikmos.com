@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\Publication;
 use App\Enums\ServiceCategory;
+use App\Media\HasStandardImages;
 use Database\Factories\ServiceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,7 +16,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * @property ServiceCategory $category
@@ -29,7 +29,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class Service extends Model implements HasMedia
 {
     /** @use HasFactory<ServiceFactory> */
-    use HasFactory, InteractsWithMedia, SoftDeletes;
+    use HasFactory, HasStandardImages, InteractsWithMedia, SoftDeletes {
+        HasStandardImages::registerMediaConversions insteadof InteractsWithMedia;
+    }
 
     protected function casts(): array
     {
@@ -48,11 +50,6 @@ class Service extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('illustration')->singleFile();
-    }
-
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        $this->addMediaConversion('card')->nonQueued()->width(800)->height(600);
     }
 
     public function imageUrl(?string $conversion = 'card'): ?string

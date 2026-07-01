@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Media\HasStandardImages;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * @property bool $is_active
@@ -21,7 +21,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 #[Fillable(['name', 'role_title', 'bio', 'socials', 'funfacts', 'position', 'is_featured', 'is_active'])]
 class TeamMember extends Model implements HasMedia
 {
-    use InteractsWithMedia;
+    use HasStandardImages, InteractsWithMedia {
+        HasStandardImages::registerMediaConversions insteadof InteractsWithMedia;
+    }
 
     protected function casts(): array
     {
@@ -36,11 +38,6 @@ class TeamMember extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('photo')->singleFile();
-    }
-
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        $this->addMediaConversion('card')->nonQueued()->width(480)->height(560);
     }
 
     public function photoUrl(): ?string

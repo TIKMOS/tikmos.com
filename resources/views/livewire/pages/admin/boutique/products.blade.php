@@ -1,7 +1,9 @@
 <?php
 
+use App\Media\ImageService;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Settings\MediaSettings;
 use App\Settings\ShopSettings;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -69,7 +71,28 @@ new #[Layout('components.layouts.admin')] class extends Component
         Product::findOrFail($this->editingId)->getMedia('gallery')->firstWhere('id', $mediaId)?->delete();
     }
 
-    public function save(): void
+    /** @param array<int, int|string> $ids */
+    public function reorderImages(array $ids, ImageService $images): void
+    {
+        $images->reorder($ids);
+    }
+
+    public function updateAlt(int $mediaId, string $value, ImageService $images): void
+    {
+        $media = Product::findOrFail($this->editingId)->getMedia('gallery')->firstWhere('id', $mediaId);
+        if ($media) {
+            $images->setAlt($media, $value);
+        }
+    }
+
+    public function makeCover(int $mediaId, ImageService $images): void
+    {
+        $collection = Product::findOrFail($this->editingId)->getMedia('gallery');
+        $ordered = $collection->pluck('id')->reject(fn ($id) => $id === $mediaId)->prepend($mediaId)->all();
+        $images->reorder($ordered);
+    }
+
+    public function save(ImageService $images): void
     {
         $data = $this->validate([
             'name' => ['required', 'string', 'max:160'],
@@ -82,8 +105,7 @@ new #[Layout('components.layouts.admin')] class extends Component
             'description' => ['nullable', 'string', 'max:8000'],
             'is_active' => ['boolean'],
             'is_featured' => ['boolean'],
-            'images' => ['array', 'max:6'],
-            'images.*' => ['image', 'mimes:png,jpg,jpeg,webp', 'max:3072'],
+            ...$images->rules('images'),
         ]);
 
         $data['description'] = $this->description ? clean($this->description) : null;
@@ -112,9 +134,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         $product->save();
 
         foreach ($this->images as $image) {
-            $product->addMedia($image->getRealPath())
-                ->usingFileName(Str::random(8).'.'.$image->getClientOriginalExtension())
-                ->toMediaCollection('gallery');
+            $images->attach($product, $image, 'gallery');
         }
 
         $this->showForm = false;
@@ -151,6 +171,7 @@ new #[Layout('components.layouts.admin')] class extends Component
             'products' => Product::with('category')->orderByDesc('is_featured')->latest()->paginate(12),
             'categories' => ProductCategory::orderBy('position')->get(),
             'shopEnabled' => app(ShopSettings::class)->enabled,
+            'galleryMax' => app(MediaSettings::class)->gallery_max,
         ];
     }
 }; ?>
@@ -230,25 +251,10 @@ new #[Layout('components.layouts.admin')] class extends Component
                     </div>
                     <x-tk.field label="Description" :error="$errors->first('description')"><x-tk.editor wire:model="description" /></x-tk.field>
 
-                    {{-- Galerie --}}
-                    <div>
-                        <p class="mb-1.5 text-[13px] font-medium text-content">Images</p>
-                        @if ($editingId)
-                            <div class="mb-2 flex flex-wrap gap-2">
-                                @foreach (\App\Models\Product::find($editingId)?->getMedia('gallery') ?? [] as $media)
-                                    <div wire:key="img-{{ $media->id }}" class="relative h-16 w-16 overflow-hidden rounded-tile border border-line">
-                                        <img src="{{ $media->getUrl('thumb') }}" alt="" class="h-full w-full object-cover">
-                                        <button type="button" wire:click="removeImage({{ $media->id }})" class="absolute right-0.5 top-0.5 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-white"><x-lucide-x class="h-3 w-3" /></button>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
-                        <input type="file" wire:model="images" multiple accept="image/png,image/jpeg,image/webp"
-                               class="block w-full text-sm text-muted file:mr-3 file:rounded-btn file:border-0 file:bg-ink file:px-4 file:py-2 file:text-sm file:font-medium file:text-paper">
-                        <p class="mt-1 text-xs text-muted">Jusqu'à 6 images, 3 Mo chacune. La 1ʳᵉ image est l'image principale.</p>
-                        @error('images.*')<p class="mt-1 text-xs text-danger">{{ $message }}</p>@enderror
-                        <div wire:loading wire:target="images" class="mt-1 text-xs text-muted">Téléversement…</div>
-                    </div>
+                    {{-- Galerie (upload multiple + réordonnancement + alt + couverture) --}}
+                    <x-tk.media-gallery
+                        :media="$editingId ? (\App\Models\Product::find($editingId)?->getMedia('gallery') ?? collect()) : collect()"
+                        field="images" :max="$galleryMax" />
 
                     <div class="flex flex-wrap gap-6">
                         <x-tk.toggle label="Actif" wire:model="is_active" />
