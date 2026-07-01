@@ -19,6 +19,10 @@ new #[Layout('components.layouts.admin')] class extends Component
 
     public string $name = '';
 
+    public string $brand = '';
+
+    public string $sizes = ''; // saisie séparée par des virgules (ex. "40, 41, 42")
+
     public ?int $category_id = null;
 
     public ?int $price = null;
@@ -37,7 +41,7 @@ new #[Layout('components.layouts.admin')] class extends Component
 
     public function create(): void
     {
-        $this->reset(['editingId', 'name', 'category_id', 'price', 'compare_at_price', 'stock', 'description', 'images']);
+        $this->reset(['editingId', 'name', 'brand', 'sizes', 'category_id', 'price', 'compare_at_price', 'stock', 'description', 'images']);
         $this->is_active = true;
         $this->is_featured = false;
         $this->showForm = true;
@@ -47,6 +51,8 @@ new #[Layout('components.layouts.admin')] class extends Component
     {
         $this->editingId = $product->id;
         $this->name = $product->name;
+        $this->brand = (string) $product->brand;
+        $this->sizes = implode(', ', $product->sizeList());
         $this->category_id = $product->category_id;
         $this->price = $product->price;
         $this->compare_at_price = $product->compare_at_price;
@@ -67,6 +73,8 @@ new #[Layout('components.layouts.admin')] class extends Component
     {
         $data = $this->validate([
             'name' => ['required', 'string', 'max:160'],
+            'brand' => ['nullable', 'string', 'max:80'],
+            'sizes' => ['nullable', 'string', 'max:255'],
             'category_id' => ['nullable', 'exists:product_categories,id'],
             'price' => ['required', 'integer', 'min:0'],
             'compare_at_price' => ['nullable', 'integer', 'min:0'],
@@ -84,8 +92,12 @@ new #[Layout('components.layouts.admin')] class extends Component
             ? Product::findOrFail($this->editingId)
             : new Product(['position' => (int) Product::max('position') + 1]);
 
+        $sizes = array_values(array_filter(array_map('trim', explode(',', $this->sizes)), fn ($s) => $s !== ''));
+
         $product->fill([
             'name' => $data['name'],
+            'brand' => $data['brand'] ?: null,
+            'sizes' => $sizes ?: null,
             'category_id' => $data['category_id'],
             'price' => $data['price'],
             'compare_at_price' => $data['compare_at_price'],
@@ -199,6 +211,10 @@ new #[Layout('components.layouts.admin')] class extends Component
                 </div>
                 <form wire:submit="save" class="mt-5 space-y-4">
                     <x-tk.field label="Nom" :error="$errors->first('name')"><x-tk.input wire:model="name" /></x-tk.field>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <x-tk.field label="Marque (optionnel)" :error="$errors->first('brand')"><x-tk.input wire:model="brand" placeholder="Maison Tikmos" /></x-tk.field>
+                        <x-tk.field label="Tailles" hint="Séparées par des virgules (ex. 40, 41, 42)" :error="$errors->first('sizes')"><x-tk.input wire:model="sizes" placeholder="40, 41, 42" /></x-tk.field>
+                    </div>
                     <div class="grid gap-4 sm:grid-cols-2">
                         <x-tk.field label="Catégorie">
                             <select wire:model="category_id" class="min-h-[48px] w-full rounded-input border border-tk-300 bg-surface px-4 text-[15px] text-content focus:border-ink focus:outline-none">

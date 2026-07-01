@@ -22,7 +22,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property int $position
  */
 #[Fillable([
-    'category_id', 'name', 'slug', 'description', 'price', 'compare_at_price',
+    'category_id', 'name', 'brand', 'slug', 'description', 'sizes', 'price', 'compare_at_price',
     'stock', 'is_active', 'is_featured', 'position',
 ])]
 class Product extends Model implements HasMedia
@@ -34,10 +34,31 @@ class Product extends Model implements HasMedia
         return [
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
+            'sizes' => 'array',
             'price' => 'integer',
             'compare_at_price' => 'integer',
             'stock' => 'integer',
         ];
+    }
+
+    /** @return list<string> */
+    public function sizeList(): array
+    {
+        $sizes = [];
+
+        foreach ((array) $this->sizes as $size) {
+            $size = trim((string) $size);
+            if ($size !== '') {
+                $sizes[] = $size;
+            }
+        }
+
+        return $sizes;
+    }
+
+    public function hasSizes(): bool
+    {
+        return $this->sizeList() !== [];
     }
 
     public function getRouteKeyName(): string
