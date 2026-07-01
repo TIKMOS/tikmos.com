@@ -1,0 +1,58 @@
+<svg viewBox="0 0 800 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Illustration Tikmos — mathématiques, data et IA">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6f1e8"/>
+      <stop offset="1" stop-color="#eef1f8"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d8bd86"/>
+      <stop offset="1" stop-color="#b9975b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="640" fill="url(#bg)"/>
+
+  <!-- grille discrète -->
+  <g stroke="#17306e" stroke-opacity="0.06" stroke-width="1">
+    <path d="M0 160 H800 M0 320 H800 M0 480 H800 M160 0 V640 M320 0 V640 M480 0 V640 M640 0 V640"/>
+  </g>
+
+  <!-- grand cercle (rigueur) -->
+  <circle cx="560" cy="200" r="150" fill="none" stroke="#17306e" stroke-opacity="0.18" stroke-width="2"/>
+  <path d="M410 200 a150 150 0 0 1 150 -150" fill="none" stroke="url(#gold)" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- courbe ascendante (résultats) -->
+  <path d="M90 470 C 220 430, 300 380, 380 330 S 560 210, 690 150" fill="none" stroke="#17306e" stroke-width="4" stroke-linecap="round"/>
+  <g fill="#17306e">
+    <circle cx="90" cy="470" r="8"/>
+    <circle cx="380" cy="330" r="8"/>
+    <circle cx="690" cy="150" r="9"/>
+  </g>
+  <circle cx="380" cy="330" r="16" fill="none" stroke="url(#gold)" stroke-width="4"/>
+
+  <!-- réseau de nœuds (data / IA) -->
+  <g stroke="#17306e" stroke-opacity="0.35" stroke-width="1.5">
+    <path d="M180 540 L 280 500 L 360 560 M 280 500 L 340 440"/>
+  </g>
+  <g fill="url(#gold)">
+    <circle cx="180" cy="540" r="7"/>
+    <circle cx="280" cy="500" r="9"/>
+    <circle cx="360" cy="560" r="6"/>
+    <circle cx="340" cy="440" r="6"/>
+  </g>
+
+  <!-- barres (croissance) -->
+  <g fill="#17306e" fill-opacity="0.9">
+    <rect x="560" y="470" width="34" height="90" rx="6"/>
+    <rect x="606" y="430" width="34" height="130" rx="6"/>
+    <rect x="652" y="390" width="34" height="170" rx="6"/>
+  </g>
+  <rect x="652" y="390" width="34" height="30" rx="6" fill="url(#gold)"/>
+
+  <!-- signes discrets (mathématiques) -->
+  <g fill="#17306e" fill-opacity="0.5" font-family="Georgia, serif" font-size="46" font-style="italic">
+    <text x="120" y="180">∑</text>
+    <text x="240" y="250">π</text>
+    <text x="470" y="470">ƒ(x)</text>
+  </g>
+</svg>

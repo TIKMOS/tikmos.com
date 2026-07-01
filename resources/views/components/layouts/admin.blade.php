@@ -22,7 +22,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#0b0b0c">
+    <meta name="theme-color" content="#17306e">
     @include('partials.pwa')
     <title>{{ $title ? $title.' — Tikmos Admin' : 'Tikmos Admin' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])

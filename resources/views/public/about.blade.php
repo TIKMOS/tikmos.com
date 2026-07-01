@@ -18,8 +18,8 @@
                 </div>
             </div>
             <div class="reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
-                <div class="aspect-[5/4] overflow-hidden rounded-[28px] bg-tk-100 shadow-lg">
-                    <img src="{{ asset('img/portrait-prof.jpg') }}" alt="{{ $seo->person_name ?? config('app.name') }}" loading="eager" class="h-full w-full object-cover" />
+                <div class="aspect-[5/4] overflow-hidden rounded-[28px] border border-line bg-surface shadow-lg">
+                    <img src="{{ asset('img/about-illustration.svg') }}" alt="Illustration — mathématiques, data science et IA" loading="eager" class="h-full w-full object-cover" />
                 </div>
             </div>
         </div>

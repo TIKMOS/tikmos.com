@@ -17,8 +17,8 @@
     ];
 
     $variants = [
-        // CTA principal — aplat encre (un par zone)
-        'primary' => 'bg-ink text-paper hover:bg-tk-800',
+        // CTA principal — aplat encre (bleu roi), un par zone
+        'primary' => 'bg-ink text-paper hover:opacity-90',
         // Emphase premium — blanc + bordure OR champagne (signature luxe)
         'gold' => 'bg-paper text-gold-600 border border-gold hover:bg-gold-100',
         // « accent » = emphase sobre : blanc + bordure encre (compat)

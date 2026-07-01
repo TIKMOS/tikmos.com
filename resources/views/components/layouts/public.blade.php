@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#0b0b0c">
+    <meta name="theme-color" content="#17306e">
     @include('partials.pwa')
     {{ $head ?? '' }}
     @stack('meta')
@@ -62,7 +62,7 @@
     >
         <div class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-6 lg:px-8">
             <a href="{{ url('/') }}" wire:navigate aria-label="Accueil Tikmos">
-                <x-tk.logo />
+                <x-tk.logo class="h-12 md:h-14" />
             </a>
 
             @php
@@ -192,20 +192,16 @@
             <div class="md:col-span-3">
                 <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-500">Liens rapides</p>
                 <ul class="mt-4 space-y-2.5 text-sm text-tk-400">
-                    <li><a href="{{ url('/services') }}" wire:navigate class="hover:text-white">Services</a></li>
-                    <li><a href="{{ url('/realisations') }}" wire:navigate class="hover:text-white">Réalisations</a></li>
-                    <li><a href="{{ url('/boutique') }}" wire:navigate class="hover:text-white">Boutique</a></li>
-                    <li><a href="{{ url('/equipe') }}" wire:navigate class="hover:text-white">L'équipe</a></li>
-                    <li><a href="{{ url('/blog') }}" wire:navigate class="hover:text-white">Blog</a></li>
                     <li><a href="{{ url('/a-propos') }}" wire:navigate class="hover:text-white">À propos</a></li>
+                    <li><a href="{{ url('/services') }}" wire:navigate class="hover:text-white">Services</a></li>
+                    <li><a href="{{ url('/blog') }}" wire:navigate class="hover:text-white">Blog</a></li>
+                    <li><a href="{{ url('/boutique') }}" wire:navigate class="hover:text-white">Boutique</a></li>
                 </ul>
             </div>
 
             <div class="md:col-span-2">
                 <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-500">Ressources</p>
                 <ul class="mt-4 space-y-2.5 text-sm text-tk-400">
-                    <li><a href="{{ url('/faq') }}" wire:navigate class="hover:text-white">Aide &amp; FAQ</a></li>
-                    <li><a href="{{ url('/temoignages') }}" wire:navigate class="hover:text-white">Témoignages</a></li>
                     <li><a href="{{ url('/cgu') }}" wire:navigate class="hover:text-white">CGU</a></li>
                     <li><a href="{{ url('/cgv') }}" wire:navigate class="hover:text-white">CGV (boutique)</a></li>
                     <li><a href="{{ url('/confidentialite') }}" wire:navigate class="hover:text-white">Confidentialité</a></li>
@@ -217,7 +213,6 @@
             <div class="md:col-span-3">
                 <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-500">Contact</p>
                 <ul class="mt-4 space-y-2.5 text-sm text-tk-400">
-                    <li>{{ $general->business_hours }}</li>
                     <li><a href="https://wa.me/{{ $waDigits }}" class="hover:text-white">{{ $general->brand_phone }}</a></li>
                     @if (! empty($general->emails['contact']))
                         <li><a href="mailto:{{ $general->emails['contact'] }}" class="hover:text-white">{{ $general->emails['contact'] }}</a></li>
@@ -227,8 +222,7 @@
         </div>
         <div class="border-t border-white/10">
             <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-5 py-5 text-xs text-tk-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-                <p>© {{ date('Y') }} Tikmos. Tous droits réservés.</p>
-                <p>Conçu par <a href="https://alinkka.net" target="_blank" rel="noopener" class="font-medium text-tk-300 underline-offset-2 hover:text-white hover:underline">Alinkka</a></p>
+                <p>© {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.</p>
             </div>
         </div>
     </footer>

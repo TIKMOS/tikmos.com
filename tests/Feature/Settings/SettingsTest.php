@@ -12,9 +12,9 @@ use App\Settings\ShopSettings;
 it('charge les réglages généraux avec les valeurs migrées', function (): void {
     $g = app(GeneralSettings::class);
 
-    expect($g->brand_phone)->toBe('+229 01 66 38 64 17')
+    expect($g->brand_phone)->toBe('+229 01 97 44 06 15')
         ->and($g->delivered_base)->toBe(1200)
-        ->and($g->nav_links)->toHaveCount(6)
+        ->and($g->nav_links)->toHaveCount(3)
         ->and($g->top_bandeau_enabled)->toBeTrue();
 });
 

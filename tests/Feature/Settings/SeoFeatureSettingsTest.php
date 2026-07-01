@@ -38,6 +38,6 @@ it('pilote le numéro WhatsApp depuis les réglages (source unique)', function (
     $g = app(GeneralSettings::class);
 
     // La valeur a été reciblée vers un placeholder Tikmos (plus le numéro Sezy).
-    expect($g->whatsapp_number)->toBe('2290000000000')
+    expect($g->whatsapp_number)->toBe('2290197440615')
         ->and($g->emails['contact'])->toBe('contact@tikmos.com');
 });
