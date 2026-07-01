@@ -3,12 +3,11 @@
 @php
     $links = [
         ['route' => 'admin.dashboard', 'label' => 'Tableau de bord', 'icon' => 'layout-dashboard', 'perm' => null],
-        ['route' => 'admin.colis', 'label' => 'Colis', 'icon' => 'package', 'perm' => 'colis.view'],
-        ['route' => 'admin.vols', 'label' => 'Vols', 'icon' => 'plane', 'perm' => 'vol.view'],
-        ['route' => 'admin.demandes', 'label' => 'Demandes', 'icon' => 'inbox', 'perm' => 'demande.view'],
+        ['route' => 'admin.service-requests', 'label' => 'Devis & demandes', 'icon' => 'receipt', 'perm' => 'demande.view'],
         ['route' => 'admin.services', 'label' => 'Services', 'icon' => 'layers', 'perm' => 'services.manage'],
         ['route' => 'admin.projects', 'label' => 'Réalisations', 'icon' => 'folder-open', 'perm' => 'projects.manage'],
-        ['route' => 'admin.service-requests', 'label' => 'Devis', 'icon' => 'receipt', 'perm' => 'demande.view'],
+        ['route' => 'admin.boutique', 'label' => 'Boutique', 'icon' => 'shopping-bag', 'perm' => 'shop.products.manage'],
+        ['route' => 'admin.boutique.orders', 'label' => 'Commandes', 'icon' => 'package', 'perm' => 'shop.orders.view'],
         ['route' => 'admin.clients', 'label' => 'Clients', 'icon' => 'users', 'perm' => 'client.view'],
         ['route' => 'admin.messages', 'label' => 'Messages', 'icon' => 'mail', 'perm' => 'message.view'],
         ['route' => 'admin.equipe', 'label' => 'Équipe', 'icon' => 'user-cog', 'perm' => 'equipe.view'],
