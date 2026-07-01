@@ -36,6 +36,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [SecurityHeaders::class]);
 
+        // Les webhooks de paiement sont authentifiés par signature, pas par CSRF.
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/payments/*',
+        ]);
+
         $middleware->alias([
             'approved' => EnsureUserApproved::class,
             'role' => RoleMiddleware::class,

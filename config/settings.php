@@ -3,6 +3,7 @@
 use App\Settings\FeatureSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\HomepageSettings;
+use App\Settings\PaymentSettings;
 use App\Settings\ReviewsSettings;
 use App\Settings\SeoSettings;
 use App\Settings\ShopSettings;
@@ -26,6 +27,7 @@ return [
         ShopSettings::class,
         SeoSettings::class,
         FeatureSettings::class,
+        PaymentSettings::class,
     ],
 
     /*

@@ -1,7 +1,13 @@
 <?php
 
+use App\Enums\PaymentMethod;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Payments\Enums\PaymentProvider;
 use App\Services\CartService;
 use App\Services\OrderService;
+use App\Services\PaymentService;
+use App\Settings\PaymentSettings;
 use App\Settings\ShopSettings;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
@@ -24,7 +30,9 @@ new #[Layout('components.layouts.public')] class extends Component
     #[Validate('nullable|string|max:1000')]
     public string $notes = '';
 
-    public function mount(CartService $cart): void
+    public string $payment_method = 'cod';
+
+    public function mount(CartService $cart, PaymentSettings $payments): void
     {
         if ($cart->isEmpty()) {
             $this->redirect(route('cart'), navigate: true);
@@ -35,28 +43,81 @@ new #[Layout('components.layouts.public')] class extends Component
         $this->contact_name = $user->name;
         $this->contact_phone = (string) $user->phone;
         $this->delivery_city = (string) $user->city;
+
+        // Mode par défaut selon les réglages (online prioritaire si disponible).
+        $this->payment_method = $payments->onlineEnabled() ? 'online' : 'cod';
     }
 
-    public function place(OrderService $orders): void
+    public function place(OrderService $orders, PaymentService $payments, PaymentSettings $settings): void
     {
         $data = $this->validate();
 
-        $order = $orders->place(auth()->user(), $data);
-
+        $method = $this->resolveMethod($settings);
+        $order = $orders->place(auth()->user(), $data, $method);
         $this->dispatch('cart-updated');
+
+        if ($method === PaymentMethod::Online) {
+            // Ouvre une transaction en attente et déclenche le widget KKiaPay côté client.
+            $payment = $payments->open($order, PaymentProvider::Kkiapay);
+
+            $this->dispatch('open-kkiapay',
+                amount: $order->total,
+                reference: $payment->reference,
+                orderNumber: $order->number,
+                name: $order->contact_name,
+                phone: $order->contact_phone,
+            );
+
+            return;
+        }
+
         session()->flash('toast', ['type' => 'success', 'message' => 'Commande confirmée ! Numéro : '.$order->number]);
         $this->redirect(route('app.orders.show', $order->number), navigate: true);
+    }
+
+    /** Vérifie la transaction après retour du widget (source de vérité serveur). */
+    public function confirmOnline(string $reference, string $transactionId, PaymentService $payments): void
+    {
+        $payment = Payment::where('reference', $reference)->firstOrFail();
+
+        abort_unless($payment->payable instanceof Order && $payment->payable->user_id === auth()->id(), 403);
+
+        if ($payments->verify($payment, $transactionId)) {
+            session()->flash('toast', ['type' => 'success', 'message' => 'Paiement confirmé ! Commande '.$payment->payable->number]);
+            $this->redirect(route('app.orders.show', $payment->payable->number), navigate: true);
+
+            return;
+        }
+
+        session()->flash('toast', ['type' => 'error', 'message' => "Le paiement n'a pas pu être confirmé. Réessayez ou choisissez le paiement à la livraison."]);
+    }
+
+    private function resolveMethod(PaymentSettings $settings): PaymentMethod
+    {
+        if ($this->payment_method === 'online' && $settings->onlineEnabled()) {
+            return PaymentMethod::Online;
+        }
+
+        abort_unless($settings->codEnabled() || $settings->onlineEnabled(), 422);
+
+        // Repli : si le COD est désactivé mais l'online dispo, on force l'online.
+        return $settings->codEnabled() ? PaymentMethod::Cod : PaymentMethod::Online;
     }
 
     /** @return array<string, mixed> */
     public function with(): array
     {
         $cart = app(CartService::class);
+        $settings = app(PaymentSettings::class);
 
         return [
             'items' => $cart->items(),
             'subtotal' => $cart->subtotal(),
             'deliveryFee' => app(ShopSettings::class)->default_delivery_fee,
+            'onlineEnabled' => $settings->onlineEnabled(),
+            'codEnabled' => $settings->codEnabled(),
+            'kkiapayKey' => $settings->kkiapay_public_key ?: (string) (config('payments.gateways.kkiapay.public_key') ?? ''),
+            'kkiapaySandbox' => $settings->kkiapay_sandbox,
         ];
     }
 }; ?>
@@ -86,16 +147,32 @@ new #[Layout('components.layouts.public')] class extends Component
                 </x-tk.admin-section>
 
                 <x-tk.admin-section title="Paiement" icon="wallet">
-                    <label class="flex items-center gap-3 rounded-tile border-2 border-ink bg-sky/40 p-4">
-                        <x-lucide-truck class="h-6 w-6 text-content" />
-                        <span><span class="block font-medium text-content">Paiement à la livraison</span><span class="block text-sm text-muted">Réglez en espèces ou Mobile Money à la réception.</span></span>
-                        <x-lucide-check-circle-2 class="ml-auto h-5 w-5 text-content" />
-                    </label>
+                    <div class="space-y-3">
+                        @if ($onlineEnabled)
+                            <label class="flex cursor-pointer items-center gap-3 rounded-tile border-2 p-4 transition"
+                                :class="$wire.payment_method === 'online' ? 'border-ink bg-sky/40' : 'border-line hover:border-tk-300'">
+                                <input type="radio" wire:model="payment_method" value="online" class="sr-only" />
+                                <x-lucide-smartphone class="h-6 w-6 text-content" />
+                                <span><span class="block font-medium text-content">Paiement en ligne</span><span class="block text-sm text-muted">Mobile Money (MTN, Moov) ou carte bancaire via KKiaPay — sécurisé.</span></span>
+                                <x-lucide-check-circle-2 class="ml-auto h-5 w-5 text-content" x-show="$wire.payment_method === 'online'" />
+                            </label>
+                        @endif
+
+                        @if ($codEnabled)
+                            <label class="flex cursor-pointer items-center gap-3 rounded-tile border-2 p-4 transition"
+                                :class="$wire.payment_method === 'cod' ? 'border-ink bg-sky/40' : 'border-line hover:border-tk-300'">
+                                <input type="radio" wire:model="payment_method" value="cod" class="sr-only" />
+                                <x-lucide-truck class="h-6 w-6 text-content" />
+                                <span><span class="block font-medium text-content">Paiement à la livraison</span><span class="block text-sm text-muted">Réglez en espèces ou Mobile Money à la réception.</span></span>
+                                <x-lucide-check-circle-2 class="ml-auto h-5 w-5 text-content" x-show="$wire.payment_method === 'cod'" />
+                            </label>
+                        @endif
+                    </div>
                 </x-tk.admin-section>
 
                 <x-tk.button type="submit" variant="primary" size="lg" icon="check" class="w-full sm:w-auto">
-                    <span wire:loading.remove wire:target="place">Confirmer ma commande</span>
-                    <span wire:loading wire:target="place">Traitement…</span>
+                    <span wire:loading.remove wire:target="place,confirmOnline">Confirmer ma commande</span>
+                    <span wire:loading wire:target="place,confirmOnline">Traitement…</span>
                 </x-tk.button>
             </form>
 
@@ -121,4 +198,32 @@ new #[Layout('components.layouts.public')] class extends Component
             </div>
         </div>
     </x-tk.section>
+
+    @if ($onlineEnabled && $kkiapayKey)
+        @push('scripts')
+            <script src="https://cdn.kkiapay.me/k.js"></script>
+        @endpush
+
+        <div
+            x-data="{ ref: null }"
+            x-on:open-kkiapay.window="
+                ref = $event.detail.reference;
+                openKkiapayWidget({
+                    amount: $event.detail.amount,
+                    key: @js($kkiapayKey),
+                    sandbox: @js($kkiapaySandbox),
+                    phone: $event.detail.phone,
+                    name: $event.detail.name,
+                    data: JSON.stringify({ reference: $event.detail.reference, order: $event.detail.orderNumber }),
+                });
+            "
+            x-init="
+                window.addSuccessListener?.((response) => {
+                    if (ref && response?.transactionId) {
+                        $wire.confirmOnline(ref, response.transactionId);
+                    }
+                });
+            "
+        ></div>
+    @endif
 </div>

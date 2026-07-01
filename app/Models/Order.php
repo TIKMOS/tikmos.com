@@ -7,11 +7,13 @@ namespace App\Models;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
+use App\Payments\Contracts\Payable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -29,7 +31,7 @@ use Illuminate\Support\Carbon;
     'delivery_address', 'delivery_city', 'notes',
     'confirmed_at', 'shipped_at', 'delivered_at', 'received_confirmed_at',
 ])]
-class Order extends Model
+class Order extends Model implements Payable
 {
     protected function casts(): array
     {
@@ -62,6 +64,30 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /** @return MorphMany<Payment, $this> */
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
+    }
+
+    public function payableAmount(): int
+    {
+        return $this->total;
+    }
+
+    /**
+     * Réaction au paiement en ligne confirmé (idempotente : appelée une seule
+     * fois par PaymentService::settle).
+     */
+    public function onPaymentSucceeded(Payment $payment): void
+    {
+        $this->update([
+            'payment_status' => OrderPaymentStatus::Paid,
+            'confirmed_at' => $this->confirmed_at ?? now(),
+            'status' => $this->status === OrderStatus::Pending ? OrderStatus::Confirmed : $this->status,
+        ]);
     }
 
     public function totalLabel(): string

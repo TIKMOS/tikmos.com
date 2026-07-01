@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -31,6 +32,10 @@ Route::view('confidentialite', 'public.privacy')->name('privacy');
 Route::view('cookies', 'public.cookies')->name('cookies');
 
 Volt::route('contact', 'pages.public.contact')->name('contact');
+
+// Webhooks de paiement (signés, hors CSRF — voir bootstrap/app.php)
+Route::post('webhooks/payments/{provider}', PaymentWebhookController::class)
+    ->name('webhooks.payments');
 
 // SEO
 Route::get('sitemap.xml', SitemapController::class)->name('sitemap');

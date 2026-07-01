@@ -22,11 +22,11 @@ class OrderService
     /**
      * Crée une commande à partir du panier courant (transaction). Recalcul serveur.
      *
-     * @param  array{contact_name: string, contact_phone: string, delivery_address: string, delivery_city?: string|null, notes?: string|null, courier_id?: int|null}  $data
+     * @param  array{contact_name: string, contact_phone: string, delivery_address: string, delivery_city?: string|null, notes?: string|null}  $data
      */
-    public function place(User $user, array $data): Order
+    public function place(User $user, array $data, PaymentMethod $method = PaymentMethod::Cod): Order
     {
-        return DB::transaction(function () use ($user, $data): Order {
+        return DB::transaction(function () use ($user, $data, $method): Order {
             $items = $this->cart->items();
 
             abort_if($items->isEmpty(), 422, 'Votre panier est vide.');
@@ -39,7 +39,7 @@ class OrderService
                 'number' => $this->generateNumber(),
                 'user_id' => $user->id,
                 'status' => OrderStatus::Pending,
-                'payment_method' => PaymentMethod::Cod,
+                'payment_method' => $method,
                 'payment_status' => OrderPaymentStatus::Unpaid,
                 'subtotal' => $subtotal,
                 'delivery_fee' => $deliveryFee,
@@ -48,7 +48,6 @@ class OrderService
                 'contact_phone' => $data['contact_phone'],
                 'delivery_address' => $data['delivery_address'],
                 'delivery_city' => $data['delivery_city'] ?? null,
-                'courier_id' => $data['courier_id'] ?? null,
                 'notes' => $data['notes'] ?? null,
             ]);
 

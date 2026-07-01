@@ -7,9 +7,11 @@ use App\Models\Partner;
 use App\Models\Project;
 use App\Models\Review;
 use App\Models\TeamMember;
+use App\Payments\PaymentManager;
 use App\Settings\FeatureSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\HomepageSettings;
+use App\Settings\PaymentSettings;
 use App\Settings\SeoSettings;
 use App\Settings\ShopSettings;
 use Illuminate\Support\Facades\URL;
@@ -20,7 +22,17 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Registre des passerelles de paiement (portable, résolu depuis config + réglages).
+        $this->app->singleton(PaymentManager::class, function (): PaymentManager {
+            $config = config('payments');
+            $config['default_mode'] = app(PaymentSettings::class)->mode;
+            $config['gateways']['kkiapay'] = array_merge(
+                $config['gateways']['kkiapay'],
+                app(PaymentSettings::class)->kkiapayConfig(),
+            );
+
+            return new PaymentManager($config);
+        });
     }
 
     public function boot(): void

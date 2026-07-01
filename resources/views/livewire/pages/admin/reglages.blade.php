@@ -17,6 +17,7 @@ new #[Layout('components.layouts.admin')] class extends Component
             ['label' => 'Équipe', 'desc' => 'Membres affichés sur la page Équipe.', 'icon' => 'users', 'route' => 'admin.reglages.team', 'permission' => 'team.manage', 'tint' => 'lilac'],
             ['label' => 'Avis', 'desc' => 'Modération et mise en avant des témoignages.', 'icon' => 'star', 'route' => 'admin.avis', 'permission' => 'reviews.view', 'tint' => 'peach'],
             ['label' => 'Boutique', 'desc' => 'Produits, catégories, commandes.', 'icon' => 'shopping-bag', 'route' => 'admin.boutique', 'permission' => 'shop.products.manage', 'tint' => 'sky'],
+            ['label' => 'Paiements', 'desc' => 'Mode (en ligne / à la livraison), KKiaPay, webhook.', 'icon' => 'wallet', 'route' => 'admin.reglages.payments', 'permission' => 'settings.manage', 'tint' => 'mint'],
         ];
     }
 }; ?>

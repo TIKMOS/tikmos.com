@@ -203,14 +203,14 @@ Idem pour Stripe/PayPal (redirection au lieu de widget → `initialize()` renvoi
 
 ---
 
-## 10. Definition of Done (lot d'implémentation)
-- [ ] Interface + `KkiapayGateway` + `CodGateway` + `PaymentManager` + DTO/enums.
-- [ ] Table `payments` (+ `payment_events`), modèle polymorphe, `markSucceeded()` idempotent.
-- [ ] Endpoint webhook signé + `verify()` ; checkout boutique branché (online + COD).
-- [ ] `PaymentSettings` + écran admin (activation, clés, sandbox).
-- [ ] Tests Pest : verify SUCCESS/echec, signature webhook valide/invalide, idempotence
-      (widget+webhook), écart de montant refusé, bascule online/COD.
-- [ ] Mode **sandbox** vérifié de bout en bout ; secrets hors repo ; doc de copie rédigée.
+## 10. Definition of Done (lot d'implémentation) — ✅ livré (lot 21)
+- [x] Interface + `KkiapayGateway` + `CodGateway` + `PaymentManager` + DTO/enums. → `app/Payments/`
+- [x] Table `payments` (+ `payment_events`), modèle polymorphe, `markSucceeded()` idempotent. → `app/Models/Payment.php`
+- [x] Endpoint webhook signé + `verify()` ; checkout boutique branché (online + COD). → `PaymentWebhookController`, `checkout.blade.php`
+- [x] `PaymentSettings` + écran admin (activation, clés, sandbox). → `reglages/payments.blade.php`
+- [x] Tests Pest : verify SUCCESS/echec, signature webhook valide/invalide, idempotence
+      (widget+webhook), écart de montant refusé, bascule online/COD. → `tests/Feature/PaymentTest.php` (7 tests)
+- [x] Mode **sandbox** par défaut ; secrets chiffrés (`PaymentSettings::encrypted`) & hors repo (`.env`) ; §9 = guide de copie.
 
 ## Sources
 - [Documentation KKiaPay](https://docs.kkiapay.me/v1) · [SDK PHP](https://docs.kkiapay.me/v1/en-1.0.0/plugin-et-sdk/admin-sdks-server-side/php-admin-sdk) · [SDK JS](https://docs.kkiapay.me/v1/en-1.0.0/plugin-et-sdk/sdk-javascript) · [Webhooks](https://docs.kkiapay.me/v1/en-1.0.0/tableau-de-bord/webhook) · [php-sdk (GitHub)](https://github.com/kkiapay/php-sdk)
