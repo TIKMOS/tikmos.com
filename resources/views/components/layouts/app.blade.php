@@ -3,9 +3,9 @@
 @php
     $nav = [
         ['label' => 'Accueil', 'icon' => 'home', 'route' => 'app.dashboard'],
-        ['label' => 'Mes colis', 'icon' => 'package', 'route' => 'app.colis'],
-        ['label' => 'Demandes', 'icon' => 'plus', 'route' => 'app.demandes.create', 'fab' => true],
-        ['label' => 'Alertes', 'icon' => 'bell', 'route' => 'app.alertes'],
+        ['label' => 'Mes devis', 'icon' => 'file-text', 'route' => 'app.requests'],
+        ['label' => 'Devis', 'icon' => 'plus', 'route' => 'services', 'fab' => true],
+        ['label' => 'Achats', 'icon' => 'shopping-bag', 'route' => 'app.orders'],
         ['label' => 'Compte', 'icon' => 'user', 'route' => 'app.compte'],
     ];
     $bottomItems = array_map(fn ($i) => [...$i, 'active' => request()->routeIs($i['route'])], $nav);
@@ -28,7 +28,7 @@
             <div class="flex items-center gap-8">
                 <a href="{{ route('app.dashboard') }}" wire:navigate aria-label="Accueil"><x-tk.logo /></a>
                 <nav class="hidden items-center gap-6 text-sm font-medium md:flex">
-                    @foreach (['app.dashboard' => 'Accueil', 'app.colis' => 'Mes colis', 'app.demandes.create' => 'Demandes', 'app.alertes' => 'Alertes'] as $route => $label)
+                    @foreach (['app.dashboard' => 'Accueil', 'app.requests' => 'Mes devis', 'app.orders' => 'Mes achats'] as $route => $label)
                         <a href="{{ route($route) }}" wire:navigate
                            class="{{ request()->routeIs($route) ? 'text-content' : 'text-content hover:text-content' }}">{{ $label }}</a>
                     @endforeach

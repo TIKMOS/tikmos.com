@@ -9,6 +9,12 @@ use Livewire\Volt\Volt;
 
 Route::middleware(['auth', 'approved'])->group(function (): void {
     Volt::route('/', 'pages.app.dashboard')->name('dashboard');
+
+    // Services & devis (Tikmos)
+    Volt::route('devis', 'pages.app.requests-index')->name('requests');
+    Volt::route('devis/{request:reference}', 'pages.app.requests-show')->name('requests.show');
+
+    // Domaine Sezy hérité (colis) — retiré avec son métier ultérieurement.
     Volt::route('colis', 'pages.app.colis-index')->name('colis');
     Volt::route('colis/{reference}', 'pages.app.colis-show')->name('colis.show');
     Volt::route('demandes/nouvelle', 'pages.app.demande-create')->name('demandes.create');
