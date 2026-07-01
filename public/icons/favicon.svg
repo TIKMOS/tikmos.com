@@ -1,0 +1,13 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tikmos">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8d3a2"/>
+      <stop offset="1" stop-color="#b9975b"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0d1a3a"/>
+  <!-- Tête (sphère or champagne) -->
+  <circle cx="256" cy="168" r="62" fill="url(#gold)"/>
+  <!-- Corps (figure qui s'élève) -->
+  <path d="M256 236 C 314 300, 314 374, 256 412 C 198 374, 198 300, 256 236 Z" fill="url(#gold)"/>
+</svg>
