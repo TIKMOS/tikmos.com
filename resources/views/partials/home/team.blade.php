@@ -5,6 +5,7 @@
             <x-tk.kicker>L'équipe</x-tk.kicker>
             <x-tk.divider-gold class="mt-3" />
             <h2 class="mt-3 max-w-2xl font-display text-3xl font-extrabold text-content md:text-4xl">Une équipe derrière chaque projet.</h2>
+            <p class="mt-3 max-w-md text-muted">Dévouée à vos projets, du cadrage à la livraison.</p>
         </div>
         <x-tk.button href="{{ url('/equipe') }}" variant="secondary" icon="arrow-right" :iconRight="true">Rencontrer l'équipe</x-tk.button>
     </div>

@@ -96,8 +96,8 @@ it('modère et met en avant un avis', function (): void {
         ->and($review->is_featured)->toBeTrue();
 });
 
-it('affiche les avis featured sur l’accueil', function (): void {
-    Review::create(['author_name' => 'Diaspora Test 88', 'rating' => 5, 'body' => 'Avis featured unique 88', 'source' => 'manual', 'status' => 'approved', 'is_featured' => true, 'published_at' => now()]);
+it('affiche les avis approuvés sur la page témoignages', function (): void {
+    Review::create(['author_name' => 'Client Test 88', 'rating' => 5, 'body' => 'Avis approuvé unique 88', 'source' => 'manual', 'status' => 'approved', 'is_featured' => true, 'published_at' => now()]);
 
-    $this->get('/')->assertOk()->assertSee('Avis featured unique 88');
+    $this->get('/temoignages')->assertOk()->assertSee('Avis approuvé unique 88');
 });

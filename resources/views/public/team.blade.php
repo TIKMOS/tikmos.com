@@ -22,7 +22,7 @@
             <x-tk.kicker class="justify-center">L'équipe</x-tk.kicker>
             <div class="mt-3 flex justify-center"><x-tk.divider-gold /></div>
             <h1 class="mt-3 font-display text-4xl font-black leading-[1] tracking-[-0.02em] text-content md:text-5xl">Une équipe derrière chaque projet.</h1>
-            <p class="mx-auto mt-5 max-w-lg text-lg text-muted">Des compétences complémentaires — data, IA, développement et accompagnement — réunies pour livrer vos projets de bout en bout.</p>
+            <p class="mx-auto mt-5 max-w-lg text-lg text-muted">Une équipe dévouée à vos projets, du cadrage à la livraison.</p>
         </div>
 
         @if ($members->isEmpty())

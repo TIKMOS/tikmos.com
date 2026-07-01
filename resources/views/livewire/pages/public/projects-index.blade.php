@@ -37,8 +37,8 @@ new #[Layout('components.layouts.public')] class extends Component
         <div class="max-w-2xl reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
             <x-tk.kicker>Réalisations</x-tk.kicker>
             <x-tk.divider-gold class="mt-3" />
-            <h1 class="mt-3 font-display text-4xl font-black leading-[1] tracking-[-0.02em] text-content md:text-5xl">Des projets livrés, des résultats concrets.</h1>
-            <p class="mt-4 text-lg text-muted">Quelques exemples de ce que nous avons conçu, déployé et accompagné.</p>
+            <h1 class="mt-3 font-display text-4xl font-black leading-[1] tracking-[-0.02em] text-content md:text-5xl">Des projets menés de bout en bout.</h1>
+            <p class="mt-4 text-lg text-muted">Pour vos projets ambitieux, des résultats concrets.</p>
         </div>
 
         @if ($categories->isNotEmpty())

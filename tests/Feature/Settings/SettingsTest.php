@@ -23,7 +23,7 @@ it('charge les réglages accueil', function (): void {
 
     expect($h->hero_title)->toContain('livre')
         ->and($h->services)->toHaveCount(4)
-        ->and($h->sections_order)->toContain('faq')
+        ->and($h->sections_order)->toContain('projects')
         ->and($h->sections_order)->toContain('team');
 });
 

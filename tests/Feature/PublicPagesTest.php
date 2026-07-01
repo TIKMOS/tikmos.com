@@ -8,10 +8,10 @@ it('affiche la page d’accueil Tikmos (héros + services + CTA devis)', functio
     $this->get('/')
         ->assertOk()
         ->assertSee('Je conçois, je forme, je livre.', false)
-        ->assertSee('Mes services')
         ->assertSee('Demander un devis')
         ->assertSee('clients et projets accompagnés')
-        ->assertSee('Plateforme data décisionnelle', false);
+        ->assertSee('Plateforme data décisionnelle', false)
+        ->assertSee('Une équipe derrière chaque projet.', false);
 });
 
 it('affiche la page À propos (storytelling)', function (): void {

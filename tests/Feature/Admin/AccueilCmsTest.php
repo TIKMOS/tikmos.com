@@ -36,12 +36,12 @@ it('masque une section désactivée', function (): void {
     $this->get('/')->assertOk()->assertDontSee("Tout pour rapprocher l'Europe et l'Afrique.");
 });
 
-it('affiche les FAQ publiées sur l’accueil', function (): void {
+it('affiche les FAQ publiées sur la page FAQ', function (): void {
     FaqItem::query()->delete();
     FaqItem::create(['question' => 'Question test unique 31', 'answer' => '<p>Réponse</p>', 'position' => 0, 'is_published' => true]);
     FaqItem::create(['question' => 'Brouillon caché 32', 'answer' => '<p>x</p>', 'position' => 1, 'is_published' => false]);
 
-    $this->get('/')->assertOk()->assertSee('Question test unique 31')->assertDontSee('Brouillon caché 32');
+    $this->get('/faq')->assertOk()->assertSee('Question test unique 31')->assertDontSee('Brouillon caché 32');
 });
 
 it('ouvre l’admin FAQ et crée une question sanitizée', function (): void {

@@ -5,7 +5,8 @@
         <div>
             <x-tk.kicker>Réalisations</x-tk.kicker>
             <x-tk.divider-gold class="mt-3" />
-            <h2 class="mt-3 max-w-2xl font-display text-3xl font-extrabold text-content md:text-4xl">Des projets livrés, des résultats concrets.</h2>
+            <h2 class="mt-3 max-w-2xl font-display text-3xl font-extrabold text-content md:text-4xl">Des projets menés de bout en bout.</h2>
+            <p class="mt-3 max-w-md text-muted">Pour vos projets ambitieux, des résultats concrets.</p>
         </div>
         <x-tk.button href="{{ url('/realisations') }}" variant="secondary" icon="arrow-right" :iconRight="true">Toutes les réalisations</x-tk.button>
     </div>
