@@ -15,8 +15,8 @@
     --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
     /* ---------- Socle ---------- */
-    /* « Encre » = bleu roi profond (remplace le noir) — pairé à l'or champagne. */
-    --color-ink: #17306e;
+    /* « Encre » = bleu nuit du logo (marine profond) — pairé à l'or champagne. */
+    --color-ink: #011859;
     --color-black: #000000;
     --color-paper: #ffffff;
     --color-ivory: #faf8f3;   /* fond d'app premium (ivoire doux) */
@@ -74,7 +74,7 @@
     /* ---------- Sémantiques (dark-aware via .dark) ---------- */
     --color-canvas: #faf8f3;   /* fond d'app = ivoire */
     --color-surface: #ffffff;
-    --color-content: #14182e;  /* texte : bleu nuit très sombre (soul bleue, lisible) */
+    --color-content: #0c1636;  /* texte : bleu nuit très sombre (famille du logo, lisible) */
     --color-muted: #6f6f76;
     --color-line: #e4e1d9;
 
