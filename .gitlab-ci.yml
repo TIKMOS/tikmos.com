@@ -1,0 +1,36 @@
+# CI Tikmos — qualité (Pint, Larastan) + tests (Pest).
+# Pas de Node : public/build est versionné pour le déploiement.
+
+stages:
+  - quality
+  - test
+
+default:
+  image: php:8.3-cli
+  cache:
+    key: composer-cache
+    paths:
+      - vendor/
+  before_script:
+    - apt-get update -yqq && apt-get install -yqq git unzip libzip-dev libpng-dev libjpeg-dev libfreetype6-dev
+    - docker-php-ext-configure gd --with-freetype --with-jpeg
+    - docker-php-ext-install -j"$(nproc)" pdo_sqlite zip gd bcmath
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    - composer install --no-interaction --prefer-dist --no-progress
+    - cp .env.example .env
+    - php artisan key:generate
+
+pint:
+  stage: quality
+  script:
+    - ./vendor/bin/pint --test
+
+larastan:
+  stage: quality
+  script:
+    - php -d memory_limit=1G ./vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+pest:
+  stage: test
+  script:
+    - php artisan test
