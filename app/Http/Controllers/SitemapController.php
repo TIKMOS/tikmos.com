@@ -1,34 +1,48 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Models\Post;
 use App\Models\Product;
+use App\Models\Project;
+use App\Models\Service;
 use App\Settings\ShopSettings;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 
 class SitemapController extends Controller
 {
     public function __invoke(): Response
     {
-        $routes = ['home', 'services', 'achat', 'flights', 'track', 'about', 'team', 'contact', 'cgu', 'privacy', 'cookies'];
+        /** @var Collection<int, string> $urls */
+        $urls = collect(['home', 'about', 'services', 'projects', 'team', 'blog', 'contact', 'faq', 'testimonials', 'cgu', 'cgv', 'privacy', 'cookies'])
+            ->map(fn (string $name): string => route($name));
 
-        $urls = collect($routes)
-            ->map(fn (string $name): string => route($name))
-            ->map(fn (string $url): string => "  <url><loc>{$url}</loc></url>");
+        Service::query()->published()->pluck('slug')
+            ->each(fn (string $slug) => $urls->push(route('services.show', $slug)));
+
+        Project::query()->published()->pluck('slug')
+            ->each(fn (string $slug) => $urls->push(route('projects.show', $slug)));
+
+        Post::query()->published()->pluck('slug')
+            ->each(fn (string $slug) => $urls->push(route('blog.show', $slug)));
 
         if (app(ShopSettings::class)->enabled) {
-            $urls->push('  <url><loc>'.route('shop').'</loc></url>');
-            Product::active()->pluck('slug')->each(function (string $slug) use ($urls): void {
-                $urls->push('  <url><loc>'.route('shop.show', $slug).'</loc></url>');
-            });
+            $urls->push(route('shop'));
+            Product::query()->active()->pluck('slug')
+                ->each(fn (string $slug) => $urls->push(route('shop.show', $slug)));
         }
 
-        $urls = $urls->implode("\n");
+        $body = $urls
+            ->map(fn (string $url): string => "  <url><loc>{$url}</loc></url>")
+            ->implode("\n");
 
         $xml = <<<XML
         <?xml version="1.0" encoding="UTF-8"?>
         <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-        {$urls}
+        {$body}
         </urlset>
         XML;
 
