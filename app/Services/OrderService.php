@@ -9,8 +9,11 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Models\Order;
 use App\Models\User;
+use App\Notifications\OrderReceived;
+use App\Settings\GeneralSettings;
 use App\Settings\ShopSettings;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class OrderService
 {
@@ -66,6 +69,12 @@ class OrderService
             }
 
             $this->cart->clear();
+
+            // Alerte équipe (email de contact) — hors transaction critique mais suffisant ici.
+            $teamEmail = app(GeneralSettings::class)->emails['contact'] ?? null;
+            if ($teamEmail) {
+                Notification::route('mail', $teamEmail)->notify(new OrderReceived($order));
+            }
 
             return $order;
         });

@@ -22,6 +22,9 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property ServiceRequestStatus $status
  * @property int|null $user_id
  * @property int|null $assigned_to
+ * @property-read Service|null $service
+ * @property-read User|null $user
+ * @property-read Quote|null $quote
  */
 #[Fillable([
     'reference', 'user_id', 'service_id', 'name', 'email', 'phone',

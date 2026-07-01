@@ -56,6 +56,7 @@ new #[Layout('components.layouts.admin')] class extends Component
             default => [],
         };
         $order->update(['status' => $target, ...$stamps]);
+        $order->user?->notify(new \App\Notifications\OrderStatusChanged($order));
         $this->dispatch('sz-toast', type: 'success', message: 'Statut mis à jour : '.$target->label());
     }
 

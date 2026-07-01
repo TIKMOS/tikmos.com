@@ -4,7 +4,11 @@ use App\Enums\Publication;
 use App\Enums\ServiceRequestStatus;
 use App\Models\Service;
 use App\Models\ServiceRequest;
+use App\Notifications\ServiceRequestReceived;
+use App\Notifications\ServiceRequestSubmitted;
+use App\Settings\GeneralSettings;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
@@ -80,6 +84,15 @@ new #[Layout('components.layouts.public')] class extends Component
             'note' => 'Demande créée depuis la fiche service.',
             'user_id' => Auth::id(),
         ]);
+
+        // Notifications : alerte équipe + accusé de réception client.
+        $teamEmail = app(GeneralSettings::class)->emails['contact'] ?? null;
+        if ($teamEmail) {
+            Notification::route('mail', $teamEmail)->notify(new ServiceRequestReceived($request));
+        }
+        if ($request->email) {
+            Notification::route('mail', $request->email)->notify(new ServiceRequestSubmitted($request));
+        }
 
         $this->reference = $request->reference;
         $this->reset(['phone', 'company', 'message', 'budget_hint']);

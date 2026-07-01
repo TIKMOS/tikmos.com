@@ -4,8 +4,12 @@ use App\Enums\QuoteStatus;
 use App\Enums\ServiceRequestStatus;
 use App\Models\Quote;
 use App\Models\ServiceRequest;
+use App\Notifications\QuoteSent;
+use App\Notifications\ServiceRequestStatusChanged;
 use App\Support\ReferenceGenerator;
+use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
@@ -42,9 +46,20 @@ new #[Layout('components.layouts.admin')] class extends Component
 
         $target = ServiceRequestStatus::from($status);
         $this->request->transitionTo($target, Auth::user(), $this->note ?: null);
+        $this->notifyClient(new ServiceRequestStatusChanged($this->request));
         $this->reset('note');
         $this->request->refresh()->load('events.author');
         $this->dispatch('sz-toast', type: 'success', message: 'Statut mis à jour : '.$target->label());
+    }
+
+    /** Notifie le client (compte lié, sinon email de la demande). */
+    private function notifyClient(BaseNotification $notification): void
+    {
+        if ($this->request->user) {
+            $this->request->user->notify($notification);
+        } elseif ($this->request->email) {
+            Notification::route('mail', $this->request->email)->notify($notification);
+        }
     }
 
     public function assignToMe(): void
@@ -88,6 +103,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         }
 
         $this->request->refresh()->load(['quote', 'events.author']);
+        $this->notifyClient(new QuoteSent($this->request));
         $this->dispatch('sz-toast', type: 'success', message: 'Devis '.$quote->reference.' enregistré et envoyé.');
     }
 
