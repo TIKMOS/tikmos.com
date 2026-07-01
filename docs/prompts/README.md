@@ -32,6 +32,12 @@ interface par interface, **avec tests**. Tout est encadré par le **prompt maît
 | 16 | [Internationalisation](16-lot-i18n.md) | FR → EN, extraction des chaînes, sélecteur. |
 | 17 | [Tests & QA](17-lot-tests-qa.md) | Couverture critique, factories, CI, polish. |
 | 18 | [Mise en production](18-lot-production.md) | Build, caches, cron/queue, HTTPS, checklist live. |
+| **V3 — modules costauds & nettoyage** | | |
+| 19 | [Nettoyage Sezy & boutique](19-lot-nettoyage-sezy.md) | Retrait total du domaine Sezy + normalisation `sz→tk`. |
+| 20 | [Module de gestion des images](20-lot-module-images.md) | Upload/galerie/médiathèque, WebP/AVIF, srcset/lazy. |
+| 21 | [Système de paiement (KKiaPay)](21-lot-systeme-paiement.md) | Abstraction portable + KKiaPay, online↔COD configurable. |
+| 22 | [Journal d'activité & audit](22-lot-journal-activite.md) | Traçabilité granulaire par utilisateur/client. |
+| 23 | [QA & configurabilité](23-lot-qa-configurabilite.md) | Espaces client/admin sans bug + tout configurable en admin. |
 
 ## Conventions communes à tous les prompts
 - **Charte** : `x-tk.*`, tokens « Encre + Or champagne », filets or parcimonieux.

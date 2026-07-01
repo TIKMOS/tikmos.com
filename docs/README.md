@@ -24,6 +24,10 @@ on écrit la spec avant le code, on teste de A à Z.
 | [04-conventions-architecture](04-conventions-architecture.md) | Arborescence, code, composants, API-like, sécurité, SEO, perf, PWA, déploiement |
 | [05-base-de-donnees](05-base-de-donnees.md) | Schéma, tables, relations, enums, index, settings |
 | [06-interface-accueil](06-interface-accueil.md) | UI accueil premium, sections, interactions, chargement |
+| **[30-systeme-paiement](30-systeme-paiement.md)** | **V3** — abstraction paiement portable + **KKiaPay** (online↔COD, évolutif) |
+| **[31-module-images](31-module-images.md)** | **V3** — module images complet (upload/galerie/médiathèque, WebP/AVIF) |
+| **[32-journal-activite](32-journal-activite.md)** | **V3** — journal d'activité & audit granulaire par acteur |
+| **[33-audit-et-nettoyage](33-audit-et-nettoyage.md)** | **V3** — plan : retrait Sezy, boutique, QA espaces, configurabilité |
 | **[prompts/](prompts/README.md)** | **Bibliothèque de prompts 360** : prompt maître + 19 lots (fondations → vitrine → commerce → blog → back-office → SEO/i18n/PWA → prod) |
 
 ## Décisions verrouillées
