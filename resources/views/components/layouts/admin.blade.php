@@ -6,6 +6,7 @@
         ['route' => 'admin.service-requests', 'label' => 'Devis & demandes', 'icon' => 'receipt', 'perm' => 'demande.view'],
         ['route' => 'admin.services', 'label' => 'Services', 'icon' => 'layers', 'perm' => 'services.manage'],
         ['route' => 'admin.projects', 'label' => 'Réalisations', 'icon' => 'folder-open', 'perm' => 'projects.manage'],
+        ['route' => 'admin.blog', 'label' => 'Blog', 'icon' => 'newspaper', 'perm' => 'blog.manage'],
         ['route' => 'admin.boutique', 'label' => 'Boutique', 'icon' => 'shopping-bag', 'perm' => 'shop.products.manage'],
         ['route' => 'admin.boutique.orders', 'label' => 'Commandes', 'icon' => 'package', 'perm' => 'shop.orders.view'],
         ['route' => 'admin.clients', 'label' => 'Clients', 'icon' => 'users', 'perm' => 'client.view'],

@@ -11,6 +11,8 @@ Volt::route('services', 'pages.public.services-index')->name('services');
 Volt::route('services/{service:slug}', 'pages.public.services-show')->name('services.show');
 Volt::route('realisations', 'pages.public.projects-index')->name('projects');
 Volt::route('realisations/{project:slug}', 'pages.public.projects-show')->name('projects.show');
+Volt::route('blog', 'pages.public.blog-index')->name('blog');
+Volt::route('blog/{post:slug}', 'pages.public.blog-show')->name('blog.show');
 Route::view('achat', 'public.achat')->name('achat');
 Route::view('a-propos', 'public.about')->name('about');
 Route::view('equipe', 'public.team')->name('team');

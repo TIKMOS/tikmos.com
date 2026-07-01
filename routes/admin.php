@@ -23,6 +23,7 @@ Route::middleware(['auth', 'approved', 'role:'.$staffRoles])->group(function ():
     // Services & devis (Tikmos)
     Volt::route('services', 'pages.admin.services')->middleware('permission:services.manage')->name('services');
     Volt::route('realisations', 'pages.admin.projects')->middleware('permission:projects.manage')->name('projects');
+    Volt::route('blog', 'pages.admin.blog')->middleware('permission:blog.manage')->name('blog');
     Volt::route('devis', 'pages.admin.service-requests')->middleware('permission:demande.view')->name('service-requests');
     Volt::route('devis/{request:reference}', 'pages.admin.service-request-show')->middleware('permission:demande.view')->name('service-requests.show');
 
