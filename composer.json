@@ -13,6 +13,7 @@
         "livewire/volt": "^1.7",
         "mallardduck/blade-lucide-icons": "^1.26",
         "mews/purifier": "^3.4",
+        "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-medialibrary": "^11.23",
         "spatie/laravel-permission": "^8.0",
         "spatie/laravel-settings": "^3.9"

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Audit\Concerns\Auditable;
 use App\Media\HasStandardImages;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,8 +29,19 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 ])]
 class Product extends Model implements HasMedia
 {
-    use HasStandardImages, InteractsWithMedia, SoftDeletes {
+    use Auditable, HasStandardImages, InteractsWithMedia, SoftDeletes {
         HasStandardImages::registerMediaConversions insteadof InteractsWithMedia;
+    }
+
+    /** @return array<int, string> */
+    protected function auditAttributes(): array
+    {
+        return ['name', 'brand', 'price', 'compare_at_price', 'stock', 'is_active', 'is_featured', 'category_id'];
+    }
+
+    protected function auditGroup(): string
+    {
+        return 'boutique';
     }
 
     protected function casts(): array

@@ -59,6 +59,17 @@ new #[Layout('components.layouts.admin')] class extends Component
             ->find($this->selectedId);
     }
 
+    /** Timeline d'activité du client sélectionné (audit + connexions). */
+    #[Computed]
+    public function activity(): \Illuminate\Support\Collection
+    {
+        if (! $this->selected) {
+            return collect();
+        }
+
+        return app(\App\Audit\ActivityFeed::class)->timelineFor($this->selected, 15);
+    }
+
     public function open(int $id): void
     {
         $this->selectedId = $id;
@@ -260,6 +271,26 @@ new #[Layout('components.layouts.admin')] class extends Component
                         <p class="text-sm text-muted">Aucune demande.</p>
                     @endforelse
                 </div>
+
+                {{-- Activité (audit) --}}
+                @can('audit.view')
+                    <p class="mt-6 text-xs font-semibold uppercase tracking-wider text-tk-400">Activité</p>
+                    <div class="mt-2 space-y-2">
+                        @forelse ($this->activity as $item)
+                            <div class="flex items-start gap-2 text-sm" wire:key="cact-{{ $loop->index }}">
+                                <span class="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-tk-100">
+                                    <x-dynamic-component :component="'lucide-'.($item['source'] === 'login' ? 'log-in' : 'activity')" class="h-3 w-3 text-content" />
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-content"><span class="font-medium">{{ ucfirst($item['action']) }}</span> · {{ $item['subject'] }}</p>
+                                    <p class="text-xs text-muted">{{ $item['at']?->format('d/m/Y H:i') }} @if (!empty($item['context']['ip'])) · {{ $item['context']['ip'] }} @endif</p>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-sm text-muted">Aucune activité enregistrée.</p>
+                        @endforelse
+                    </div>
+                @endcan
 
                 @can('clients.manage')
                     {{-- Notes internes --}}

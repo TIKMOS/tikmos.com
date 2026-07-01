@@ -30,3 +30,7 @@ Schedule::call(fn () => Artisan::call('model:prune'))
 // Purge des médias orphelins (fichiers sans modèle parent).
 Schedule::call(fn () => Artisan::call('media:prune'))
     ->weekly()->name('tk-media-prune')->withoutOverlapping();
+
+// Rétention du journal d'activité et des connexions.
+Schedule::call(fn () => Artisan::call('audit:prune'))
+    ->weekly()->name('tk-audit-prune')->withoutOverlapping();

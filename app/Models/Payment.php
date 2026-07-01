@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Audit\Concerns\Auditable;
 use App\Payments\Data\ChargeResult;
 use App\Payments\Enums\PaymentState;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -26,6 +27,19 @@ use Illuminate\Support\Carbon;
 ])]
 class Payment extends Model
 {
+    use Auditable;
+
+    /** @return array<int, string> */
+    protected function auditAttributes(): array
+    {
+        return ['state', 'method', 'amount', 'paid_at'];
+    }
+
+    protected function auditGroup(): string
+    {
+        return 'paiement';
+    }
+
     protected function casts(): array
     {
         return [

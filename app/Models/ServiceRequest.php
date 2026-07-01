@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Audit\Concerns\Auditable;
 use App\Enums\ServiceRequestStatus;
 use App\Support\ReferenceGenerator;
 use Database\Factories\ServiceRequestFactory;
@@ -33,7 +34,18 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class ServiceRequest extends Model implements HasMedia
 {
     /** @use HasFactory<ServiceRequestFactory> */
-    use HasFactory, InteractsWithMedia, SoftDeletes;
+    use Auditable, HasFactory, InteractsWithMedia, SoftDeletes;
+
+    /** @return array<int, string> */
+    protected function auditAttributes(): array
+    {
+        return ['status', 'assigned_to'];
+    }
+
+    protected function auditGroup(): string
+    {
+        return 'devis';
+    }
 
     protected function casts(): array
     {

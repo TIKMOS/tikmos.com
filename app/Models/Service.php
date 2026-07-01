@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Audit\Concerns\Auditable;
 use App\Enums\Publication;
 use App\Enums\ServiceCategory;
 use App\Media\HasStandardImages;
@@ -29,8 +30,19 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class Service extends Model implements HasMedia
 {
     /** @use HasFactory<ServiceFactory> */
-    use HasFactory, HasStandardImages, InteractsWithMedia, SoftDeletes {
+    use Auditable, HasFactory, HasStandardImages, InteractsWithMedia, SoftDeletes {
         HasStandardImages::registerMediaConversions insteadof InteractsWithMedia;
+    }
+
+    /** @return array<int, string> */
+    protected function auditAttributes(): array
+    {
+        return ['title', 'status', 'price_label', 'category'];
+    }
+
+    protected function auditGroup(): string
+    {
+        return 'contenu';
     }
 
     protected function casts(): array

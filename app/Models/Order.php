@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Audit\Concerns\Auditable;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
@@ -33,6 +34,19 @@ use Illuminate\Support\Carbon;
 ])]
 class Order extends Model implements Payable
 {
+    use Auditable;
+
+    /** @return array<int, string> */
+    protected function auditAttributes(): array
+    {
+        return ['status', 'payment_status', 'payment_method', 'total'];
+    }
+
+    protected function auditGroup(): string
+    {
+        return 'boutique';
+    }
+
     protected function casts(): array
     {
         return [

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Audit\Concerns\Auditable;
 use App\Enums\Publication;
 use App\Media\HasStandardImages;
 use Database\Factories\PostFactory;
@@ -29,8 +30,19 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class Post extends Model implements HasMedia
 {
     /** @use HasFactory<PostFactory> */
-    use HasFactory, HasStandardImages, InteractsWithMedia, SoftDeletes {
+    use Auditable, HasFactory, HasStandardImages, InteractsWithMedia, SoftDeletes {
         HasStandardImages::registerMediaConversions insteadof InteractsWithMedia;
+    }
+
+    /** @return array<int, string> */
+    protected function auditAttributes(): array
+    {
+        return ['title', 'status', 'published_at', 'post_category_id'];
+    }
+
+    protected function auditGroup(): string
+    {
+        return 'contenu';
     }
 
     protected function casts(): array

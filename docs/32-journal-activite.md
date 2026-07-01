@@ -78,11 +78,19 @@ app/Audit/
 
 ---
 
-## 7. Definition of Done (lot d'implémentation)
-- [ ] Trait `Auditable` appliqué aux entités sensibles (diffs avant/après).
-- [ ] `AuditContext` (IP/UA/canal) via middleware ; login_logs déjà branchés.
-- [ ] `ActivityFeed` (timeline agrégée normalisée) + filtres.
-- [ ] Admin Audit enrichi + onglet **Activité** sur fiche user/client + fiches objets.
-- [ ] Rétention `audit:prune` planifiée ; export CSV.
-- [ ] Tests : une action CRUD/paiement/login crée l'activité attendue (acteur, diff, contexte) ;
-      filtrage par acteur ; accès refusé sans permission.
+## 7. Definition of Done (lot d'implémentation) — ✅ livré (lot 22)
+- [x] Spatie ActivityLog installé (v4.12) ; migrations `activity_log` (rangées avant les seeds).
+- [x] Trait `Auditable` (diffs avant/après, `logOnlyDirty`, journal par domaine) appliqué à
+      Product, Order, Service, Post, ServiceRequest, Payment. → `app/Audit/Concerns/Auditable.php`
+- [x] `AuditContext` (IP/UA/canal) capté à l'écriture de chaque activité (via `tapActivity`) ;
+      login_logs déjà branchés.
+- [x] `ActivityFeed` : timeline agrégée normalisée (activity_log + login_logs) + filtres.
+      → `app/Audit/ActivityFeed.php`
+- [x] Admin **Audit** enrichi (onglets Activité/Connexions, filtres auteur/action/domaine/période,
+      diff avant→après) + onglet **Activité** sur la fiche client (CRM).
+- [x] Rétention `audit:prune --days` planifiée (hebdomadaire).
+- [x] Tests Pest (7) : création (acteur+domaine+libellé+contexte), diff avant/après, champ non
+      surveillé ignoré, timeline par acteur, filtrage admin, accès refusé sans permission, purge.
+- [ ] **Restant (itératif)** : export CSV ; journaliser les changements de rôles et de réglages
+      (settings) ; middleware `RecordAuditContext` dédié (aujourd'hui capté au log) ; unifier aussi
+      `request_events`/`order_events` dans le feed (restent sur les timelines objets).
