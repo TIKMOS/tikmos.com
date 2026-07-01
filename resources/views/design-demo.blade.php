@@ -7,11 +7,11 @@
     <section class="bg-ink text-paper">
         <div class="mx-auto w-full max-w-6xl px-5 py-20 sm:px-6 md:py-28 lg:px-8">
             <x-tk.kicker tone="accent">Design system · v2</x-tk.kicker>
-            <h1 class="mt-4 max-w-2xl font-display text-5xl font-black leading-[0.95] md:text-7xl">Vos colis, d'un continent à l'autre.</h1>
-            <p class="mt-5 max-w-lg text-lg text-tk-400">De Paris à Cotonou en 3–5 jours. Votre colis, suivi à la trace.</p>
+            <h1 class="mt-4 max-w-2xl font-display text-5xl font-black leading-[0.95] md:text-7xl">L'expertise qui exécute.</h1>
+            <p class="mt-5 max-w-lg text-lg text-tk-400">Formation, data/IA et solutions sur mesure. Galerie de composants du design system.</p>
             <div class="mt-8 flex flex-wrap gap-3">
-                <x-tk.button variant="accent" size="lg" icon="search">Suivre un colis</x-tk.button>
-                <x-tk.button variant="secondary" size="lg" class="!border-white/30 !text-white hover:!bg-white/10">Nouvelle expédition</x-tk.button>
+                <x-tk.button variant="accent" size="lg" icon="arrow-right" :iconRight="true">Composant primaire</x-tk.button>
+                <x-tk.button variant="secondary" size="lg" class="!border-white/30 !text-white hover:!bg-white/10">Composant secondaire</x-tk.button>
             </div>
         </div>
     </section>
@@ -28,34 +28,34 @@
 
         <x-tk.kicker class="mt-12 block">Badges & statuts</x-tk.kicker>
         <div class="mt-5 flex flex-wrap gap-2">
-            <x-tk.badge tone="neutral" dot>Enregistré</x-tk.badge>
-            <x-tk.badge tone="info" dot>En vol</x-tk.badge>
+            <x-tk.badge tone="neutral" dot>Brouillon</x-tk.badge>
+            <x-tk.badge tone="info" dot>En cours</x-tk.badge>
             <x-tk.badge tone="warning" dot>En attente</x-tk.badge>
-            <x-tk.badge tone="success" dot>Livré</x-tk.badge>
+            <x-tk.badge tone="success" dot>Terminé</x-tk.badge>
             <x-tk.badge tone="danger" dot>Incident</x-tk.badge>
             <x-tk.badge tone="accent">Accent</x-tk.badge>
         </div>
 
         <x-tk.kicker class="mt-12 block">Statistiques</x-tk.kicker>
         <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <x-tk.stat label="Colis ce mois" value="128" icon="package" />
-            <x-tk.stat label="À expédier" value="14" icon="plane-takeoff" tone="accent" />
+            <x-tk.stat label="Projets ce mois" value="128" icon="folder-kanban" />
+            <x-tk.stat label="Devis à traiter" value="14" icon="file-text" tone="accent" />
             <x-tk.stat label="En attente paiement" value="6" icon="wallet" />
-            <x-tk.stat label="Prochain vol" value="03/11" icon="calendar" />
+            <x-tk.stat label="Prochaine session" value="03/11" icon="calendar" />
         </div>
     </x-tk.section>
 
     <x-tk.section tone="paper">
         <div class="grid gap-8 lg:grid-cols-2">
             <div>
-                <x-tk.kicker>Suivi colis · stepper</x-tk.kicker>
+                <x-tk.kicker>Suivi de devis · stepper</x-tk.kicker>
                 <x-tk.card class="mt-5">
-                    <p class="mb-5 font-mono text-sm font-bold tracking-wide">SZ-2026-00427</p>
+                    <p class="mb-5 font-mono text-sm font-bold tracking-wide">TKM-DEV-2026-00427</p>
                     <x-tk.stepper :steps="[
-                        ['label' => 'Enregistré', 'date' => '28/10', 'location' => 'Cotonou', 'state' => 'done'],
-                        ['label' => 'En transit', 'date' => '01/11', 'location' => 'Vol Cotonou → Paris', 'state' => 'done'],
-                        ['label' => 'Arrivé à Paris', 'date' => '03/11', 'location' => 'Paris', 'state' => 'current'],
-                        ['label' => 'À récupérer', 'state' => 'todo'],
+                        ['label' => 'Demande reçue', 'date' => '28/10', 'state' => 'done'],
+                        ['label' => 'À l\'étude', 'date' => '01/11', 'state' => 'done'],
+                        ['label' => 'Devis envoyé', 'date' => '03/11', 'state' => 'current'],
+                        ['label' => 'Accepté', 'state' => 'todo'],
                         ['label' => 'Livré', 'state' => 'todo'],
                     ]" />
                 </x-tk.card>
@@ -64,8 +64,8 @@
                 <div>
                     <x-tk.kicker>Formulaire</x-tk.kicker>
                     <div class="mt-5 space-y-4">
-                        <x-tk.field label="Référence du colis" hint="Format : SZ-AAAA-NNNNN" for="ref">
-                            <x-tk.input id="ref" icon="search" placeholder="SZ-2026-00427" />
+                        <x-tk.field label="Référence du devis" hint="Format : TKM-DEV-AAAA-NNNNN" for="ref">
+                            <x-tk.input id="ref" icon="search" placeholder="TKM-DEV-2026-00427" />
                         </x-tk.field>
                         <x-tk.field label="Email" for="mail" :error="'Cet email est invalide.'">
                             <x-tk.input id="mail" type="email" :invalid="true" placeholder="vous@exemple.com" />
@@ -83,8 +83,8 @@
             <div>
                 <x-tk.kicker>État vide</x-tk.kicker>
                 <div class="mt-5">
-                    <x-tk.empty-state icon="package-open" title="Aucun colis pour l'instant">
-                        Vos colis apparaîtront ici dès votre première expédition.
+                    <x-tk.empty-state icon="inbox" title="Rien pour l'instant">
+                        Vos éléments apparaîtront ici dès votre première action.
                         <x-slot:action>
                             <x-tk.button variant="accent" size="sm" icon="plus">Nouvelle demande</x-tk.button>
                         </x-slot:action>

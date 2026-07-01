@@ -19,6 +19,7 @@ new #[Layout('components.layouts.admin')] class extends Component
             ['label' => 'Boutique', 'desc' => 'Produits, catégories, commandes.', 'icon' => 'shopping-bag', 'route' => 'admin.boutique', 'permission' => 'shop.products.manage', 'tint' => 'sky'],
             ['label' => 'Paiements', 'desc' => 'Mode (en ligne / à la livraison), KKiaPay, webhook.', 'icon' => 'wallet', 'route' => 'admin.reglages.payments', 'permission' => 'settings.manage', 'tint' => 'mint'],
             ['label' => 'Médias', 'desc' => 'Formats, poids, compression, rendu des images.', 'icon' => 'image', 'route' => 'admin.reglages.media', 'permission' => 'settings.manage', 'tint' => 'lilac'],
+            ['label' => 'Fonctionnalités', 'desc' => 'Activer/masquer boutique, blog, PWA.', 'icon' => 'toggle-right', 'route' => 'admin.reglages.features', 'permission' => 'settings.manage', 'tint' => 'peach'],
         ];
     }
 }; ?>

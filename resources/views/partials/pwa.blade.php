@@ -7,3 +7,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tikmos">
 <meta name="mobile-web-app-capable" content="yes">
+@if (app(\App\Settings\FeatureSettings::class)->pwa)
+    <meta name="tk-pwa" content="1">
+@endif

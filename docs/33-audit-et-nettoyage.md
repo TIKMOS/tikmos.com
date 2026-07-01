@@ -86,6 +86,22 @@ Objectif : **aucune valeur en dur** côté vitrine ; réglages **structurés** e
 
 ---
 
+## 5 bis. État lot 23 (QA + configurabilité) — ✅ livré
+- [x] **Configurabilité** : nouvel écran **Réglages → Fonctionnalités** (boutique, blog, PWA)
+      pilotable sans déploiement. → `reglages/features.blade.php`
+- [x] **Blog** réellement conditionné : middleware `feature:blog` (404 si off) + lien retiré du
+      menu et du pied de page. → `EnsureFeatureEnabled`
+- [x] **PWA** conditionnée : le service worker ne s'enregistre que si la PWA est activée
+      (méta `tk-pwa`) ; icônes/manifeste toujours servis.
+- [x] **Boutique** : liens nav/footer déjà gardés par `ShopSettings::enabled` (404 si off).
+- [x] **Nettoyage** : suppression des factories mortes (Parcel/Flight/…), neutralisation de la
+      galerie `design-demo` (contenu Sezy → Tikmos), correction de la description SEO
+      (« chaussures » → « équipements informatiques & accessoires de luxe »).
+- [x] **Route integrity** : audit automatique — zéro `route()` mort dans les vues.
+- [x] Tests Pest (6) : blog on/off, méta PWA on/off, boutique off, pilotage admin, RBAC de l'écran.
+- [ ] **Restant (itératif)** : passage QA manuel responsive 360→1440 ; export CSV audit (voir `32-`) ;
+      étendre l'ordre/visibilité des sections à toutes les pages (aujourd'hui : accueil).
+
 ## 6. Lots d'exécution (voir `prompts/`)
 | Lot | Objet | Doc de réf |
 |---|---|---|

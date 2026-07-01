@@ -66,7 +66,11 @@
             </a>
 
             @php
-                $navLinks = collect($general->nav_links)->filter(fn ($l) => $l['visible'] ?? true)->values()->all();
+                // Liens visibles, en retirant ceux qui pointent vers une fonctionnalité désactivée.
+                $navLinks = collect($general->nav_links)
+                    ->filter(fn ($l) => $l['visible'] ?? true)
+                    ->reject(fn ($l) => ($l['path'] ?? '') === 'blog' && ! $features->blog)
+                    ->values()->all();
             @endphp
 
             <nav class="hidden items-center gap-1 text-sm font-medium md:flex">
@@ -194,8 +198,8 @@
                 <ul class="mt-4 space-y-2.5 text-sm text-tk-400">
                     <li><a href="{{ url('/a-propos') }}" wire:navigate class="hover:text-white">À propos</a></li>
                     <li><a href="{{ url('/services') }}" wire:navigate class="hover:text-white">Services</a></li>
-                    <li><a href="{{ url('/blog') }}" wire:navigate class="hover:text-white">Blog</a></li>
-                    <li><a href="{{ url('/boutique') }}" wire:navigate class="hover:text-white">Boutique</a></li>
+                    @if ($features->blog)<li><a href="{{ url('/blog') }}" wire:navigate class="hover:text-white">Blog</a></li>@endif
+                    @if ($shopEnabled)<li><a href="{{ url('/boutique') }}" wire:navigate class="hover:text-white">Boutique</a></li>@endif
                 </ul>
             </div>
 
