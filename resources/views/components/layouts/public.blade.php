@@ -204,7 +204,8 @@
             <div class="md:col-span-2">
                 <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-500">Ressources</p>
                 <ul class="mt-4 space-y-2.5 text-sm text-tk-400">
-                    <li><a href="{{ url('/contact') }}" wire:navigate class="hover:text-white">Aide &amp; FAQ</a></li>
+                    <li><a href="{{ url('/faq') }}" wire:navigate class="hover:text-white">Aide &amp; FAQ</a></li>
+                    <li><a href="{{ url('/temoignages') }}" wire:navigate class="hover:text-white">Témoignages</a></li>
                     <li><a href="{{ url('/cgu') }}" wire:navigate class="hover:text-white">Conditions générales</a></li>
                     <li><a href="{{ url('/confidentialite') }}" wire:navigate class="hover:text-white">Confidentialité</a></li>
                     <li><a href="{{ url('/cookies') }}" wire:navigate class="hover:text-white">Cookies</a></li>

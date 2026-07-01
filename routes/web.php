@@ -14,6 +14,8 @@ Volt::route('realisations/{project:slug}', 'pages.public.projects-show')->name('
 Route::view('achat', 'public.achat')->name('achat');
 Route::view('a-propos', 'public.about')->name('about');
 Route::view('equipe', 'public.team')->name('team');
+Route::view('temoignages', 'public.temoignages')->name('testimonials');
+Route::view('faq', 'public.faq')->name('faq');
 
 // Boutique (active seulement si ShopSettings::enabled)
 Route::middleware('shop.enabled')->group(function (): void {
