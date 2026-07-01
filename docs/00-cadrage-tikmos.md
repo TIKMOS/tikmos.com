@@ -44,8 +44,9 @@ client, devis/commandes, notifications, équipe, contenu éditable).
 - **Orientation professionnelle** (conseil, accompagnement de parcours).
 - **Autres services** (le catalogue de services est **éditable** depuis l'admin — extensible sans dév).
 
-### D. Boutique — chaussures de luxe
-- Catalogue de **chaussures de luxe** présenté avec soin (photos, tailles, références).
+### D. Boutique — équipements informatiques & accessoires de luxe (homme)
+- Catalogue d'**équipements informatiques** (ordinateurs, périphériques, audio) et d'**accessoires de
+  luxe** présenté avec soin (photos, marque, variantes, références).
 - **Modèle calqué sur Sezy** (décision client) : **panier maison** (session → connexion), commande,
   **paiement à la livraison** (cash / mobile money à la remise), **suivi de commande** dans l'espace
   client. **WhatsApp** reste un canal de commande/contact. Paiement en ligne = phase ultérieure.

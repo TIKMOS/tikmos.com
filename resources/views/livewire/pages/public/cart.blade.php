@@ -60,7 +60,7 @@ new #[Layout('components.layouts.public')] class extends Component
 
         @if ($items->isEmpty())
             <div class="mt-10"><x-tk.empty-state icon="shopping-cart" title="Votre panier est vide">
-                Parcourez la boutique pour ajouter des chaussures.
+                Parcourez la boutique pour ajouter des articles.
                 <x-slot:action><x-tk.button href="{{ route('shop') }}" variant="primary" icon="store">Voir la boutique</x-tk.button></x-slot:action>
             </x-tk.empty-state></div>
         @else
@@ -71,7 +71,7 @@ new #[Layout('components.layouts.public')] class extends Component
                         @php($product = $item['product'])
                         <div wire:key="ci-{{ \Illuminate\Support\Str::slug($item['key']) }}" class="flex items-center gap-4 rounded-card border border-line bg-surface p-4">
                             <div class="h-20 w-20 shrink-0 overflow-hidden rounded-tile bg-canvas">
-                                @if ($product->mainImageUrl('thumb'))<img src="{{ $product->mainImageUrl('thumb') }}" alt="{{ $product->name }}" class="h-full w-full object-cover">@else<div class="grid h-full place-items-center"><x-lucide-footprints class="h-6 w-6 text-tk-300" /></div>@endif
+                                @if ($product->mainImageUrl('thumb'))<img src="{{ $product->mainImageUrl('thumb') }}" alt="{{ $product->name }}" class="h-full w-full object-cover">@else<div class="grid h-full place-items-center"><x-lucide-package class="h-6 w-6 text-tk-300" /></div>@endif
                             </div>
                             <div class="min-w-0 flex-1">
                                 <a href="{{ route('shop.show', $product->slug) }}" wire:navigate class="font-medium text-content hover:underline">{{ $product->name }}</a>

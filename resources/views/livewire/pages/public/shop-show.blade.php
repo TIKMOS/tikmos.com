@@ -51,7 +51,7 @@ new #[Layout('components.layouts.public')] class extends Component
 
 <div>
     @push('meta')
-        <x-tk.seo :title="$product->name" :description="\Illuminate\Support\Str::limit(strip_tags((string) $product->description), 150) ?: ('Chaussures de luxe — '.config('app.name'))" />
+        <x-tk.seo :title="$product->name" :description="\Illuminate\Support\Str::limit(strip_tags((string) $product->description), 150) ?: ('Équipements & accessoires de luxe — '.config('app.name'))" />
         @php
             $productJsonLd = json_encode([
                 '@context' => 'https://schema.org',

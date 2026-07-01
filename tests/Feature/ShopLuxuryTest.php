@@ -22,17 +22,17 @@ function luxAdmin(): User
     return $u;
 }
 
-it('présente la boutique de chaussures de luxe (contenu + marque)', function (): void {
+it('présente la boutique (équipements & accessoires de luxe + marque)', function (): void {
     $cat = ProductCategory::create(['name' => 'Cat Hommes Test', 'slug' => 'cat-hommes-test', 'is_active' => true]);
     Product::create([
-        'category_id' => $cat->id, 'name' => 'Derby test', 'brand' => 'Maison Tikmos',
-        'slug' => 'derby-test', 'price' => 250000, 'sizes' => [41, 42, 43], 'is_active' => true,
+        'category_id' => $cat->id, 'name' => 'Laptop test', 'brand' => 'Maison Tikmos',
+        'slug' => 'laptop-test', 'price' => 250000, 'is_active' => true,
     ]);
 
     $this->get('/boutique')
         ->assertOk()
-        ->assertSee('Chaussures de luxe')
-        ->assertSee('Derby test')
+        ->assertSee('accessoires de luxe')
+        ->assertSee('Laptop test')
         ->assertSee('Maison Tikmos');
 });
 

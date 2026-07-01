@@ -85,6 +85,6 @@ class OrderService
         $year = now()->year;
         $seq = Order::whereYear('created_at', $year)->count() + 1;
 
-        return sprintf('SZ-CMD-%d-%05d', $year, $seq);
+        return sprintf('TKM-CMD-%d-%05d', $year, $seq);
     }
 }

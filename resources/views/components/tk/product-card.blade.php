@@ -8,7 +8,7 @@
         @if ($product->mainImageUrl())
             <img src="{{ $product->mainImageUrl() }}" alt="{{ $product->name }}" loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105">
         @else
-            <div class="grid h-full place-items-center"><x-lucide-footprints class="h-10 w-10 text-tk-300" /></div>
+            <div class="grid h-full place-items-center"><x-lucide-package class="h-10 w-10 text-tk-300" /></div>
         @endif
         @if ($product->compareAtLabel())<span class="absolute left-3 top-3 rounded-pill bg-gold px-3 py-1 text-xs font-semibold text-ink">Promo</span>@endif
         @if ($product->isOutOfStock())<span class="absolute right-3 top-3 rounded-pill bg-surface/90 px-3 py-1 text-xs font-semibold text-content">Épuisé</span>@endif

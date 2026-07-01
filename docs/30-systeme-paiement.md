@@ -1,0 +1,216 @@
+# TIKMOS — Système de paiement (abstraction + KKiaPay)
+
+> Module **costaud, évolutif et portable** : une couche d'abstraction « passerelles de paiement »
+> réutilisable sur d'autres projets, avec un premier driver **KKiaPay** (mobile money / carte / Wave,
+> zone UEMOA). Bascule **paiement en ligne ↔ paiement à la livraison** configurable depuis l'admin.
+> Dernière mise à jour : 2026-07-01.
+> Recherche : docs officielles KKiaPay (SDK PHP `kkiapay/kkiapay-php`, widget `cdn.kkiapay.me/k.js`,
+> `verifyTransaction`, webhooks signés `x-kkiapay-secret`).
+
+---
+
+## 1. Objectifs
+- **Encaisser en ligne** (KKiaPay : MTN/Moov MoMo, carte, Wave) **et/ou à la livraison** (COD).
+- **Configurable par l'admin** : activer/désactiver chaque mode et chaque passerelle, par canal
+  (boutique, acomptes de devis, futurs modules).
+- **Évolutif** : ajouter une passerelle (FedaPay, Stripe, PayPal…) = 1 classe driver, zéro refonte.
+- **Portable** : conçu comme un **package interne** (`app/Payments/`) copiable tel quel sur un autre
+  projet Laravel. Aucune dépendance au métier Tikmos dans le cœur.
+- **Sûr** : vérification serveur systématique, **webhooks signés**, idempotence, montants recalculés
+  serveur, jamais confiance au client.
+
+---
+
+## 2. Architecture (couche d'abstraction)
+
+```
+app/Payments/
+  Contracts/
+    PaymentGateway.php        # interface commune à toutes les passerelles
+  Gateways/
+    KkiapayGateway.php        # driver KKiaPay (1er)
+    // FedapayGateway.php, StripeGateway.php … (à venir)
+  Data/
+    ChargeRequest.php         # DTO : montant, devise, référence, client, metadata, callback
+    ChargeResult.php          # DTO : statut, référence passerelle, brut
+    WebhookResult.php         # DTO normalisé d'un événement webhook
+  Enums/
+    PaymentProvider.php       # kkiapay | fedapay | stripe | cod …
+    PaymentState.php          # pending | succeeded | failed | refunded | cancelled
+  PaymentManager.php          # résout la passerelle active (driver manager, façon Laravel)
+  Exceptions/PaymentException.php
+config/payments.php           # passerelles, clés, mode online/COD, activation par canal
+```
+
+### Interface `PaymentGateway`
+```php
+interface PaymentGateway
+{
+    public function provider(): PaymentProvider;
+
+    /** Prépare/initie une charge et retourne de quoi rendre le widget ou rediriger. */
+    public function initialize(ChargeRequest $request): ChargeResult;
+
+    /** Vérifie une transaction côté serveur (source de vérité). */
+    public function verify(string $reference): ChargeResult;
+
+    /** Valide la signature d'un webhook et normalise l'événement. */
+    public function handleWebhook(\Illuminate\Http\Request $request): WebhookResult;
+}
+```
+
+> **Règle d'or** : le résultat d'un paiement n'est **jamais** décidé côté client. On confirme via
+> `verify()` (poll après widget) **et** via `handleWebhook()` (asynchrone). Les deux chemins
+> convergent vers une **transition idempotente** de la commande/du paiement.
+
+### `PaymentManager` (driver manager)
+Étend le pattern `Illuminate\Support\Manager`. `PaymentManager::driver('kkiapay')` ou
+`PaymentManager::active($channel)` qui lit `config/payments.php` + les réglages admin (feature flags)
+pour retourner la passerelle active d'un canal.
+
+---
+
+## 3. Modèle de données
+
+### payments
+| Colonne | Type | Notes |
+|---|---|---|
+| id | | |
+| payable_type / payable_id | morph | commande, devis, … (polymorphe → portable) |
+| provider | string | kkiapay / cod / … |
+| reference | string unique | notre référence (`TKM-PAY-…`) |
+| provider_reference | string null | id transaction passerelle |
+| amount | unsigned int | plus petite unité (XOF entier) |
+| currency | string(8) | XOF |
+| state | string | PaymentState |
+| method | string null | momo / card / wallet / cash |
+| meta | json null | payload brut normalisé (audit) |
+| paid_at | timestamp null | |
+| timestamps | | |
+- Index : `reference`, `provider_reference`, `(payable_type, payable_id)`, `state`.
+
+### payment_events (traçabilité fine — voir aussi `33-journal-activite.md`)
+`id, payment_id, from_state, to_state, source(widget|webhook|admin|verify), note, created_at`.
+
+> Le paiement est **découplé** de la commande via `payable` (morph) : le même module encaisse une
+> commande boutique **ou** un acompte de devis **ou** tout futur objet, sans le savoir.
+
+---
+
+## 4. Flux « paiement en ligne » (KKiaPay)
+
+1. **Init (serveur)** — au checkout, on crée un `Payment` (`pending`, montant recalculé serveur,
+   `reference` unique) via `PaymentManager::active('shop')->initialize(...)`.
+2. **Widget (client)** — la page charge `k.js` et appelle `openKkiapayWidget({ amount, key,
+   sandbox, data: {reference}, callback, paymentmethod, countries:['BJ'] })`. `data` porte **notre**
+   référence pour le rapprochement.
+3. **Succès côté client** — `addSuccessListener(r => …)` renvoie un `transactionId`. On l'envoie au
+   serveur (Livewire action) qui appelle **`verify(transactionId)`** (SDK PHP `verifyTransaction`) →
+   si `status = SUCCESS` et `amount` conforme → transition `succeeded` + marque la commande payée.
+4. **Webhook (asynchrone, source de vérité)** — KKiaPay POST sur `/webhooks/kkiapay`. On **vérifie la
+   signature** (`x-kkiapay-secret` = hash secret), on normalise, on `verify()` par sécurité, puis on
+   applique la **même** transition idempotente. Réponse **HTTP 200** obligatoire (sinon retries).
+5. **Idempotence** — toute transition passe par `Payment::markSucceeded()` protégé (no-op si déjà
+   `succeeded`). Widget et webhook peuvent arriver dans n'importe quel ordre / en double.
+
+### Widget (extrait, à intégrer au checkout)
+```html
+<script src="https://cdn.kkiapay.me/k.js"></script>
+<script>
+  function payer() {
+    openKkiapayWidget({
+      amount: @js($payment->amount),
+      key: @js(config('payments.gateways.kkiapay.public_key')),
+      sandbox: @js(config('payments.gateways.kkiapay.sandbox')),
+      paymentmethod: 'momo', // momo | card | wallet (optionnel)
+      countries: ['BJ'],
+      data: JSON.stringify({ reference: @js($payment->reference) }),
+      name: @js($order->contact_name), phone: @js($order->contact_phone),
+    });
+  }
+  addSuccessListener(r => Livewire.dispatch('kkiapay-success', { transactionId: r.transactionId }));
+  addFailedListener(() => Livewire.dispatch('kkiapay-failed'));
+</script>
+```
+
+### Vérification serveur (driver)
+```php
+$kkiapay = new \Kkiapay\Kkiapay($public, $private, $secret, $sandbox);
+$tx = $kkiapay->verifyTransaction($transactionId); // status, amount, transactionId, client…
+// state = $tx->status === 'SUCCESS' ? Succeeded : Failed ; contrôler amount == payment->amount
+```
+
+---
+
+## 5. Flux « paiement à la livraison » (COD)
+- Driver `cod` (interne) : `initialize()` crée un `Payment` `pending` (méthode `cash`), aucune
+  interaction passerelle. La commande suit son pipeline ; à la remise, l'admin **marque payé**
+  (`succeeded`, `paid_at`). Comportement actuel de la boutique — repris dans le module unifié.
+
+---
+
+## 6. Configuration & activation (admin)
+
+`config/payments.php` (valeurs par défaut) + surcharge via **`PaymentSettings`** (Spatie Settings,
+éditable en admin) :
+```php
+return [
+  'default_mode' => env('PAYMENTS_MODE', 'cod'),      // 'online' | 'cod' | 'both'
+  'channels' => [
+    'shop'   => ['modes' => ['cod', 'online'], 'gateway' => 'kkiapay'],
+    'quotes' => ['modes' => ['cod'], 'gateway' => 'kkiapay'],
+  ],
+  'gateways' => [
+    'kkiapay' => [
+      'public_key'  => env('KKIAPAY_PUBLIC_KEY'),
+      'private_key' => env('KKIAPAY_PRIVATE_KEY'),
+      'secret'      => env('KKIAPAY_SECRET'),
+      'sandbox'     => (bool) env('KKIAPAY_SANDBOX', true),
+      'enabled'     => (bool) env('KKIAPAY_ENABLED', false),
+    ],
+  ],
+];
+```
+Écran admin **Réglages → Paiements** : activer online/COD, choisir la passerelle par canal, saisir les
+clés (chiffrées), basculer sandbox/production. Clés **jamais** commit — `.env` uniquement.
+
+---
+
+## 7. Sécurité (défense en profondeur)
+- **Signature webhook** vérifiée (`x-kkiapay-secret`) avant tout traitement ; rejet 401 sinon.
+- **Re-vérification** systématique via `verifyTransaction` (ne jamais faire confiance au payload).
+- **Montant** comparé au `Payment` serveur ; refus si écart.
+- **Idempotence** (référence unique + transitions no-op) contre doublons/retries.
+- **Rate limiting** sur l'endpoint webhook ; logs d'audit (voir `33-journal-activite.md`).
+- Secrets en `.env`, HTTPS obligatoire, endpoint webhook hors CSRF (route dédiée sans session).
+
+---
+
+## 8. Évolutivité (ajouter une passerelle)
+1. Créer `app/Payments/Gateways/FedapayGateway.php implements PaymentGateway`.
+2. L'enregistrer dans `PaymentManager` + `config/payments.php`.
+3. Aucun changement dans la boutique/devis (ils parlent à l'interface).
+Idem pour Stripe/PayPal (redirection au lieu de widget → `initialize()` renvoie une URL).
+
+---
+
+## 9. Portabilité (copier sur un autre projet)
+- Le dossier **`app/Payments/`** + `config/payments.php` + la migration `payments` + le contrôleur
+  webhook sont **autonomes** (aucune référence au métier Tikmos ; couplage via `payable` morph).
+- Procédure de copie documentée : copier le dossier, publier la config, la migration, ajouter la
+  route webhook, brancher `PaymentManager` sur son objet `payable`. Objectif : **< 15 min** pour
+  réutiliser sur un nouveau projet.
+
+---
+
+## 10. Definition of Done (lot d'implémentation)
+- [ ] Interface + `KkiapayGateway` + `CodGateway` + `PaymentManager` + DTO/enums.
+- [ ] Table `payments` (+ `payment_events`), modèle polymorphe, `markSucceeded()` idempotent.
+- [ ] Endpoint webhook signé + `verify()` ; checkout boutique branché (online + COD).
+- [ ] `PaymentSettings` + écran admin (activation, clés, sandbox).
+- [ ] Tests Pest : verify SUCCESS/echec, signature webhook valide/invalide, idempotence
+      (widget+webhook), écart de montant refusé, bascule online/COD.
+- [ ] Mode **sandbox** vérifié de bout en bout ; secrets hors repo ; doc de copie rédigée.
+
+## Sources
+- [Documentation KKiaPay](https://docs.kkiapay.me/v1) · [SDK PHP](https://docs.kkiapay.me/v1/en-1.0.0/plugin-et-sdk/admin-sdks-server-side/php-admin-sdk) · [SDK JS](https://docs.kkiapay.me/v1/en-1.0.0/plugin-et-sdk/sdk-javascript) · [Webhooks](https://docs.kkiapay.me/v1/en-1.0.0/tableau-de-bord/webhook) · [php-sdk (GitHub)](https://github.com/kkiapay/php-sdk)

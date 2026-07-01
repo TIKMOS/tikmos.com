@@ -41,15 +41,15 @@ new #[Layout('components.layouts.public')] class extends Component
 
 <div>
     @push('meta')
-        <x-tk.seo title="Boutique" description="Chaussures de luxe sélectionnées avec exigence. Commande simple, suivie, paiement à la livraison." />
+        <x-tk.seo title="Boutique" description="Équipements informatiques et accessoires de luxe, sélectionnés avec exigence. Commande simple, suivie." />
     @endpush
 
     <x-tk.section>
         <div class="max-w-2xl reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
             <x-tk.kicker>Boutique</x-tk.kicker>
             <x-tk.divider-gold class="mt-3" />
-            <h1 class="mt-3 font-display text-4xl font-black leading-[1] tracking-[-0.02em] text-content md:text-5xl">Chaussures de luxe, choisies avec exigence.</h1>
-            <p class="mt-4 max-w-md text-lg text-muted">Une sélection raffinée pour celles et ceux qui aiment le beau. Paiement à la livraison.</p>
+            <h1 class="mt-3 font-display text-4xl font-black leading-[1] tracking-[-0.02em] text-content md:text-5xl">Équipements &amp; accessoires de luxe.</h1>
+            <p class="mt-4 max-w-md text-lg text-muted">Matériel informatique et accessoires haut de gamme, choisis avec exigence.</p>
         </div>
 
         {{-- Filtres --}}
