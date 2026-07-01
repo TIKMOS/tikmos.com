@@ -19,7 +19,7 @@ new #[Layout('components.layouts.auth')] class extends Component
         if ($status === Password::RESET_LINK_SENT) {
             $this->reset('email');
             session()->flash('toast', ['type' => 'success', 'message' => __($status)]);
-            $this->dispatch('sz-toast', type: 'success', message: __($status));
+            $this->dispatch('tk-toast', type: 'success', message: __($status));
 
             return;
         }

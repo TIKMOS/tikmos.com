@@ -24,9 +24,9 @@ class StaffInvitation extends Notification implements ShouldQueue
         $url = url(route('password.reset', ['token' => $this->token, 'email' => $notifiable->email], false));
 
         return (new MailMessage)
-            ->subject("SEZY — invitation à rejoindre l'équipe")
+            ->subject("Tikmos — invitation à rejoindre l'équipe")
             ->greeting('Bonjour,')
-            ->line("Vous avez été invité à rejoindre l'espace de gestion SEZY en tant que **{$this->roleLabel}**.")
+            ->line("Vous avez été invité à rejoindre l'espace de gestion Tikmos en tant que **{$this->roleLabel}**.")
             ->action('Définir mon mot de passe', $url)
             ->line('Pour des raisons de sécurité, ce lien expire après un délai limité. Demandez un renvoi si besoin.');
     }

@@ -18,9 +18,9 @@ class TwoFactorCodeNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Votre code de connexion SEZY')
+            ->subject('Votre code de connexion Tikmos')
             ->greeting('Bonjour,')
-            ->line('Voici votre code de connexion SEZY :')
+            ->line('Voici votre code de connexion Tikmos :')
             ->line('**'.$this->code.'**')
             ->line("Ce code expire dans {$this->minutes} minutes.")
             ->line("Si vous n'êtes pas à l'origine de cette connexion, ignorez cet email et changez votre mot de passe.");

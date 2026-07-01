@@ -44,7 +44,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         ]);
 
         $this->cancel();
-        $this->dispatch('sz-toast', type: 'success', message: 'Page enregistrée (v'.$doc->version.').');
+        $this->dispatch('tk-toast', type: 'success', message: 'Page enregistrée (v'.$doc->version.').');
     }
 
     /** @return array<string, mixed> */

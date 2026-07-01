@@ -49,7 +49,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->notifyClient(new ServiceRequestStatusChanged($this->request));
         $this->reset('note');
         $this->request->refresh()->load('events.author');
-        $this->dispatch('sz-toast', type: 'success', message: 'Statut mis à jour : '.$target->label());
+        $this->dispatch('tk-toast', type: 'success', message: 'Statut mis à jour : '.$target->label());
     }
 
     /** Notifie le client (compte lié, sinon email de la demande). */
@@ -68,7 +68,7 @@ new #[Layout('components.layouts.admin')] class extends Component
 
         $this->request->update(['assigned_to' => Auth::id()]);
         $this->request->refresh()->load('assignee');
-        $this->dispatch('sz-toast', type: 'success', message: 'Demande affectée.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Demande affectée.');
     }
 
     public function saveQuote(): void
@@ -104,7 +104,7 @@ new #[Layout('components.layouts.admin')] class extends Component
 
         $this->request->refresh()->load(['quote', 'events.author']);
         $this->notifyClient(new QuoteSent($this->request));
-        $this->dispatch('sz-toast', type: 'success', message: 'Devis '.$quote->reference.' enregistré et envoyé.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Devis '.$quote->reference.' enregistré et envoyé.');
     }
 
     /** @return array<string, mixed> */

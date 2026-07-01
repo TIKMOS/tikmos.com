@@ -21,12 +21,8 @@ Schedule::call(fn () => Artisan::call('queue:work', [
     '--stop-when-empty' => true,
     '--max-time' => 50,
     '--tries' => 3,
-]))->everyMinute()->name('sz-queue-work')->withoutOverlapping();
+]))->everyMinute()->name('tk-queue-work')->withoutOverlapping();
 
 // Purge des modèles « prunable » (appareils de confiance 2FA expirés).
 Schedule::call(fn () => Artisan::call('model:prune'))
-    ->daily()->name('sz-model-prune')->withoutOverlapping();
-
-// Sollicitation quotidienne des avis (colis livrés depuis le délai configuré).
-Schedule::call(fn () => Artisan::call('reviews:solicit'))
-    ->dailyAt('09:00')->name('sz-reviews-solicit')->withoutOverlapping();
+    ->daily()->name('tk-model-prune')->withoutOverlapping();

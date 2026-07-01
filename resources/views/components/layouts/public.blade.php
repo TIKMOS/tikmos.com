@@ -97,7 +97,7 @@
                                  class="absolute right-0 top-12 z-40 w-52 rounded-card border border-line bg-surface p-1.5 shadow-pop">
                                 <p class="truncate px-3 py-1.5 text-xs text-muted">{{ auth()->user()->name }}</p>
                                 <a href="{{ auth()->user()->homeRoute() }}" wire:navigate class="flex items-center gap-2 rounded-tile px-3 py-2 text-sm text-content hover:bg-tk-100"><x-lucide-layout-dashboard class="h-4 w-4" /> Mon espace</a>
-                                @unless (auth()->user()->isStaff() || auth()->user()->isLivreur())
+                                @unless (auth()->user()->isStaff())
                                     <a href="{{ url('/app/compte') }}" wire:navigate class="flex items-center gap-2 rounded-tile px-3 py-2 text-sm text-content hover:bg-tk-100"><x-lucide-user class="h-4 w-4" /> Mon compte</a>
                                 @endunless
                                 <form method="POST" action="{{ route('logout') }}" class="border-t border-line pt-1 mt-1">@csrf
@@ -206,7 +206,7 @@
                     <li><a href="{{ url('/cgv') }}" wire:navigate class="hover:text-white">CGV (boutique)</a></li>
                     <li><a href="{{ url('/confidentialite') }}" wire:navigate class="hover:text-white">Confidentialité</a></li>
                     <li><a href="{{ url('/cookies') }}" wire:navigate class="hover:text-white">Cookies</a></li>
-                    <li><button type="button" x-data @click="window.dispatchEvent(new CustomEvent('sz-open-cookie-prefs'))" class="hover:text-white">Gérer les cookies</button></li>
+                    <li><button type="button" x-data @click="window.dispatchEvent(new CustomEvent('tk-open-cookie-prefs'))" class="hover:text-white">Gérer les cookies</button></li>
                 </ul>
             </div>
 

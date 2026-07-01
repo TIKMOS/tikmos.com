@@ -62,7 +62,7 @@ it('crée un produit depuis l’admin', function (): void {
 
 it('refuse l’admin boutique sans permission', function (): void {
     $agent = User::factory()->create();
-    $agent->assignRole(Role::AgentCotonou->value);
+    $agent->assignRole(Role::Support->value);
 
     $this->actingAs($agent)->get('/admin/boutique')->assertForbidden();
 });

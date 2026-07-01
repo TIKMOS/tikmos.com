@@ -19,7 +19,7 @@ class EnsureUserApproved
             $request->session()->regenerateToken();
 
             return redirect()->route('login')->withErrors([
-                'email' => 'Votre compte est suspendu. Contactez SEZY.',
+                'email' => 'Votre compte est suspendu. Contactez Tikmos.',
             ]);
         }
 

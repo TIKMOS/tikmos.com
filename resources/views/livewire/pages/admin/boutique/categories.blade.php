@@ -25,7 +25,7 @@ new #[Layout('components.layouts.admin')] class extends Component
             ]);
         }
         $this->reset(['name', 'editingId']);
-        $this->dispatch('sz-toast', type: 'success', message: 'Catégorie enregistrée.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Catégorie enregistrée.');
     }
 
     protected function uniqueSlug(string $name): string
@@ -54,7 +54,7 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function delete(ProductCategory $category): void
     {
         $category->delete();
-        $this->dispatch('sz-toast', type: 'success', message: 'Catégorie supprimée.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Catégorie supprimée.');
     }
 
     /** @return array<string, mixed> */

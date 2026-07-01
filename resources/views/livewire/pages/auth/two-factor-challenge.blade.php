@@ -71,7 +71,7 @@ new #[Layout('components.layouts.auth')] class extends Component
                 $this->devCode = $code;
             }
 
-            $this->dispatch('sz-toast', type: 'success', message: 'Un nouveau code vous a été envoyé.');
+            $this->dispatch('tk-toast', type: 'success', message: 'Un nouveau code vous a été envoyé.');
         }
     }
 }; ?>

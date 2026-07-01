@@ -81,7 +81,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         // Garde-fous super-administrateur.
         $superValue = Role::SuperAdmin->value;
         if ($this->fRole === $superValue && ! auth()->user()->hasRole($superValue)) {
-            $this->dispatch('sz-toast', type: 'error', message: 'Le rôle super administrateur est réservé.');
+            $this->dispatch('tk-toast', type: 'error', message: 'Le rôle super administrateur est réservé.');
 
             return;
         }
@@ -89,14 +89,14 @@ new #[Layout('components.layouts.admin')] class extends Component
         if ($isEdit) {
             $user = User::findOrFail($this->editId);
             if ($user->isLastSuperAdmin() && $this->fRole !== $superValue) {
-                $this->dispatch('sz-toast', type: 'error', message: 'Impossible : dernier super administrateur.');
+                $this->dispatch('tk-toast', type: 'error', message: 'Impossible : dernier super administrateur.');
 
                 return;
             }
             $user->update(['name' => $this->fName, 'email' => $this->fEmail, 'phone' => $this->fPhone ?: null]);
             $user->syncRoles([$this->fRole]);
             $this->closeForm();
-            $this->dispatch('sz-toast', type: 'success', message: 'Membre mis à jour.');
+            $this->dispatch('tk-toast', type: 'success', message: 'Membre mis à jour.');
 
             return;
         }
@@ -113,14 +113,14 @@ new #[Layout('components.layouts.admin')] class extends Component
 
         if ($this->fMode === 'email') {
             $ok = $this->sendInvite($user);
-            $this->dispatch('sz-toast',
+            $this->dispatch('tk-toast',
                 type: $ok ? 'success' : 'error',
                 message: $ok
                     ? 'Membre créé, invitation envoyée.'
                     : "Membre créé, mais l'email n'est pas parti (SMTP ?). Modifiez-le pour définir un mot de passe.",
             );
         } else {
-            $this->dispatch('sz-toast', type: 'success', message: 'Membre créé avec mot de passe.');
+            $this->dispatch('tk-toast', type: 'success', message: 'Membre créé avec mot de passe.');
         }
         $this->closeForm();
     }
@@ -152,7 +152,7 @@ new #[Layout('components.layouts.admin')] class extends Component
     {
         $this->authorizeManage();
         $ok = $this->sendInvite($user);
-        $this->dispatch('sz-toast',
+        $this->dispatch('tk-toast',
             type: $ok ? 'success' : 'error',
             message: $ok ? 'Invitation renvoyée.' : "L'email n'a pas pu partir (vérifiez le SMTP).",
         );
@@ -162,53 +162,53 @@ new #[Layout('components.layouts.admin')] class extends Component
     {
         $this->authorizeManage();
         if ($user->isLastSuperAdmin() && $role !== Role::SuperAdmin->value) {
-            $this->dispatch('sz-toast', type: 'error', message: 'Impossible : dernier super administrateur.');
+            $this->dispatch('tk-toast', type: 'error', message: 'Impossible : dernier super administrateur.');
 
             return;
         }
         if ($role === Role::SuperAdmin->value && ! auth()->user()->hasRole(Role::SuperAdmin->value)) {
-            $this->dispatch('sz-toast', type: 'error', message: 'Réservé au super administrateur.');
+            $this->dispatch('tk-toast', type: 'error', message: 'Réservé au super administrateur.');
 
             return;
         }
         $user->syncRoles([$role]);
-        $this->dispatch('sz-toast', type: 'success', message: 'Rôle mis à jour.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Rôle mis à jour.');
     }
 
     public function toggleSuspend(User $user): void
     {
         $this->authorizeManage();
         if ($user->id === auth()->id()) {
-            $this->dispatch('sz-toast', type: 'error', message: 'Vous ne pouvez pas vous suspendre vous-même.');
+            $this->dispatch('tk-toast', type: 'error', message: 'Vous ne pouvez pas vous suspendre vous-même.');
 
             return;
         }
         if (! $user->isSuspended() && $user->isLastSuperAdmin()) {
-            $this->dispatch('sz-toast', type: 'error', message: 'Impossible : dernier super administrateur.');
+            $this->dispatch('tk-toast', type: 'error', message: 'Impossible : dernier super administrateur.');
 
             return;
         }
         $user->isSuspended() ? $user->reactivate() : $user->suspend();
-        $this->dispatch('sz-toast', type: 'success', message: $user->isSuspended() ? 'Compte suspendu.' : 'Compte réactivé.');
+        $this->dispatch('tk-toast', type: 'success', message: $user->isSuspended() ? 'Compte suspendu.' : 'Compte réactivé.');
     }
 
     public function resetTwoFactor(User $user): void
     {
         $this->authorizeManage();
         $user->resetTwoFactor();
-        $this->dispatch('sz-toast', type: 'success', message: '2FA réinitialisée (appareils révoqués).');
+        $this->dispatch('tk-toast', type: 'success', message: '2FA réinitialisée (appareils révoqués).');
     }
 
     public function deleteMember(User $user): void
     {
         $this->authorizeManage();
         if ($user->id === auth()->id() || $user->isLastSuperAdmin()) {
-            $this->dispatch('sz-toast', type: 'error', message: 'Action impossible sur ce compte.');
+            $this->dispatch('tk-toast', type: 'error', message: 'Action impossible sur ce compte.');
 
             return;
         }
         $user->delete();
-        $this->dispatch('sz-toast', type: 'success', message: 'Membre retiré.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Membre retiré.');
     }
 
     /** @return array<string, mixed> */

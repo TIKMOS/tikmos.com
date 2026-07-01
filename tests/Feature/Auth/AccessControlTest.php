@@ -49,15 +49,15 @@ it('déconnecte et bloque un compte suspendu', function (): void {
 it('vérifie les permissions des rôles', function (): void {
     expect(User::factory()->create()->assignRole(Role::SuperAdmin->value)->hasPermissionTo('roles.manage'))->toBeTrue();
     expect(user(Role::Admin->value)->hasPermissionTo('roles.manage'))->toBeFalse();
-    expect(user(Role::Admin->value)->hasPermissionTo('colis.create'))->toBeTrue();
-    expect(user(Role::AgentCotonou->value)->hasPermissionTo('vol.manage'))->toBeFalse();
+    expect(user(Role::Admin->value)->hasPermissionTo('services.manage'))->toBeTrue();
+    expect(user(Role::Support->value)->hasPermissionTo('settings.manage'))->toBeFalse();
 });
 
 it('autorise le commercial sur /admin et les demandes, mais pas la configuration', function (): void {
     $commercial = user(Role::Commercial->value);
 
     $this->actingAs($commercial)->get('/admin')->assertOk();
-    $this->actingAs($commercial)->get('/admin/demandes')->assertOk();
+    $this->actingAs($commercial)->get('/admin/devis')->assertOk();
     $this->actingAs($commercial)->get('/admin/reglages')->assertForbidden();
 });
 
@@ -66,5 +66,5 @@ it('autorise l’éditeur sur le CMS, mais pas les demandes', function (): void 
 
     $this->actingAs($editor)->get('/admin')->assertOk();
     $this->actingAs($editor)->get('/admin/reglages/accueil')->assertOk();
-    $this->actingAs($editor)->get('/admin/demandes')->assertForbidden();
+    $this->actingAs($editor)->get('/admin/devis')->assertForbidden();
 });

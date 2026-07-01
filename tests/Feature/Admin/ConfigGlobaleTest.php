@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\Role;
-use App\Models\PreferredSite;
 use App\Models\User;
 use App\Settings\GeneralSettings;
 use Database\Seeders\RolePermissionSeeder;
@@ -26,7 +25,7 @@ it('ouvre le réglage Général pour un admin', function (): void {
 
 it('refuse le réglage Général sans permission', function (): void {
     $u = User::factory()->create();
-    $u->assignRole(Role::AgentCotonou->value);
+    $u->assignRole(Role::Support->value);
     $this->actingAs($u)->get('/admin/reglages/general')->assertForbidden();
 });
 
@@ -49,24 +48,4 @@ it('reflète les réglages sur le site public', function (): void {
     $s->save();
 
     $this->get('/')->assertOk()->assertSee('Slogan de test unique 4242');
-});
-
-it('gère les sites préférés et les affiche sur Achat', function (): void {
-    $this->actingAs(admin())->get('/admin/reglages/sites')->assertOk();
-
-    Volt::actingAs(admin())->test('pages.admin.reglages.sites')
-        ->call('create')
-        ->set('name', 'BoutiqueDemo42')
-        ->call('save')
-        ->assertHasNoErrors();
-
-    expect(PreferredSite::where('name', 'BoutiqueDemo42')->exists())->toBeTrue();
-
-    $this->get('/achat')->assertOk()->assertSee('BoutiqueDemo42');
-});
-
-it('masque un site préféré inactif sur Achat', function (): void {
-    PreferredSite::create(['name' => 'SiteMasque99', 'is_active' => false, 'position' => 1]);
-
-    $this->get('/achat')->assertOk()->assertDontSee('SiteMasque99');
 });

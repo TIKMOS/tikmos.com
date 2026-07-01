@@ -17,7 +17,7 @@ class ResetPasswordNotification extends ResetPassword
         $minutes = config('auth.passwords.'.config('auth.defaults.passwords').'.expire', 60);
 
         return (new MailMessage)
-            ->subject('Réinitialisation de votre mot de passe SEZY')
+            ->subject('Réinitialisation de votre mot de passe Tikmos')
             ->greeting('Bonjour,')
             ->line('Vous recevez cet email car nous avons reçu une demande de réinitialisation de mot de passe pour votre compte.')
             ->action('Réinitialiser le mot de passe', url($url))

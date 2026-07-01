@@ -18,7 +18,7 @@ new #[Layout('components.layouts.public')] class extends Component
     {
         $cart->remove($key);
         $this->dispatch('cart-updated');
-        $this->dispatch('sz-toast', type: 'success', message: 'Article retiré.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Article retiré.');
     }
 
     public function checkout(): void

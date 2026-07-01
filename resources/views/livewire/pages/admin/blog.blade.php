@@ -96,13 +96,13 @@ new #[Layout('components.layouts.admin')] class extends Component
         }
 
         $this->showForm = false;
-        $this->dispatch('sz-toast', type: 'success', message: $this->editingId ? 'Article mis à jour.' : 'Article créé.');
+        $this->dispatch('tk-toast', type: 'success', message: $this->editingId ? 'Article mis à jour.' : 'Article créé.');
     }
 
     public function delete(Post $post): void
     {
         $post->delete();
-        $this->dispatch('sz-toast', type: 'success', message: 'Article supprimé.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Article supprimé.');
     }
 
     /** @return array<string, mixed> */

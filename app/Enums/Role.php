@@ -11,11 +11,7 @@ enum Role: string
     case Commercial = 'commercial';
     case Editor = 'editor';
     case GestionnaireBoutique = 'gestionnaire_boutique';
-    case AgentCotonou = 'agent_cotonou';
-    case AgentParis = 'agent_paris';
-    case ConseillerMobilite = 'conseiller_mobilite';
     case Support = 'support';
-    case Livreur = 'livreur';
     case Client = 'client';
 
     public function label(): string
@@ -26,11 +22,7 @@ enum Role: string
             self::Commercial => 'Commercial',
             self::Editor => 'Éditeur (contenu)',
             self::GestionnaireBoutique => 'Gestionnaire boutique',
-            self::AgentCotonou => 'Agent Cotonou',
-            self::AgentParis => 'Relais Paris',
-            self::ConseillerMobilite => 'Conseiller mobilité',
             self::Support => 'Support',
-            self::Livreur => 'Livreur',
             self::Client => 'Client',
         };
     }
@@ -48,9 +40,6 @@ enum Role: string
             self::Commercial,
             self::Editor,
             self::GestionnaireBoutique,
-            self::AgentCotonou,
-            self::AgentParis,
-            self::ConseillerMobilite,
             self::Support,
         ];
     }

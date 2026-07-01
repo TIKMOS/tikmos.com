@@ -23,7 +23,7 @@ new #[Layout('components.layouts.public')] class extends Component
         // Produit à pointures : une taille valide est obligatoire.
         if ($this->product->hasSizes()) {
             if ($size === null || $size === '' || ! in_array($size, $this->product->sizeList(), true)) {
-                $this->dispatch('sz-toast', type: 'error', message: 'Veuillez choisir une taille.');
+                $this->dispatch('tk-toast', type: 'error', message: 'Veuillez choisir une taille.');
 
                 return;
             }
@@ -33,7 +33,7 @@ new #[Layout('components.layouts.public')] class extends Component
 
         app(\App\Services\CartService::class)->add($this->product->id, 1, $size);
         $this->dispatch('cart-updated');
-        $this->dispatch('sz-toast', type: 'success', message: 'Ajouté au panier.'.($size ? ' (Taille '.$size.')' : ''));
+        $this->dispatch('tk-toast', type: 'success', message: 'Ajouté au panier.'.($size ? ' (Taille '.$size.')' : ''));
     }
 
     /** @return array<string, mixed> */

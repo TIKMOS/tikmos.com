@@ -98,7 +98,7 @@
                         <x-tk.avatar name="Boris Vital" />
                         <div>
                             <p class="font-display font-bold">Boris Vital</p>
-                            <p class="text-sm text-tk-400">Fondateur · SEZY</p>
+                            <p class="text-sm text-tk-400">Fondateur · Tikmos</p>
                         </div>
                     </div>
                     <p class="mt-4 text-sm text-tk-300">« On s'occupe de tout. Vous, vous suivez. »</p>
@@ -106,7 +106,7 @@
                 <div class="mt-4 flex justify-end">
                     <x-tk.button variant="accent" size="sm"
                         x-data
-                        x-on:click="$dispatch('sz-toast', { type: 'success', message: 'Tout fonctionne' })">Tester un toast</x-tk.button>
+                        x-on:click="$dispatch('tk-toast', { type: 'success', message: 'Tout fonctionne' })">Tester un toast</x-tk.button>
                 </div>
             </div>
         </div>

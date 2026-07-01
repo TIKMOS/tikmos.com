@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -27,7 +26,7 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'number', 'user_id', 'status', 'payment_method', 'payment_status',
     'subtotal', 'delivery_fee', 'total', 'contact_name', 'contact_phone',
-    'delivery_address', 'delivery_city', 'courier_id', 'notes',
+    'delivery_address', 'delivery_city', 'notes',
     'confirmed_at', 'shipped_at', 'delivered_at', 'received_confirmed_at',
 ])]
 class Order extends Model
@@ -63,18 +62,6 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
-    }
-
-    /** @return BelongsTo<Courier, $this> */
-    public function courier(): BelongsTo
-    {
-        return $this->belongsTo(Courier::class);
-    }
-
-    /** @return HasOne<Delivery, $this> */
-    public function delivery(): HasOne
-    {
-        return $this->hasOne(Delivery::class);
     }
 
     public function totalLabel(): string

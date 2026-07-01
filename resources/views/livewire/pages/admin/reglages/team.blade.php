@@ -114,7 +114,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         }
 
         $this->showForm = false;
-        $this->dispatch('sz-toast', type: 'success', message: $this->editingId ? 'Membre mis à jour.' : 'Membre ajouté.');
+        $this->dispatch('tk-toast', type: 'success', message: $this->editingId ? 'Membre mis à jour.' : 'Membre ajouté.');
     }
 
     public function toggle(TeamMember $member): void
@@ -125,7 +125,7 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function delete(TeamMember $member): void
     {
         $member->delete();
-        $this->dispatch('sz-toast', type: 'success', message: 'Membre supprimé.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Membre supprimé.');
     }
 
     /** @param  array<int, string>  $ids */

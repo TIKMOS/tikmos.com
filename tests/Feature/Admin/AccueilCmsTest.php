@@ -63,6 +63,6 @@ it('ouvre l’admin Accueil pour un admin et refuse sinon', function (): void {
     $this->actingAs(adminUser())->get('/admin/reglages/accueil')->assertOk();
 
     $agent = User::factory()->create();
-    $agent->assignRole(Role::AgentCotonou->value);
+    $agent->assignRole(Role::Support->value);
     $this->actingAs($agent)->get('/admin/reglages/accueil')->assertForbidden();
 });

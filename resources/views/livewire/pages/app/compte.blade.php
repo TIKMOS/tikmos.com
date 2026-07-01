@@ -27,13 +27,13 @@ new #[Layout('components.layouts.app')] class extends Component
     public function save(): void
     {
         auth()->user()->update($this->validate());
-        $this->dispatch('sz-toast', type: 'success', message: 'Profil mis à jour.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Profil mis à jour.');
     }
 
     public function revokeDevice(int $id): void
     {
         auth()->user()->trustedDevices()->whereKey($id)->delete();
-        $this->dispatch('sz-toast', type: 'success', message: 'Appareil révoqué.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Appareil révoqué.');
     }
 
     public function deleteAccount(): void

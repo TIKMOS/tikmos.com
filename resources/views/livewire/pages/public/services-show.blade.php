@@ -96,7 +96,7 @@ new #[Layout('components.layouts.public')] class extends Component
 
         $this->reference = $request->reference;
         $this->reset(['phone', 'company', 'message', 'budget_hint']);
-        $this->dispatch('sz-toast', type: 'success', message: 'Demande envoyée. Référence : '.$request->reference);
+        $this->dispatch('tk-toast', type: 'success', message: 'Demande envoyée. Référence : '.$request->reference);
     }
 }; ?>
 

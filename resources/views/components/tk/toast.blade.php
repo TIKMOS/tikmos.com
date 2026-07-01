@@ -1,4 +1,4 @@
-{{-- Toaster Alpine, sans dépendance. Écoute window 'sz-toast' + flash session('toast'). --}}
+{{-- Toaster Alpine, sans dépendance. Écoute window 'tk-toast' + flash session('toast'). --}}
 <div
     x-data="{
         toasts: [],
@@ -9,7 +9,7 @@
         },
         remove(id) { this.toasts = this.toasts.filter(t => t.id !== id); },
     }"
-    x-on:sz-toast.window="push($event.detail)"
+    x-on:tk-toast.window="push($event.detail)"
     @if (session('toast'))
         x-init="push(@js(session('toast')))"
     @endif

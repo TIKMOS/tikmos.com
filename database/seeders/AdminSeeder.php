@@ -12,13 +12,12 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         $admin = User::firstOrCreate(
-            ['email' => env('SEZY_ADMIN_EMAIL', 'boris@sezy.africa')],
+            ['email' => env('TIKMOS_ADMIN_EMAIL', 'moise@tikmos.com')],
             [
-                'name' => 'Boris Vital',
-                'phone' => '+2290166386417',
-                'password' => Hash::make(env('SEZY_ADMIN_PASSWORD', 'password')),
+                'name' => 'Moïse TIKO',
+                'phone' => '+2290197440615',
+                'password' => Hash::make(env('TIKMOS_ADMIN_PASSWORD', 'password')),
                 'status' => 'active',
-                'city' => 'Cotonou',
                 'country' => 'BJ',
                 'email_verified_at' => now(),
             ],

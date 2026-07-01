@@ -23,12 +23,12 @@ it('affiche le hub Réglages pour un rôle avec settings.manage', function (): v
         ->assertOk()
         ->assertSee('Réglages')
         ->assertSee('Général')
-        ->assertSee('Transporteurs');
+        ->assertSee('Partenaires');
 });
 
 it('refuse le hub Réglages sans settings.manage', function (): void {
     // agent_cotonou est un rôle de gestion mais n'a pas settings.manage
-    $this->actingAs(staffWith(Role::AgentCotonou->value))
+    $this->actingAs(staffWith(Role::Support->value))
         ->get('/admin/reglages')
         ->assertForbidden();
 });

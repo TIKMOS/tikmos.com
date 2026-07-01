@@ -68,7 +68,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         }
 
         $this->showForm = false;
-        $this->dispatch('sz-toast', type: 'success', message: $this->editingId ? 'Partenaire mis à jour.' : 'Partenaire ajouté.');
+        $this->dispatch('tk-toast', type: 'success', message: $this->editingId ? 'Partenaire mis à jour.' : 'Partenaire ajouté.');
     }
 
     public function toggle(Partner $partner): void
@@ -79,7 +79,7 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function delete(Partner $partner): void
     {
         $partner->delete();
-        $this->dispatch('sz-toast', type: 'success', message: 'Partenaire supprimé.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Partenaire supprimé.');
     }
 
     /** @param  array<int, string>  $ids */

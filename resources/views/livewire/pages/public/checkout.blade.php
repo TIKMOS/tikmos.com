@@ -24,9 +24,6 @@ new #[Layout('components.layouts.public')] class extends Component
     #[Validate('nullable|string|max:1000')]
     public string $notes = '';
 
-    // '' = SEZY (livraison interne), sinon l'identifiant du transporteur partenaire.
-    public string $courier_id = '';
-
     public function mount(CartService $cart): void
     {
         if ($cart->isEmpty()) {
@@ -40,19 +37,11 @@ new #[Layout('components.layouts.public')] class extends Component
         $this->delivery_city = (string) $user->city;
     }
 
-    public function place(OrderService $orders, \App\Services\DeliveryService $deliveries): void
+    public function place(OrderService $orders): void
     {
         $data = $this->validate();
 
-        // '' = SEZY interne (courier null) ; sinon transporteur actif valide.
-        $courierId = $this->courier_id !== '' ? (int) $this->courier_id : null;
-        if ($courierId !== null && ! \App\Models\Courier::active()->whereKey($courierId)->exists()) {
-            $courierId = null;
-        }
-        $data['courier_id'] = $courierId;
-
         $order = $orders->place(auth()->user(), $data);
-        $deliveries->ensureForOrder($order);
 
         $this->dispatch('cart-updated');
         session()->flash('toast', ['type' => 'success', 'message' => 'Commande confirmée ! Numéro : '.$order->number]);
@@ -68,7 +57,6 @@ new #[Layout('components.layouts.public')] class extends Component
             'items' => $cart->items(),
             'subtotal' => $cart->subtotal(),
             'deliveryFee' => app(ShopSettings::class)->default_delivery_fee,
-            'couriers' => \App\Models\Courier::active()->get(),
         ];
     }
 }; ?>
@@ -96,25 +84,6 @@ new #[Layout('components.layouts.public')] class extends Component
                         <x-tk.field label="Notes (optionnel)" :error="$errors->first('notes')"><x-tk.input wire:model="notes" placeholder="Précisions de livraison…" /></x-tk.field>
                     </div>
                 </x-tk.admin-section>
-
-                @if ($couriers->isNotEmpty())
-                    <x-tk.admin-section title="Transporteur" description="Choisissez qui livrera votre commande (optionnel)." icon="truck">
-                        <div class="space-y-2">
-                            <label class="flex cursor-pointer items-center gap-3 rounded-tile border p-3 transition-colors {{ $courier_id === '' ? 'border-ink bg-sky/30' : 'border-line hover:border-tk-400' }}">
-                                <input type="radio" wire:model.live="courier_id" value="" @checked($courier_id === '') class="text-ink focus:ring-ink/20">
-                                <x-lucide-truck class="h-5 w-5 text-content" />
-                                <span class="text-sm font-medium text-content">SEZY (livraison interne)</span>
-                            </label>
-                            @foreach ($couriers as $c)
-                                <label class="flex cursor-pointer items-center gap-3 rounded-tile border p-3 transition-colors {{ $courier_id === (string) $c->id ? 'border-ink bg-sky/30' : 'border-line hover:border-tk-400' }}">
-                                    <input type="radio" wire:model.live="courier_id" value="{{ $c->id }}" @checked($courier_id === (string) $c->id) class="text-ink focus:ring-ink/20">
-                                    @if ($c->logoUrl())<img src="{{ $c->logoUrl() }}" alt="" class="h-6 w-auto">@else<x-lucide-truck class="h-5 w-5 text-tk-400" />@endif
-                                    <span class="text-sm font-medium text-content">{{ $c->name }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </x-tk.admin-section>
-                @endif
 
                 <x-tk.admin-section title="Paiement" icon="wallet">
                     <label class="flex items-center gap-3 rounded-tile border-2 border-ink bg-sky/40 p-4">

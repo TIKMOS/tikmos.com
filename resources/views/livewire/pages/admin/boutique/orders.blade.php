@@ -34,7 +34,7 @@ new #[Layout('components.layouts.admin')] class extends Component
 
     public function selected(): ?Order
     {
-        return $this->selectedId ? Order::with('items', 'user', 'delivery.courier', 'delivery.livreur')->find($this->selectedId) : null;
+        return $this->selectedId ? Order::with('items', 'user')->find($this->selectedId) : null;
     }
 
     public function setStatus(string $status): void
@@ -44,7 +44,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         $target = OrderStatus::from($status);
 
         if (! $order || ! $order->status->canTransitionTo($target)) {
-            $this->dispatch('sz-toast', type: 'error', message: 'Transition non autorisée.');
+            $this->dispatch('tk-toast', type: 'error', message: 'Transition non autorisée.');
 
             return;
         }
@@ -57,29 +57,14 @@ new #[Layout('components.layouts.admin')] class extends Component
         };
         $order->update(['status' => $target, ...$stamps]);
         $order->user?->notify(new \App\Notifications\OrderStatusChanged($order));
-        $this->dispatch('sz-toast', type: 'success', message: 'Statut mis à jour : '.$target->label());
+        $this->dispatch('tk-toast', type: 'success', message: 'Statut mis à jour : '.$target->label());
     }
 
     public function markPaid(): void
     {
         $this->authorizeUpdate();
         $this->selected()?->update(['payment_status' => OrderPaymentStatus::Paid]);
-        $this->dispatch('sz-toast', type: 'success', message: 'Encaissement enregistré.');
-    }
-
-    public function assignCourier(\App\Services\DeliveryService $service, int $courierId, ?int $livreurId = null): void
-    {
-        $this->authorizeUpdate();
-        $order = $this->selected();
-        $courier = \App\Models\Courier::find($courierId);
-        if (! $order || ! $courier) {
-            return;
-        }
-        $delivery = $service->ensureForOrder($order, $courier);
-        if ($livreurId) {
-            $service->assignLivreur($delivery, \App\Models\User::findOrFail($livreurId));
-        }
-        $this->dispatch('sz-toast', type: 'success', message: 'Transporteur affecté.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Encaissement enregistré.');
     }
 
     /** @return array<string, mixed> */
@@ -93,7 +78,6 @@ new #[Layout('components.layouts.admin')] class extends Component
         return [
             'orders' => $query->paginate(15),
             'statuses' => OrderStatus::cases(),
-            'couriers' => \App\Models\Courier::active()->with('livreurs')->get(),
         ];
     }
 }; ?>
@@ -180,27 +164,6 @@ new #[Layout('components.layouts.admin')] class extends Component
                         @if ($order->payment_status !== \App\Enums\OrderPaymentStatus::Paid)
                             <x-tk.button wire:click="markPaid" variant="secondary" size="sm" icon="wallet">Marquer payée (COD encaissé)</x-tk.button>
                         @endif
-
-                        {{-- Livraison --}}
-                        <div class="w-full" x-data="{ courier: {{ $order->courier_id ?? 'null' }}, livreur: '' }">
-                            <p class="mb-1.5 text-xs font-semibold uppercase tracking-wider text-tk-400">Livraison</p>
-                            @if ($order->delivery)
-                                <p class="mb-2 text-sm text-content">
-                                    <x-tk.badge :tone="$order->delivery->status->tone()" dot>{{ $order->delivery->status->label() }}</x-tk.badge>
-                                    @if ($order->delivery->courier)<span class="ml-1 text-muted">· {{ $order->delivery->courier->name }}</span>@endif
-                                    @if ($order->delivery->livreur)<span class="text-muted">({{ $order->delivery->livreur->name }})</span>@endif
-                                </p>
-                            @endif
-                            @if ($couriers->isNotEmpty())
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <select x-model="courier" class="min-h-[40px] rounded-input border border-tk-300 bg-surface px-3 text-sm focus:border-ink focus:outline-none">
-                                        <option value="">— Transporteur —</option>
-                                        @foreach ($couriers as $c)<option value="{{ $c->id }}">{{ $c->name }}</option>@endforeach
-                                    </select>
-                                    <x-tk.button x-show="courier" x-on:click="$wire.assignCourier(courier, livreur || null)" variant="primary" size="sm" icon="truck">Affecter</x-tk.button>
-                                </div>
-                            @endif
-                        </div>
                     </div>
                 @endcan
             </div>

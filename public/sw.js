@@ -1,5 +1,5 @@
-/* SEZY — Service Worker. Précache l'app-shell, fallback offline, cache des assets. */
-const VERSION = 'sezy-v1';
+/* Tikmos — Service Worker. Précache l'app-shell, fallback offline, cache des assets. */
+const VERSION = 'tikmos-v1';
 const APP_SHELL = ['/offline.html', '/icons/icon-192.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {

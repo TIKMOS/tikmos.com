@@ -62,6 +62,6 @@ it('ouvre l’admin Pages et édite avec sanitisation + version', function (): v
 
 it('refuse l’admin Pages sans permission', function (): void {
     $agent = User::factory()->create();
-    $agent->assignRole(Role::AgentCotonou->value);
+    $agent->assignRole(Role::Support->value);
     $this->actingAs($agent)->get('/admin/reglages/pages')->assertForbidden();
 });

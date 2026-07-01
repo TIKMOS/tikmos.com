@@ -24,13 +24,13 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function approve(Review $review): void
     {
         $review->update(['status' => ReviewStatus::Approved, 'published_at' => $review->published_at ?? now()]);
-        $this->dispatch('sz-toast', type: 'success', message: 'Avis approuvé.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Avis approuvé.');
     }
 
     public function reject(Review $review): void
     {
         $review->update(['status' => ReviewStatus::Rejected, 'is_featured' => false]);
-        $this->dispatch('sz-toast', type: 'success', message: 'Avis rejeté.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Avis rejeté.');
     }
 
     public function toggleFeatured(Review $review): void
@@ -39,7 +39,7 @@ new #[Layout('components.layouts.admin')] class extends Component
 
         if (! $review->is_featured) {
             if ($review->status !== ReviewStatus::Approved || $review->rating < $min) {
-                $this->dispatch('sz-toast', type: 'error', message: "Avis approuvé et noté ≥ {$min} requis pour la mise en avant.");
+                $this->dispatch('tk-toast', type: 'error', message: "Avis approuvé et noté ≥ {$min} requis pour la mise en avant.");
 
                 return;
             }
@@ -51,7 +51,7 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function delete(Review $review): void
     {
         $review->delete();
-        $this->dispatch('sz-toast', type: 'success', message: 'Avis supprimé.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Avis supprimé.');
     }
 
     /** @return array<string, mixed> */

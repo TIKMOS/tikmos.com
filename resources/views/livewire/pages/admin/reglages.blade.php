@@ -9,16 +9,14 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function sections(): array
     {
         return [
-            ['label' => 'Général', 'desc' => 'Contacts, bandeau, réseaux, adresses, compteur de colis.', 'icon' => 'settings-2', 'route' => 'admin.reglages.general', 'permission' => 'settings.manage', 'tint' => 'sky'],
-            ['label' => 'Accueil', 'desc' => 'Hero, services, étapes, sections de la page d\'accueil.', 'icon' => 'layout-template', 'route' => 'admin.reglages.homepage', 'permission' => 'cms.homepage.manage', 'tint' => 'mint'],
+            ['label' => 'Général', 'desc' => 'Contacts, bandeau, réseaux, adresses.', 'icon' => 'settings-2', 'route' => 'admin.reglages.general', 'permission' => 'settings.manage', 'tint' => 'sky'],
+            ['label' => 'Accueil', 'desc' => 'Hero, sections, ordre de la page d\'accueil.', 'icon' => 'layout-template', 'route' => 'admin.reglages.homepage', 'permission' => 'cms.homepage.manage', 'tint' => 'mint'],
             ['label' => 'FAQ', 'desc' => 'Questions fréquentes, catégories, publication.', 'icon' => 'circle-help', 'route' => 'admin.reglages.faq', 'permission' => 'cms.faq.manage', 'tint' => 'lilac'],
-            ['label' => 'Pages légales', 'desc' => 'CGU, confidentialité — éditeur riche.', 'icon' => 'file-text', 'route' => 'admin.reglages.pages', 'permission' => 'cms.pages.manage', 'tint' => 'peach'],
-            ['label' => 'Sites préférés', 'desc' => 'Marques affichées sur la page Achat.', 'icon' => 'store', 'route' => 'admin.reglages.sites', 'permission' => 'preferred_sites.manage', 'tint' => 'sky'],
+            ['label' => 'Pages légales', 'desc' => 'CGU, CGV, confidentialité — éditeur riche.', 'icon' => 'file-text', 'route' => 'admin.reglages.pages', 'permission' => 'cms.pages.manage', 'tint' => 'peach'],
             ['label' => 'Partenaires', 'desc' => 'Logos de la zone partenaires (avant le footer).', 'icon' => 'handshake', 'route' => 'admin.reglages.partners', 'permission' => 'partners.manage', 'tint' => 'mint'],
             ['label' => 'Équipe', 'desc' => 'Membres affichés sur la page Équipe.', 'icon' => 'users', 'route' => 'admin.reglages.team', 'permission' => 'team.manage', 'tint' => 'lilac'],
             ['label' => 'Avis', 'desc' => 'Modération et mise en avant des témoignages.', 'icon' => 'star', 'route' => 'admin.avis', 'permission' => 'reviews.view', 'tint' => 'peach'],
             ['label' => 'Boutique', 'desc' => 'Produits, catégories, commandes.', 'icon' => 'shopping-bag', 'route' => 'admin.boutique', 'permission' => 'shop.products.manage', 'tint' => 'sky'],
-            ['label' => 'Transporteurs', 'desc' => 'Sociétés de livraison, livreurs, commissions.', 'icon' => 'truck', 'route' => 'admin.transporteurs', 'permission' => 'couriers.manage', 'tint' => 'mint'],
         ];
     }
 }; ?>

@@ -10,17 +10,10 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => $this->seed(RolePermissionSeeder::class));
 
-it('crée les rôles V2', function (): void {
+it('crée les rôles Tikmos', function (): void {
     expect(Role::where('name', 'gestionnaire_boutique')->exists())->toBeTrue()
-        ->and(Role::where('name', 'livreur')->exists())->toBeTrue();
-});
-
-it('cloisonne le livreur à ses livraisons', function (): void {
-    $livreur = Role::findByName('livreur', 'web');
-
-    expect($livreur->hasPermissionTo('deliveries.own'))->toBeTrue()
-        ->and($livreur->hasPermissionTo('shop.products.manage'))->toBeFalse()
-        ->and($livreur->hasPermissionTo('couriers.manage'))->toBeFalse();
+        ->and(Role::where('name', 'commercial')->exists())->toBeTrue()
+        ->and(Role::where('name', 'editor')->exists())->toBeTrue();
 });
 
 it('donne au gestionnaire boutique les droits commerce', function (): void {
@@ -39,11 +32,10 @@ it('donne tout au super admin', function (): void {
 });
 
 it('expose les nouveaux rôles dans l’enum', function (): void {
-    expect(RoleEnum::cases())->toHaveCount(11)
+    expect(RoleEnum::cases())->toHaveCount(7)
         ->and(RoleEnum::management())->toContain(RoleEnum::GestionnaireBoutique)
         ->and(RoleEnum::management())->toContain(RoleEnum::Commercial)
         ->and(RoleEnum::management())->toContain(RoleEnum::Editor)
-        ->and(RoleEnum::management())->not->toContain(RoleEnum::Livreur)
         ->and(RoleEnum::management())->not->toContain(RoleEnum::Client)
         ->and(RoleEnum::GestionnaireBoutique->label())->toBe('Gestionnaire boutique');
 });

@@ -26,7 +26,7 @@ window.szCookieConsent = () => ({
     visible: false,
     showPrefs: false,
     prefs: { analytics: false, marketing: false },
-    key: 'sezy_cookie_consent',
+    key: 'tikmos_cookie_consent',
     init() {
         const saved = this.read()
         if (!saved) {
@@ -35,7 +35,7 @@ window.szCookieConsent = () => ({
             this.prefs = { analytics: !!saved.analytics, marketing: !!saved.marketing }
             this.apply()
         }
-        window.addEventListener('sz-open-cookie-prefs', () => { this.showPrefs = true; this.visible = true })
+        window.addEventListener('tk-open-cookie-prefs', () => { this.showPrefs = true; this.visible = true })
     },
     read() {
         const m = document.cookie.match(new RegExp('(?:^|; )' + this.key + '=([^;]*)'))

@@ -127,7 +127,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         ], $this->nav_links);
         $s->save();
 
-        $this->dispatch('sz-toast', type: 'success', message: 'Réglages généraux enregistrés.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Réglages généraux enregistrés.');
     }
 }; ?>
 

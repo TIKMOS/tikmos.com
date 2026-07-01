@@ -12,7 +12,7 @@ new #[Layout('components.layouts.app')] class extends Component
     public function mount(Order $order): void
     {
         abort_unless($order->user_id === auth()->id(), 403);
-        $this->order = $order->load('items', 'delivery.courier');
+        $this->order = $order->load('items');
     }
 
     public function confirmReceived(): void
@@ -21,7 +21,7 @@ new #[Layout('components.layouts.app')] class extends Component
         abort_unless($this->order->status === OrderStatus::Delivered, 422);
 
         $this->order->update(['received_confirmed_at' => now()]);
-        $this->dispatch('sz-toast', type: 'success', message: 'Merci ! Réception confirmée.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Merci ! Réception confirmée.');
     }
 }; ?>
 
@@ -82,10 +82,6 @@ new #[Layout('components.layouts.app')] class extends Component
                     <div><dt class="text-muted">Destinataire</dt><dd class="font-medium text-content">{{ $order->contact_name }}</dd></div>
                     <div><dt class="text-muted">Téléphone</dt><dd class="font-medium text-content">{{ $order->contact_phone }}</dd></div>
                     <div><dt class="text-muted">Adresse</dt><dd class="text-content">{{ $order->delivery_address }}{{ $order->delivery_city ? ', '.$order->delivery_city : '' }}</dd></div>
-                    @if ($order->delivery)
-                        <div><dt class="text-muted">Transporteur</dt><dd class="font-medium text-content">{{ $order->delivery->courier?->name ?? 'SEZY' }}</dd></div>
-                        <div><dt class="text-muted">État livraison</dt><dd><x-tk.badge :tone="$order->delivery->status->tone()" dot>{{ $order->delivery->status->label() }}</x-tk.badge></dd></div>
-                    @endif
                 </dl>
             </x-tk.card>
         </div>

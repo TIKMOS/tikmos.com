@@ -26,7 +26,7 @@ new #[Layout('components.layouts.app')] class extends Component
         $quote->update(['status' => QuoteStatus::Accepted, 'decided_at' => now()]);
         $this->request->transitionTo(ServiceRequestStatus::Accepted, Auth::user(), 'Devis accepté par le client.');
         $this->request->refresh()->load(['quote', 'events.author']);
-        $this->dispatch('sz-toast', type: 'success', message: 'Devis accepté. Nous revenons vers vous rapidement.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Devis accepté. Nous revenons vers vous rapidement.');
     }
 
     public function refuseQuote(): void
@@ -37,7 +37,7 @@ new #[Layout('components.layouts.app')] class extends Component
         $quote->update(['status' => QuoteStatus::Refused, 'decided_at' => now()]);
         $this->request->transitionTo(ServiceRequestStatus::Refused, Auth::user(), 'Devis refusé par le client.');
         $this->request->refresh()->load(['quote', 'events.author']);
-        $this->dispatch('sz-toast', type: 'success', message: 'Devis refusé.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Devis refusé.');
     }
 }; ?>
 

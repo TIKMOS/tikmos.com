@@ -118,7 +118,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         }
 
         $this->showForm = false;
-        $this->dispatch('sz-toast', type: 'success', message: $this->editingId ? 'Produit mis à jour.' : 'Produit créé.');
+        $this->dispatch('tk-toast', type: 'success', message: $this->editingId ? 'Produit mis à jour.' : 'Produit créé.');
     }
 
     protected function uniqueSlug(string $name): string
@@ -141,7 +141,7 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function delete(Product $product): void
     {
         $product->delete();
-        $this->dispatch('sz-toast', type: 'success', message: 'Produit supprimé.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Produit supprimé.');
     }
 
     /** @return array<string, mixed> */

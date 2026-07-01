@@ -67,13 +67,13 @@ it('modifie un membre du personnel (nom, email, rôle)', function (): void {
     Volt::actingAs(superAdmin())->test('pages.admin.equipe')
         ->call('openEdit', $target)
         ->set('fName', 'Renommé')
-        ->set('fRole', Role::AgentCotonou->value)
+        ->set('fRole', Role::Support->value)
         ->call('save')
         ->assertHasNoErrors();
 
     $target->refresh();
     expect($target->name)->toBe('Renommé')
-        ->and($target->hasRole(Role::AgentCotonou->value))->toBeTrue();
+        ->and($target->hasRole(Role::Support->value))->toBeTrue();
 });
 
 it('suspend un membre et révoque sa 2FA', function (): void {
@@ -101,7 +101,7 @@ it('empêche de rétrograder le dernier super administrateur', function (): void
 
 it('refuse la gestion du personnel sans permission', function (): void {
     $agent = User::factory()->create();
-    $agent->assignRole(Role::AgentCotonou->value);
+    $agent->assignRole(Role::Support->value);
 
     Volt::actingAs($agent)->test('pages.admin.equipe')
         ->set('fName', 'X')->set('fEmail', 'x@y.test')->set('fRole', Role::Support->value)

@@ -14,12 +14,6 @@ $staffRoles = implode('|', array_map(fn (Role $r) => $r->value, Role::management
 Route::middleware(['auth', 'approved', 'role:'.$staffRoles])->group(function (): void {
     Volt::route('/', 'pages.admin.dashboard')->name('dashboard');
 
-    Volt::route('colis', 'pages.admin.colis-index')->middleware('permission:colis.view')->name('colis');
-    Volt::route('colis/{reference}', 'pages.admin.colis-show')->middleware('permission:colis.view')->name('colis.show');
-
-    Volt::route('vols', 'pages.admin.vols')->middleware('permission:vol.view')->name('vols');
-    Volt::route('demandes', 'pages.admin.demandes')->middleware('permission:demande.view')->name('demandes');
-
     // Services & devis (Tikmos)
     Volt::route('services', 'pages.admin.services')->middleware('permission:services.manage')->name('services');
     Volt::route('realisations', 'pages.admin.projects')->middleware('permission:projects.manage')->name('projects');
@@ -35,10 +29,8 @@ Route::middleware(['auth', 'approved', 'role:'.$staffRoles])->group(function ():
     Volt::route('boutique', 'pages.admin.boutique.products')->middleware('permission:shop.products.manage')->name('boutique');
     Volt::route('boutique/categories', 'pages.admin.boutique.categories')->middleware('permission:shop.categories.manage')->name('boutique.categories');
     Volt::route('commandes', 'pages.admin.boutique.orders')->middleware('permission:shop.orders.view')->name('boutique.orders');
-    Volt::route('transporteurs', 'pages.admin.couriers')->middleware('permission:couriers.manage')->name('transporteurs');
     Volt::route('reglages', 'pages.admin.reglages')->middleware('permission:settings.manage')->name('reglages');
     Volt::route('reglages/general', 'pages.admin.reglages.general')->middleware('permission:settings.manage')->name('reglages.general');
-    Volt::route('reglages/sites', 'pages.admin.reglages.sites')->middleware('permission:preferred_sites.manage')->name('reglages.sites');
     Volt::route('reglages/accueil', 'pages.admin.reglages.homepage')->middleware('permission:cms.homepage.manage')->name('reglages.homepage');
     Volt::route('reglages/faq', 'pages.admin.reglages.faq')->middleware('permission:cms.faq.manage')->name('reglages.faq');
     Volt::route('reglages/pages', 'pages.admin.reglages.pages')->middleware('permission:cms.pages.manage')->name('reglages.pages');

@@ -8,14 +8,13 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'phone', 'password', 'city', 'country', 'locale', 'status', 'invited_at', 'internal_notes', 'courier_id'])]
+#[Fillable(['name', 'email', 'phone', 'password', 'city', 'country', 'locale', 'status', 'invited_at', 'internal_notes'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -80,31 +79,10 @@ class User extends Authenticatable
         return $this->hasAnyRole(array_map(fn (Role $r) => $r->value, Role::management()));
     }
 
-    public function isLivreur(): bool
-    {
-        return $this->hasRole(Role::Livreur->value);
-    }
-
     /** Route d'accueil après connexion selon le rôle. */
     public function homeRoute(): string
     {
-        if ($this->isLivreur()) {
-            return '/livreur';
-        }
-
         return $this->isStaff() ? '/admin' : '/app';
-    }
-
-    /** @return BelongsTo<Courier, $this> */
-    public function courier(): BelongsTo
-    {
-        return $this->belongsTo(Courier::class);
-    }
-
-    /** @return HasMany<Delivery, $this> */
-    public function deliveries(): HasMany
-    {
-        return $this->hasMany(Delivery::class, 'livreur_id');
     }
 
     /** @return HasMany<TrustedDevice, $this> */
@@ -119,22 +97,22 @@ class User extends Authenticatable
         return $this->hasMany(LoginLog::class);
     }
 
-    /** @return HasMany<Parcel, $this> */
-    public function parcels(): HasMany
-    {
-        return $this->hasMany(Parcel::class, 'sender_id');
-    }
-
-    /** @return HasMany<ParcelRequest, $this> */
-    public function parcelRequests(): HasMany
-    {
-        return $this->hasMany(ParcelRequest::class);
-    }
-
     /** @return HasMany<Review, $this> */
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    /** @return HasMany<ServiceRequest, $this> */
+    public function serviceRequests(): HasMany
+    {
+        return $this->hasMany(ServiceRequest::class);
+    }
+
+    /** @return HasMany<Order, $this> */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
     }
 
     public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void

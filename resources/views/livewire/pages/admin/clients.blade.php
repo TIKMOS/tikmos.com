@@ -54,8 +54,8 @@ new #[Layout('components.layouts.admin')] class extends Component
         }
 
         return User::role(Role::Client->value)
-            ->withCount(['parcels', 'reviews'])
-            ->with(['parcels' => fn ($q) => $q->latest()->take(5)])
+            ->withCount(['serviceRequests', 'orders', 'reviews'])
+            ->with(['serviceRequests' => fn ($q) => $q->latest()->take(5)])
             ->find($this->selectedId);
     }
 
@@ -75,7 +75,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->authorizeManage();
         if ($client = $this->selected) {
             $client->update(['internal_notes' => $this->notes ?: null]);
-            $this->dispatch('sz-toast', type: 'success', message: 'Notes enregistrées.');
+            $this->dispatch('tk-toast', type: 'success', message: 'Notes enregistrées.');
         }
     }
 
@@ -85,7 +85,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         if ($client = $this->selected) {
             $client->isSuspended() ? $client->reactivate() : $client->suspend();
             unset($this->selected);
-            $this->dispatch('sz-toast', type: 'success', message: 'Statut mis à jour.');
+            $this->dispatch('tk-toast', type: 'success', message: 'Statut mis à jour.');
         }
     }
 
@@ -95,7 +95,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         if ($client = $this->selected) {
             $client->delete();
             $this->close();
-            $this->dispatch('sz-toast', type: 'success', message: 'Client supprimé.');
+            $this->dispatch('tk-toast', type: 'success', message: 'Client supprimé.');
         }
     }
 
@@ -151,12 +151,12 @@ new #[Layout('components.layouts.admin')] class extends Component
             $client = User::role(Role::Client->value)->findOrFail($this->formId);
             $client->update($payload);
             unset($this->selected);
-            $this->dispatch('sz-toast', type: 'success', message: 'Client mis à jour.');
+            $this->dispatch('tk-toast', type: 'success', message: 'Client mis à jour.');
         } else {
             $payload['status'] = 'active';
             $client = User::create($payload);
             $client->assignRole(Role::Client->value);
-            $this->dispatch('sz-toast', type: 'success', message: 'Client créé.');
+            $this->dispatch('tk-toast', type: 'success', message: 'Client créé.');
         }
 
         $this->closeForm();
@@ -171,7 +171,7 @@ new #[Layout('components.layouts.admin')] class extends Component
     /** @return array<string, mixed> */
     public function with(): array
     {
-        $query = User::role(Role::Client->value)->withCount('parcels')->latest();
+        $query = User::role(Role::Client->value)->withCount('serviceRequests')->latest();
 
         if ($this->search !== '') {
             $query->where(fn ($q) => $q->where('name', 'like', '%'.$this->search.'%')
@@ -209,7 +209,7 @@ new #[Layout('components.layouts.admin')] class extends Component
                 </div>
                 <div class="flex items-center gap-2">
                     @if ($client->isSuspended())<x-tk.badge tone="danger" dot>Suspendu</x-tk.badge>@endif
-                    <x-tk.badge tone="neutral">{{ $client->parcels_count }} colis</x-tk.badge>
+                    <x-tk.badge tone="neutral">{{ $client->service_requests_count }} demandes</x-tk.badge>
                     <x-lucide-chevron-right class="h-4 w-4 text-tk-300" />
                 </div>
             </button>
@@ -238,7 +238,7 @@ new #[Layout('components.layouts.admin')] class extends Component
 
                 <div class="mt-4 flex flex-wrap gap-2">
                     @if ($client->isSuspended())<x-tk.badge tone="danger" dot>Suspendu</x-tk.badge>@else<x-tk.badge tone="success" dot>Actif</x-tk.badge>@endif
-                    <x-tk.badge tone="neutral">{{ $client->parcels_count }} colis</x-tk.badge>
+                    <x-tk.badge tone="neutral">{{ $client->service_requests_count }} demandes</x-tk.badge>
                     <x-tk.badge tone="neutral">{{ $client->reviews_count }} avis</x-tk.badge>
                 </div>
 
@@ -248,16 +248,16 @@ new #[Layout('components.layouts.admin')] class extends Component
                     <div class="flex justify-between gap-4"><dt class="text-muted">Inscrit le</dt><dd class="font-medium text-content">{{ $client->created_at->format('d/m/Y') }}</dd></div>
                 </dl>
 
-                {{-- Derniers colis --}}
-                <p class="mt-6 text-xs font-semibold uppercase tracking-wider text-tk-400">Derniers colis</p>
+                {{-- Dernières demandes --}}
+                <p class="mt-6 text-xs font-semibold uppercase tracking-wider text-tk-400">Dernières demandes</p>
                 <div class="mt-2 space-y-1.5">
-                    @forelse ($client->parcels as $parcel)
-                        <a href="{{ route('admin.colis.show', $parcel->reference) }}" wire:navigate class="flex items-center justify-between rounded-tile px-2 py-1.5 text-sm hover:bg-tk-50">
-                            <span class="font-mono text-content">{{ $parcel->reference }}</span>
-                            <x-tk.badge :tone="$parcel->status->tone()" dot>{{ $parcel->status->label() }}</x-tk.badge>
+                    @forelse ($client->serviceRequests as $request)
+                        <a href="{{ route('admin.service-requests.show', $request->reference) }}" wire:navigate class="flex items-center justify-between rounded-tile px-2 py-1.5 text-sm hover:bg-tk-50">
+                            <span class="font-mono text-content">{{ $request->reference }}</span>
+                            <x-tk.badge :tone="$request->status->tone()" dot>{{ $request->status->label() }}</x-tk.badge>
                         </a>
                     @empty
-                        <p class="text-sm text-muted">Aucun colis.</p>
+                        <p class="text-sm text-muted">Aucune demande.</p>
                     @endforelse
                 </div>
 
@@ -273,7 +273,7 @@ new #[Layout('components.layouts.admin')] class extends Component
                     <div class="mt-6 flex flex-wrap gap-2 border-t border-line pt-4">
                         <x-tk.button wire:click="openEdit" variant="secondary" size="sm" icon="pencil">Modifier</x-tk.button>
                         <x-tk.button wire:click="toggleSuspend" variant="secondary" size="sm" icon="{{ $client->isSuspended() ? 'circle-check' : 'ban' }}">{{ $client->isSuspended() ? 'Réactiver' : 'Suspendre' }}</x-tk.button>
-                        <x-tk.button wire:click="deleteClient" wire:confirm="Supprimer ce client ? (les colis restent archivés)" variant="danger" size="sm" icon="trash-2">Supprimer</x-tk.button>
+                        <x-tk.button wire:click="deleteClient" wire:confirm="Supprimer ce client ?" variant="danger" size="sm" icon="trash-2">Supprimer</x-tk.button>
                     </div>
                 @endcan
             </div>

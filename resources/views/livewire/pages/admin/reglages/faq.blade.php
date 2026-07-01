@@ -56,7 +56,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         }
 
         $this->showForm = false;
-        $this->dispatch('sz-toast', type: 'success', message: $this->editingId ? 'Question mise à jour.' : 'Question ajoutée.');
+        $this->dispatch('tk-toast', type: 'success', message: $this->editingId ? 'Question mise à jour.' : 'Question ajoutée.');
     }
 
     public function togglePublish(FaqItem $item): void
@@ -67,7 +67,7 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function delete(FaqItem $item): void
     {
         $item->delete();
-        $this->dispatch('sz-toast', type: 'success', message: 'Question supprimée.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Question supprimée.');
     }
 
     /** @param  array<int, string>  $ids */

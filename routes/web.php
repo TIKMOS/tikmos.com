@@ -13,7 +13,6 @@ Volt::route('realisations', 'pages.public.projects-index')->name('projects');
 Volt::route('realisations/{project:slug}', 'pages.public.projects-show')->name('projects.show');
 Volt::route('blog', 'pages.public.blog-index')->name('blog');
 Volt::route('blog/{post:slug}', 'pages.public.blog-show')->name('blog.show');
-Route::view('achat', 'public.achat')->name('achat');
 Route::view('a-propos', 'public.about')->name('about');
 Route::view('equipe', 'public.team')->name('team');
 Route::view('temoignages', 'public.temoignages')->name('testimonials');
@@ -31,10 +30,7 @@ Route::view('cgv', 'public.cgv')->name('cgv');
 Route::view('confidentialite', 'public.privacy')->name('privacy');
 Route::view('cookies', 'public.cookies')->name('cookies');
 
-Volt::route('vols', 'pages.public.flights')->name('flights');
 Volt::route('contact', 'pages.public.contact')->name('contact');
-Volt::route('suivi', 'pages.public.track')->name('track');
-Volt::route('suivi/{reference}', 'pages.public.track')->name('track.show');
 
 // SEO
 Route::get('sitemap.xml', SitemapController::class)->name('sitemap');

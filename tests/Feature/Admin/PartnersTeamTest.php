@@ -61,6 +61,6 @@ it('ouvre et gère l’admin équipe', function (): void {
 
 it('refuse l’admin équipe sans permission', function (): void {
     $agent = User::factory()->create();
-    $agent->assignRole(Role::AgentCotonou->value);
+    $agent->assignRole(Role::Support->value);
     $this->actingAs($agent)->get('/admin/reglages/equipe')->assertForbidden();
 });

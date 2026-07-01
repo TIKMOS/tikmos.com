@@ -134,7 +134,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         $s->save();
 
         $this->heroImageFile = null;
-        $this->dispatch('sz-toast', type: 'success', message: 'Page d\'accueil enregistrée.');
+        $this->dispatch('tk-toast', type: 'success', message: 'Page d\'accueil enregistrée.');
     }
 
     public function with(): array
