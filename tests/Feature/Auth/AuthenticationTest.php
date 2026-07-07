@@ -60,10 +60,10 @@ it('connecte un client avec de bons identifiants vers /app', function (): void {
 
 it('connecte un membre du staff vers /admin quand le 2FA est désactivé', function (): void {
     config(['tikmos.two_factor.enabled' => false]);
-    makeUser(Role::Admin->value, ['email' => 'staff@sezy.africa', 'password' => bcrypt('secret123')]);
+    makeUser(Role::Admin->value, ['email' => 'staff@tikmos.com', 'password' => bcrypt('secret123')]);
 
     Volt::test('pages.auth.login')
-        ->set('email', 'staff@sezy.africa')
+        ->set('email', 'staff@tikmos.com')
         ->set('password', 'secret123')
         ->call('login')
         ->assertRedirect('/admin');

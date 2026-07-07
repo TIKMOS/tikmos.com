@@ -205,8 +205,8 @@ new #[Layout('components.layouts.admin')] class extends Component
         <x-tk.admin-section title="Footer & compteur" icon="badge-check">
             <div class="space-y-4">
                 <x-tk.field label="Slogan du footer" :error="$errors->first('footer_tagline')"><x-tk.input wire:model="footer_tagline" /></x-tk.field>
-                <x-tk.field label="Base du compteur de colis livrés" hint="L'affichage = cette base + les colis réellement livrés." :error="$errors->first('delivered_base')">
-                    <x-tk.input wire:model="delivered_base" type="number" min="0" icon="package-check" />
+                <x-tk.field label="Base du compteur « clients & projets accompagnés »" hint="L'affichage = cette base + les commandes et projets réellement livrés." :error="$errors->first('delivered_base')">
+                    <x-tk.input wire:model="delivered_base" type="number" min="0" icon="trending-up" />
                 </x-tk.field>
             </div>
         </x-tk.admin-section>

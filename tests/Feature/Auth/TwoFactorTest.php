@@ -20,17 +20,17 @@ beforeEach(function (): void {
 
 it('exige un code 2FA pour le staff', function (): void {
     Notification::fake();
-    makeUser(Role::Admin->value, ['email' => 'staff@sezy.africa', 'password' => bcrypt('secret123')]);
+    makeUser(Role::Admin->value, ['email' => 'staff@tikmos.com', 'password' => bcrypt('secret123')]);
 
     Volt::test('pages.auth.login')
-        ->set('email', 'staff@sezy.africa')
+        ->set('email', 'staff@tikmos.com')
         ->set('password', 'secret123')
         ->call('login')
         ->assertRedirect(route('two-factor.challenge'));
 
     $this->assertGuest();
     expect(session('2fa.user_id'))->not->toBeNull();
-    Notification::assertSentTo(User::where('email', 'staff@sezy.africa')->first(), TwoFactorCodeNotification::class);
+    Notification::assertSentTo(User::where('email', 'staff@tikmos.com')->first(), TwoFactorCodeNotification::class);
 });
 
 it('ne demande pas de 2FA à un client', function (): void {

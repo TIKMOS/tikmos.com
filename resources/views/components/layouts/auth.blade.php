@@ -15,7 +15,7 @@
     <div class="grid min-h-dvh lg:grid-cols-2">
         {{-- Panneau de marque (desktop) — image + overlay --}}
         <div class="relative hidden flex-col justify-between overflow-hidden p-10 text-paper lg:flex">
-            <img src="https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=1100&q=70&auto=format&fit=crop"
+            <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1100&q=70&auto=format&fit=crop"
                  alt="" class="absolute inset-0 h-full w-full object-cover" loading="eager" />
             <div class="absolute inset-0 bg-gradient-to-tr from-ink via-ink/85 to-ink/55"></div>
 
@@ -23,17 +23,14 @@
 
             <div class="relative">
                 <div class="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium backdrop-blur">
-                    <svg viewBox="0 0 5 3" class="h-3 w-[18px] rounded-[2px]"><rect width="5" height="3" fill="#FCD116"/><rect y="1.5" width="5" height="1.5" fill="#E8112D"/><rect width="2" height="3" fill="#008751"/></svg>
-                    Cotonou
-                    <span class="text-white/40">↔</span>
-                    <svg viewBox="0 0 3 2" class="h-3 w-[18px] rounded-[2px]"><rect width="1" height="2" fill="#0055A4"/><rect width="1" height="2" x="1" fill="#fff"/><rect width="1" height="2" x="2" fill="#EF4135"/></svg>
-                    Paris
+                    <span class="h-1.5 w-1.5 rounded-full bg-gold"></span>
+                    Expertise · Formation · Data &amp; IA
                 </div>
-                <h1 class="max-w-md font-display text-4xl font-black leading-[1.05]">Le pont de confiance entre la diaspora et chez soi.</h1>
-                <p class="mt-4 max-w-sm text-white/70">Colis Paris ↔ Cotonou suivis à la trace, achat &amp; commande, mobilité.</p>
+                <h1 class="max-w-md font-display text-4xl font-black leading-[1.05]">L'expertise qui exécute.</h1>
+                <p class="mt-4 max-w-sm text-white/70">Formation, data/IA et solutions informatiques sur mesure — pour vos projets les plus ambitieux.</p>
             </div>
 
-            <p class="relative text-xs text-white/50">© {{ date('Y') }} Tikmos</p>
+            <p class="relative text-xs text-white/50">© {{ date('Y') }} {{ config('app.name') }}</p>
         </div>
 
         {{-- Formulaire --}}

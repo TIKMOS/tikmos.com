@@ -27,13 +27,13 @@ it('crée un membre du personnel et envoie l’invitation', function (): void {
     Volt::actingAs(superAdmin())->test('pages.admin.equipe')
         ->call('openCreate')
         ->set('fName', 'Nouveau Staff')
-        ->set('fEmail', 'staff@sezy.test')
+        ->set('fEmail', 'staff@tikmos.test')
         ->set('fRole', Role::Support->value)
         ->set('fMode', 'email')
         ->call('save')
         ->assertHasNoErrors();
 
-    $invited = User::where('email', 'staff@sezy.test')->first();
+    $invited = User::where('email', 'staff@tikmos.test')->first();
     expect($invited)->not->toBeNull()
         ->and($invited->hasRole(Role::Support->value))->toBeTrue()
         ->and($invited->invited_at)->not->toBeNull();
@@ -46,14 +46,14 @@ it('crée un membre avec mot de passe défini (sans email)', function (): void {
     Volt::actingAs(superAdmin())->test('pages.admin.equipe')
         ->call('openCreate')
         ->set('fName', 'Staff PW')
-        ->set('fEmail', 'staffpw@sezy.test')
+        ->set('fEmail', 'staffpw@tikmos.test')
         ->set('fRole', Role::Support->value)
         ->set('fMode', 'password')
         ->set('fPassword', 'motdepasse123')
         ->call('save')
         ->assertHasNoErrors();
 
-    $u = User::where('email', 'staffpw@sezy.test')->first();
+    $u = User::where('email', 'staffpw@tikmos.test')->first();
     expect($u)->not->toBeNull()
         ->and($u->invited_at)->toBeNull()
         ->and(Hash::check('motdepasse123', $u->password))->toBeTrue();
@@ -116,14 +116,14 @@ it('crée un client depuis l’admin', function (): void {
     Volt::actingAs($admin)->test('pages.admin.clients')
         ->call('openCreate')
         ->set('cName', 'Client Test')
-        ->set('cEmail', 'newclient@sezy.test')
+        ->set('cEmail', 'newclient@tikmos.test')
         ->set('cPhone', '+229 90 00 00 00')
         ->set('cCity', 'Cotonou')
         ->set('cPassword', 'motdepasse123')
         ->call('saveClient')
         ->assertHasNoErrors();
 
-    $c = User::where('email', 'newclient@sezy.test')->first();
+    $c = User::where('email', 'newclient@tikmos.test')->first();
     expect($c)->not->toBeNull()
         ->and($c->hasRole(Role::Client->value))->toBeTrue()
         ->and($c->city)->toBe('Cotonou');
