@@ -26,9 +26,9 @@ return [
     'settings' => [
         'default' => [
             'HTML.Doctype' => 'HTML 4.01 Transitional',
-            'HTML.Allowed' => 'div,b,strong,i,em,u,s,a[href|title|target|rel],ul,ol,li,p[style],br,span[style],img[width|height|alt|src],h2,h3,h4,blockquote,code,pre,hr',
-            'CSS.AllowedProperties' => 'font,font-size,font-weight,font-style,font-family,text-decoration,padding-left,color,background-color,text-align',
-            'AutoFormat.AutoParagraph' => true,
+            'HTML.Allowed' => 'div,b,strong,i,em,u,s,a[href|title|target|rel],ul,ol,li,p[style],br,span[style],img[src|alt|width|height],h2[style],h3[style],h4[style],blockquote,code,pre,hr,table,colgroup,col[span|style],thead,tbody,tr,td[colspan|rowspan|style],th[colspan|rowspan|style]',
+            'CSS.AllowedProperties' => 'font,font-size,font-weight,font-style,font-family,text-decoration,padding-left,color,background-color,text-align,width',
+            'AutoFormat.AutoParagraph' => false,
             'AutoFormat.RemoveEmpty' => true,
         ],
         'test' => [

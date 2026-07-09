@@ -24,6 +24,29 @@ function richAdmin(): User
 
 $dirtyHtml = '<h2>Programme</h2><p>Contenu <strong>enrichi</strong></p><ul><li>Point</li></ul><script>alert(1)</script>';
 
+it('conserve les tableaux, images alignées et retire les vecteurs XSS', function (): void {
+    $dirty = '<h2 style="text-align:center">Titre centré</h2>'
+        .'<table><tbody><tr><th>Col</th></tr><tr><td>Cellule</td></tr></tbody></table>'
+        .'<p style="text-align:right">Droite</p>'
+        .'<img src="/storage/editor/x.png" alt="ok" onerror="alert(1)">'
+        .'<a href="javascript:alert(1)">piège</a>'
+        .'<script>alert(1)</script>';
+
+    $clean = clean($dirty);
+
+    expect($clean)->toContain('<table>')
+        ->and($clean)->toContain('<td>Cellule</td>')
+        ->and($clean)->toContain('<th>Col</th>')
+        ->and($clean)->toContain('text-align:center')
+        ->and($clean)->toContain('text-align:right')
+        ->and($clean)->toContain('<img')
+        ->and($clean)->toContain('src="/storage/editor/x.png"')
+        // Vecteurs retirés
+        ->and($clean)->not->toContain('<script>')
+        ->and($clean)->not->toContain('onerror')
+        ->and($clean)->not->toContain('javascript:');
+});
+
 /**
  * Les zones de contenu long (éditeur riche) doivent conserver le HTML de mise en
  * forme MAIS être assainies (pas de <script>) avant stockage — puis rendues en {!! !!}.

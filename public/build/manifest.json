@@ -316,7 +316,7 @@
     "src": "_space-mono-700-normal-mWgeinG7.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Dwl8Li4h.css",
+    "file": "assets/app-dfHp-K84.css",
     "name": "app",
     "names": [
       "app.css"
@@ -325,7 +325,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-dPPa5Zd2.js",
+    "file": "assets/app-SJZ69oV_.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -334,7 +334,7 @@
     ]
   },
   "resources/js/tiptap-editor.js": {
-    "file": "assets/tiptap-editor-CUNg5g8J.js",
+    "file": "assets/tiptap-editor-7pLVSTJ_.js",
     "name": "tiptap-editor",
     "src": "resources/js/tiptap-editor.js",
     "isDynamicEntry": true

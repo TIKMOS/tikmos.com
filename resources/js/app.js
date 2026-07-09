@@ -92,18 +92,37 @@ window.szSortable = (onReorder) => ({
 
 // --- Éditeur riche TipTap (composant x-tk.editor) ---
 // Factory Alpine : pilote un TipTap lié à une propriété Livewire (par nom).
-window.szEditor = (modelName) => {
+window.szEditor = (modelName, uploadUrl = null) => {
     // IMPORTANT : l'instance TipTap est gardée dans une variable de CLÔTURE, jamais dans
     // une propriété réactive d'Alpine. Alpine proxifie en profondeur ses propriétés ;
     // or ProseMirror compare des identités de nœuds/états et casse si on lui passe des
     // objets proxifiés (« Applying a mismatched transaction »). Seuls les indicateurs
-    // d'UI (active/canUndo/canRedo) sont réactifs. C'est le patron officiel TipTap+Alpine.
+    // d'UI (active/canUndo/canRedo/inTable) sont réactifs. Patron officiel TipTap+Alpine.
     let editor = null
+
+    // Upload d'image portable : POST multipart `file` → { url }. (null = pas d'upload,
+    // on retombe sur la saisie d'URL.)
+    const csrf = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+    const uploadImage = uploadUrl
+        ? async (file) => {
+            const body = new FormData()
+            body.append('file', file)
+            const res = await fetch(uploadUrl, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf(), Accept: 'application/json' },
+                body,
+            })
+            if (!res.ok) throw new Error('upload ' + res.status)
+            return (await res.json()).url
+        }
+        : null
 
     return {
         active: {},
         canUndo: false,
         canRedo: false,
+        inTable: false,
+        uploading: false,
         async init() {
             // Un seul module = un seul chunk = une seule copie de ProseMirror.
             const { createEditor } = await import('./tiptap-editor.js')
@@ -112,6 +131,7 @@ window.szEditor = (modelName) => {
             editor = createEditor({
                 element: this.$refs.editor,
                 content: wire.get(modelName) || '',
+                uploadImage,
                 onUpdate: ({ editor: e }) => {
                     // Defer (3e arg false) : pas de round-trip serveur à chaque frappe.
                     wire.set(modelName, e.getHTML(), false)
@@ -135,7 +155,11 @@ window.szEditor = (modelName) => {
                 blockquote: editor.isActive('blockquote'),
                 codeBlock: editor.isActive('codeBlock'),
                 link: editor.isActive('link'),
+                alignLeft: editor.isActive({ textAlign: 'left' }),
+                alignCenter: editor.isActive({ textAlign: 'center' }),
+                alignRight: editor.isActive({ textAlign: 'right' }),
             }
+            this.inTable = editor.isActive('table')
             this.canUndo = editor.can().undo()
             this.canRedo = editor.can().redo()
         },
@@ -155,10 +179,42 @@ window.szEditor = (modelName) => {
                 codeBlock: () => c.toggleCodeBlock().run(),
                 hr: () => c.setHorizontalRule().run(),
                 clear: () => c.unsetAllMarks().clearNodes().run(),
+                alignLeft: () => c.setTextAlign('left').run(),
+                alignCenter: () => c.setTextAlign('center').run(),
+                alignRight: () => c.setTextAlign('right').run(),
+                table: () => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+                addRow: () => c.addRowAfter().run(),
+                addCol: () => c.addColumnAfter().run(),
+                delRow: () => c.deleteRow().run(),
+                delCol: () => c.deleteColumn().run(),
+                delTable: () => c.deleteTable().run(),
                 undo: () => c.undo().run(),
                 redo: () => c.redo().run(),
             }
             actions[name]?.()
+        },
+        // Image : upload si configuré, sinon saisie d'URL.
+        pickImage() {
+            if (uploadImage) this.$refs.imageInput?.click()
+            else this.imageByUrl()
+        },
+        imageByUrl() {
+            const url = window.prompt("URL de l'image :", 'https://')
+            if (url) editor.chain().focus().setImage({ src: url }).run()
+        },
+        async onImagePicked(event) {
+            const file = event.target.files?.[0]
+            event.target.value = ''
+            if (!file || !uploadImage) return
+            this.uploading = true
+            try {
+                const url = await uploadImage(file)
+                editor.chain().focus().setImage({ src: url }).run()
+            } catch (e) {
+                window.alert("Échec de l'upload de l'image.")
+            } finally {
+                this.uploading = false
+            }
         },
         toggleLink() {
             if (!editor) return

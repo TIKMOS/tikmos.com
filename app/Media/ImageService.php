@@ -6,6 +6,7 @@ namespace App\Media;
 
 use App\Settings\MediaSettings;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -31,6 +32,27 @@ class ImageService
             $field => ['array', 'max:'.$max],
             $field.'.*' => ['image', $this->settings->mimesRule(), 'max:'.$this->settings->max_size_kb],
         ];
+    }
+
+    /**
+     * Règles de validation pour un fichier image unique (upload inline éditeur).
+     *
+     * @return array<int, string>
+     */
+    public function imageRules(): array
+    {
+        return ['image', $this->settings->mimesRule(), 'max:'.$this->settings->max_size_kb];
+    }
+
+    /**
+     * Stocke une image « inline » (insérée dans un corps de texte riche) sur le
+     * disque public et renvoie son URL. Indépendant d'un modèle (le HTML porte le src).
+     */
+    public function storeInlineImage(UploadedFile $file, string $disk = 'public'): string
+    {
+        $path = $file->store('editor/'.now()->format('Y/m'), $disk);
+
+        return (string) Storage::disk($disk)->url((string) $path);
     }
 
     /**

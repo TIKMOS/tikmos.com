@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Http\Controllers\EditorImageController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -13,6 +14,9 @@ $staffRoles = implode('|', array_map(fn (Role $r) => $r->value, Role::management
 
 Route::middleware(['auth', 'approved', 'role:'.$staffRoles])->group(function (): void {
     Volt::route('/', 'pages.admin.dashboard')->name('dashboard');
+
+    // Upload d'images inline pour l'éditeur riche (contrat : POST file → { url }).
+    Route::post('editor/image', EditorImageController::class)->name('editor.image');
 
     // Services & devis (Tikmos)
     Volt::route('services', 'pages.admin.services')->middleware('permission:services.manage')->name('services');
