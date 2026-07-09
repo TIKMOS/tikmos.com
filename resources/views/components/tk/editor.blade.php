@@ -30,7 +30,7 @@
         </div>
 
         {{-- Zone d'édition (préservée du re-render Livewire) --}}
-        <div class="px-4 py-3" wire:ignore>
+        <div class="prose-tk max-w-none px-4 py-3" wire:ignore>
             <div x-ref="editor"></div>
         </div>
     </div>

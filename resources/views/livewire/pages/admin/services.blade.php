@@ -167,7 +167,7 @@ new #[Layout('components.layouts.admin')] class extends Component
                     <x-tk.field label="Prix affiché (optionnel)"><x-tk.input wire:model="price_label" placeholder="Sur devis" /></x-tk.field>
                     <x-tk.media-input model="image" :preview="$currentImage" label="Illustration" hint="PNG/JPG/WebP, 2 Mo." />
                     <x-tk.field label="Description" :error="$errors->first('body')">
-                        <textarea wire:model="body" rows="5" class="w-full rounded-input border border-tk-300 bg-surface px-4 py-3 text-[15px] text-content focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/10"></textarea>
+                        <x-tk.editor wire:model="body" />
                     </x-tk.field>
                     <div class="flex gap-3 pt-2">
                         <x-tk.button type="submit" variant="primary"><span wire:loading.remove wire:target="save">Enregistrer</span><span wire:loading wire:target="save">…</span></x-tk.button>

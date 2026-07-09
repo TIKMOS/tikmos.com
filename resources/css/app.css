@@ -195,3 +195,49 @@
     .tk-marquee { display: flex; width: max-content; animation: tk-marquee 28s linear infinite; }
     @media (prefers-reduced-motion: reduce) { .tk-marquee { animation: none; } }
 }
+
+@layer components {
+    /* Typographie du contenu riche (éditeur x-tk.editor → rendu front {!! !!}).
+       Utilisée partout où l'on affiche du HTML éditable : services, réalisations,
+       blog, produits, pages légales, FAQ. */
+    .prose-tk { line-height: 1.7; }
+    .prose-tk > :first-child { margin-top: 0; }
+    .prose-tk > :last-child { margin-bottom: 0; }
+    .prose-tk p { margin: 1em 0; }
+    .prose-tk h2 {
+        font-family: var(--font-display); font-weight: 800; font-size: 1.5rem;
+        line-height: 1.2; letter-spacing: -0.01em; margin: 1.8em 0 0.6em; color: var(--color-content);
+    }
+    .prose-tk h3 {
+        font-family: var(--font-display); font-weight: 700; font-size: 1.2rem;
+        line-height: 1.3; margin: 1.5em 0 0.5em; color: var(--color-content);
+    }
+    .prose-tk h4 { font-weight: 700; font-size: 1.05rem; margin: 1.3em 0 0.4em; color: var(--color-content); }
+    .prose-tk ul, .prose-tk ol { margin: 1em 0; padding-left: 1.5rem; }
+    .prose-tk ul { list-style: disc; }
+    .prose-tk ol { list-style: decimal; }
+    .prose-tk li { margin: 0.4em 0; padding-left: 0.25rem; }
+    .prose-tk li::marker { color: var(--color-gold); }
+    .prose-tk a {
+        color: var(--color-gold-600); text-decoration: underline;
+        text-underline-offset: 2px; font-weight: 500;
+    }
+    .prose-tk a:hover { color: var(--color-content); }
+    .prose-tk strong { font-weight: 700; color: var(--color-content); }
+    .prose-tk em { font-style: italic; }
+    .prose-tk blockquote {
+        border-left: 3px solid var(--color-gold); padding-left: 1rem;
+        margin: 1.3em 0; color: var(--color-muted); font-style: italic;
+    }
+    .prose-tk code {
+        font-family: var(--font-mono); font-size: 0.9em;
+        background: var(--color-tk-100); padding: 0.15em 0.4em; border-radius: 6px;
+    }
+    .prose-tk pre {
+        background: var(--color-tk-900); color: var(--color-paper);
+        padding: 1rem; border-radius: var(--radius-card); overflow-x: auto; margin: 1.2em 0;
+    }
+    .prose-tk pre code { background: none; padding: 0; color: inherit; }
+    .prose-tk img { border-radius: var(--radius-card); margin: 1.2em 0; }
+    .prose-tk hr { border: 0; border-top: 1px solid var(--color-line); margin: 2em 0; }
+}

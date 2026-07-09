@@ -174,7 +174,7 @@ new #[Layout('components.layouts.admin')] class extends Component
                     <x-tk.field label="Résultats" :error="$errors->first('results')"><x-tk.input wire:model="results" placeholder="Ex. reporting automatisé, gain de temps" /></x-tk.field>
                     <x-tk.media-input model="cover" :preview="$currentCover" label="Image de couverture" hint="PNG/JPG/WebP, 4 Mo." />
                     <x-tk.field label="Étude de cas" :error="$errors->first('body')">
-                        <textarea wire:model="body" rows="5" class="w-full rounded-input border border-tk-300 bg-surface px-4 py-3 text-[15px] text-content focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/10"></textarea>
+                        <x-tk.editor wire:model="body" />
                     </x-tk.field>
                     <div class="flex gap-3 pt-2">
                         <x-tk.button type="submit" variant="primary"><span wire:loading.remove wire:target="save">Enregistrer</span><span wire:loading wire:target="save">…</span></x-tk.button>
