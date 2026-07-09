@@ -40,20 +40,22 @@ new #[Layout('components.layouts.admin')] class extends Component
         return $slug;
     }
 
-    public function edit(ProductCategory $category): void
+    public function edit(int $id): void
     {
+        $category = ProductCategory::findOrFail($id);
         $this->editingId = $category->id;
         $this->name = $category->name;
     }
 
-    public function toggle(ProductCategory $category): void
+    public function toggle(int $id): void
     {
+        $category = ProductCategory::findOrFail($id);
         $category->update(['is_active' => ! $category->is_active]);
     }
 
-    public function delete(ProductCategory $category): void
+    public function delete(int $id): void
     {
-        $category->delete();
+        ProductCategory::findOrFail($id)->delete();
         $this->dispatch('tk-toast', type: 'success', message: 'Catégorie supprimée.');
     }
 

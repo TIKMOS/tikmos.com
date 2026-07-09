@@ -49,8 +49,9 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->showForm = true;
     }
 
-    public function edit(Product $product): void
+    public function edit(int $id): void
     {
+        $product = Product::findOrFail($id);
         $this->editingId = $product->id;
         $this->name = $product->name;
         $this->brand = (string) $product->brand;
@@ -158,9 +159,9 @@ new #[Layout('components.layouts.admin')] class extends Component
         $product->update(['is_active' => ! $product->is_active]);
     }
 
-    public function delete(Product $product): void
+    public function delete(int $id): void
     {
-        $product->delete();
+        Product::findOrFail($id)->delete();
         $this->dispatch('tk-toast', type: 'success', message: 'Produit supprimé.');
     }
 

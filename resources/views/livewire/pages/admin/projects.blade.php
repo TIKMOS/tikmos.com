@@ -42,8 +42,9 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->showForm = true;
     }
 
-    public function edit(Project $project): void
+    public function edit(int $id): void
     {
+        $project = Project::findOrFail($id);
         $this->editingId = $project->id;
         $this->title = $project->title;
         $this->category = (string) $project->category;
@@ -102,9 +103,9 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->dispatch('tk-toast', type: 'success', message: $this->editingId ? 'Réalisation mise à jour.' : 'Réalisation créée.');
     }
 
-    public function delete(Project $project): void
+    public function delete(int $id): void
     {
-        $project->delete();
+        Project::findOrFail($id)->delete();
         $this->dispatch('tk-toast', type: 'success', message: 'Réalisation supprimée.');
     }
 

@@ -42,8 +42,9 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->showForm = true;
     }
 
-    public function edit(Post $post): void
+    public function edit(int $id): void
     {
+        $post = Post::findOrFail($id);
         $this->editingId = $post->id;
         $this->title = $post->title;
         $this->post_category_id = $post->post_category_id;
@@ -99,9 +100,9 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->dispatch('tk-toast', type: 'success', message: $this->editingId ? 'Article mis à jour.' : 'Article créé.');
     }
 
-    public function delete(Post $post): void
+    public function delete(int $id): void
     {
-        $post->delete();
+        Post::findOrFail($id)->delete();
         $this->dispatch('tk-toast', type: 'success', message: 'Article supprimé.');
     }
 

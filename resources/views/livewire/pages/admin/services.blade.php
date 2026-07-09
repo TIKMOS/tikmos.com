@@ -40,8 +40,9 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->showForm = true;
     }
 
-    public function edit(Service $service): void
+    public function edit(int $id): void
     {
+        $service = Service::findOrFail($id);
         $this->editingId = $service->id;
         $this->title = $service->title;
         $this->category = $service->category->value;
@@ -94,9 +95,9 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->dispatch('tk-toast', type: 'success', message: $this->editingId ? 'Service mis à jour.' : 'Service créé.');
     }
 
-    public function delete(Service $service): void
+    public function delete(int $id): void
     {
-        $service->delete();
+        Service::findOrFail($id)->delete();
         $this->dispatch('tk-toast', type: 'success', message: 'Service supprimé.');
     }
 
