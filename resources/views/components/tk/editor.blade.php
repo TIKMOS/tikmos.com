@@ -17,16 +17,22 @@
             @endphp
             <button type="button" class="{{ $btn }}" :class="active.bold && 'bg-ink text-paper hover:bg-ink'" @click="run('bold')" title="Gras" aria-label="Gras"><x-lucide-bold class="h-4 w-4" /></button>
             <button type="button" class="{{ $btn }}" :class="active.italic && 'bg-ink text-paper hover:bg-ink'" @click="run('italic')" title="Italique" aria-label="Italique"><x-lucide-italic class="h-4 w-4" /></button>
+            <button type="button" class="{{ $btn }}" :class="active.underline && 'bg-ink text-paper hover:bg-ink'" @click="run('underline')" title="Souligné" aria-label="Souligné"><x-lucide-underline class="h-4 w-4" /></button>
+            <button type="button" class="{{ $btn }}" :class="active.strike && 'bg-ink text-paper hover:bg-ink'" @click="run('strike')" title="Barré" aria-label="Barré"><x-lucide-strikethrough class="h-4 w-4" /></button>
             <span class="mx-1 h-5 w-px bg-line"></span>
             <button type="button" class="{{ $btn }}" :class="active.h2 && 'bg-ink text-paper hover:bg-ink'" @click="run('h2')" title="Titre" aria-label="Titre niveau 2"><x-lucide-heading-2 class="h-4 w-4" /></button>
             <button type="button" class="{{ $btn }}" :class="active.h3 && 'bg-ink text-paper hover:bg-ink'" @click="run('h3')" title="Sous-titre" aria-label="Titre niveau 3"><x-lucide-heading-3 class="h-4 w-4" /></button>
             <span class="mx-1 h-5 w-px bg-line"></span>
             <button type="button" class="{{ $btn }}" :class="active.bullet && 'bg-ink text-paper hover:bg-ink'" @click="run('bullet')" title="Liste à puces" aria-label="Liste à puces"><x-lucide-list class="h-4 w-4" /></button>
             <button type="button" class="{{ $btn }}" :class="active.ordered && 'bg-ink text-paper hover:bg-ink'" @click="run('ordered')" title="Liste numérotée" aria-label="Liste numérotée"><x-lucide-list-ordered class="h-4 w-4" /></button>
+            <button type="button" class="{{ $btn }}" :class="active.blockquote && 'bg-ink text-paper hover:bg-ink'" @click="run('blockquote')" title="Citation" aria-label="Citation"><x-lucide-text-quote class="h-4 w-4" /></button>
+            <button type="button" class="{{ $btn }}" :class="active.codeBlock && 'bg-ink text-paper hover:bg-ink'" @click="run('codeBlock')" title="Bloc de code" aria-label="Bloc de code"><x-lucide-code class="h-4 w-4" /></button>
             <button type="button" class="{{ $btn }}" :class="active.link && 'bg-ink text-paper hover:bg-ink'" @click="toggleLink()" title="Lien" aria-label="Lien"><x-lucide-link class="h-4 w-4" /></button>
+            <button type="button" class="{{ $btn }}" @click="run('hr')" title="Séparateur" aria-label="Séparateur"><x-lucide-minus class="h-4 w-4" /></button>
             <span class="mx-1 h-5 w-px bg-line"></span>
-            <button type="button" class="{{ $btn }}" @click="run('undo')" title="Annuler" aria-label="Annuler"><x-lucide-undo-2 class="h-4 w-4" /></button>
-            <button type="button" class="{{ $btn }}" @click="run('redo')" title="Rétablir" aria-label="Rétablir"><x-lucide-redo-2 class="h-4 w-4" /></button>
+            <button type="button" class="{{ $btn }}" @click="run('clear')" title="Effacer la mise en forme" aria-label="Effacer la mise en forme"><x-lucide-eraser class="h-4 w-4" /></button>
+            <button type="button" class="{{ $btn }} disabled:opacity-40 disabled:pointer-events-none" :disabled="!canUndo" @click="run('undo')" title="Annuler" aria-label="Annuler"><x-lucide-undo-2 class="h-4 w-4" /></button>
+            <button type="button" class="{{ $btn }} disabled:opacity-40 disabled:pointer-events-none" :disabled="!canRedo" @click="run('redo')" title="Rétablir" aria-label="Rétablir"><x-lucide-redo-2 class="h-4 w-4" /></button>
         </div>
 
         {{-- Zone d'édition (préservée du re-render Livewire) --}}

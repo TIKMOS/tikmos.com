@@ -92,74 +92,92 @@ window.szSortable = (onReorder) => ({
 
 // --- Éditeur riche TipTap (composant x-tk.editor) ---
 // Factory Alpine : pilote un TipTap lié à une propriété Livewire (par nom).
-window.szEditor = (modelName) => ({
-    editor: null,
-    active: {},
-    async init() {
-        // Import dynamique : TipTap (~127 Ko gzip) n'est chargé que sur les écrans
-        // d'édition (admin), jamais sur la vitrine publique.
-        const [{ Editor }, { default: StarterKit }, { default: Link }] = await Promise.all([
-            import('@tiptap/core'),
-            import('@tiptap/starter-kit'),
-            import('@tiptap/extension-link'),
-        ])
-        const wire = this.$wire
-        this.editor = new Editor({
-            element: this.$refs.editor,
-            extensions: [
-                StarterKit.configure({ heading: { levels: [2, 3] } }),
-                Link.configure({ openOnClick: false, autolink: true }),
-            ],
-            content: wire.get(modelName) || '',
-            editorProps: {
-                attributes: { class: 'prose-sz max-w-none min-h-[180px] focus:outline-none' },
-            },
-            onUpdate: ({ editor }) => {
-                // Defer (3e arg false) : pas de round-trip serveur à chaque frappe.
-                wire.set(modelName, editor.getHTML(), false)
-                this.refresh()
-            },
-            onSelectionUpdate: () => this.refresh(),
-        })
-        this.refresh()
-    },
-    refresh() {
-        const e = this.editor
-        this.active = {
-            bold: e.isActive('bold'),
-            italic: e.isActive('italic'),
-            h2: e.isActive('heading', { level: 2 }),
-            h3: e.isActive('heading', { level: 3 }),
-            bullet: e.isActive('bulletList'),
-            ordered: e.isActive('orderedList'),
-            link: e.isActive('link'),
-        }
-    },
-    run(name) {
-        if (!this.editor) return
-        const c = this.editor.chain().focus()
-        const actions = {
-            bold: () => c.toggleBold().run(),
-            italic: () => c.toggleItalic().run(),
-            h2: () => c.toggleHeading({ level: 2 }).run(),
-            h3: () => c.toggleHeading({ level: 3 }).run(),
-            bullet: () => c.toggleBulletList().run(),
-            ordered: () => c.toggleOrderedList().run(),
-            undo: () => c.undo().run(),
-            redo: () => c.redo().run(),
-        }
-        actions[name]?.()
-    },
-    toggleLink() {
-        if (!this.editor) return
-        if (this.editor.isActive('link')) {
-            this.editor.chain().focus().unsetLink().run()
-            return
-        }
-        const url = window.prompt('URL du lien :')
-        if (url) this.editor.chain().focus().setLink({ href: url }).run()
-    },
-    destroy() {
-        this.editor?.destroy()
-    },
-})
+window.szEditor = (modelName) => {
+    // IMPORTANT : l'instance TipTap est gardée dans une variable de CLÔTURE, jamais dans
+    // une propriété réactive d'Alpine. Alpine proxifie en profondeur ses propriétés ;
+    // or ProseMirror compare des identités de nœuds/états et casse si on lui passe des
+    // objets proxifiés (« Applying a mismatched transaction »). Seuls les indicateurs
+    // d'UI (active/canUndo/canRedo) sont réactifs. C'est le patron officiel TipTap+Alpine.
+    let editor = null
+
+    return {
+        active: {},
+        canUndo: false,
+        canRedo: false,
+        async init() {
+            // Un seul module = un seul chunk = une seule copie de ProseMirror.
+            const { createEditor } = await import('./tiptap-editor.js')
+            const wire = this.$wire
+            const self = this
+            editor = createEditor({
+                element: this.$refs.editor,
+                content: wire.get(modelName) || '',
+                onUpdate: ({ editor: e }) => {
+                    // Defer (3e arg false) : pas de round-trip serveur à chaque frappe.
+                    wire.set(modelName, e.getHTML(), false)
+                    self.refresh()
+                },
+                onSelectionUpdate: () => self.refresh(),
+            })
+            this.refresh()
+        },
+        refresh() {
+            if (!editor) return
+            this.active = {
+                bold: editor.isActive('bold'),
+                italic: editor.isActive('italic'),
+                underline: editor.isActive('underline'),
+                strike: editor.isActive('strike'),
+                h2: editor.isActive('heading', { level: 2 }),
+                h3: editor.isActive('heading', { level: 3 }),
+                bullet: editor.isActive('bulletList'),
+                ordered: editor.isActive('orderedList'),
+                blockquote: editor.isActive('blockquote'),
+                codeBlock: editor.isActive('codeBlock'),
+                link: editor.isActive('link'),
+            }
+            this.canUndo = editor.can().undo()
+            this.canRedo = editor.can().redo()
+        },
+        run(name) {
+            if (!editor) return
+            const c = editor.chain().focus()
+            const actions = {
+                bold: () => c.toggleBold().run(),
+                italic: () => c.toggleItalic().run(),
+                underline: () => c.toggleUnderline().run(),
+                strike: () => c.toggleStrike().run(),
+                h2: () => c.toggleHeading({ level: 2 }).run(),
+                h3: () => c.toggleHeading({ level: 3 }).run(),
+                bullet: () => c.toggleBulletList().run(),
+                ordered: () => c.toggleOrderedList().run(),
+                blockquote: () => c.toggleBlockquote().run(),
+                codeBlock: () => c.toggleCodeBlock().run(),
+                hr: () => c.setHorizontalRule().run(),
+                clear: () => c.unsetAllMarks().clearNodes().run(),
+                undo: () => c.undo().run(),
+                redo: () => c.redo().run(),
+            }
+            actions[name]?.()
+        },
+        toggleLink() {
+            if (!editor) return
+            if (editor.isActive('link')) {
+                editor.chain().focus().unsetLink().run()
+                return
+            }
+            const prev = editor.getAttributes('link').href || 'https://'
+            const url = window.prompt('URL du lien :', prev)
+            if (url === null) return
+            if (url === '') {
+                editor.chain().focus().unsetLink().run()
+                return
+            }
+            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+        },
+        destroy() {
+            editor?.destroy()
+            editor = null
+        },
+    }
+}

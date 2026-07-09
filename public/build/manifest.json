@@ -315,33 +315,8 @@
     "file": "assets/space-mono-700-normal-mWgeinG7.woff2",
     "src": "_space-mono-700-normal-mWgeinG7.woff2"
   },
-  "node_modules/@tiptap/core/dist/index.js": {
-    "file": "assets/dist-6cIKtbUf.js",
-    "name": "dist",
-    "src": "node_modules/@tiptap/core/dist/index.js",
-    "isDynamicEntry": true
-  },
-  "node_modules/@tiptap/extension-link/dist/index.js": {
-    "file": "assets/dist-DVAj9GRH.js",
-    "name": "dist",
-    "src": "node_modules/@tiptap/extension-link/dist/index.js",
-    "isDynamicEntry": true,
-    "imports": [
-      "node_modules/@tiptap/core/dist/index.js"
-    ]
-  },
-  "node_modules/@tiptap/starter-kit/dist/index.js": {
-    "file": "assets/dist-yZ_ru4rJ.js",
-    "name": "dist",
-    "src": "node_modules/@tiptap/starter-kit/dist/index.js",
-    "isDynamicEntry": true,
-    "imports": [
-      "node_modules/@tiptap/core/dist/index.js",
-      "node_modules/@tiptap/extension-link/dist/index.js"
-    ]
-  },
   "resources/css/app.css": {
-    "file": "assets/app-BjYyk9Zn.css",
+    "file": "assets/app-Dwl8Li4h.css",
     "name": "app",
     "names": [
       "app.css"
@@ -350,14 +325,18 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-Bngwzqqh.js",
+    "file": "assets/app-dPPa5Zd2.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
-      "node_modules/@tiptap/core/dist/index.js",
-      "node_modules/@tiptap/starter-kit/dist/index.js",
-      "node_modules/@tiptap/extension-link/dist/index.js"
+      "resources/js/tiptap-editor.js"
     ]
+  },
+  "resources/js/tiptap-editor.js": {
+    "file": "assets/tiptap-editor-CUNg5g8J.js",
+    "name": "tiptap-editor",
+    "src": "resources/js/tiptap-editor.js",
+    "isDynamicEntry": true
   }
 }
