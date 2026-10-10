@@ -4,16 +4,16 @@ Guide concret de mise en production sur `tikmos.com`. Le socle est **prod-ready*
 Laravel (`config`/`route`/`view`/`event`) se construisent, aucune closure non-cachable. **Aucun Node
 requis sur le serveur** — `public/build` est versionné.
 
-## 1. Clé de déploiement (deploy key GitLab)
+## 1. Clé de déploiement (deploy key GitHub)
 Sur le serveur :
 ```bash
 ssh-keygen -t ed25519 -C "deploy@tikmos" -f ~/.ssh/tikmos_deploy -N ""
-cat ~/.ssh/tikmos_deploy.pub    # → GitLab : Settings → Repository → Deploy keys (lecture seule)
+cat ~/.ssh/tikmos_deploy.pub    # → dépôt GitHub : Settings → Deploy keys (lecture seule)
 ```
 `~/.ssh/config` :
 ```
-Host gitlab.com
-  HostName gitlab.com
+Host github.com
+  HostName github.com
   User git
   IdentityFile ~/.ssh/tikmos_deploy
   IdentitiesOnly yes
@@ -21,7 +21,7 @@ Host gitlab.com
 
 ## 2. Première mise en service
 ```bash
-git clone git@gitlab.com:slavesdigital/tikmos.com.git
+git clone git@github.com:TIKMOS/tikmos.com.git
 cd tikmos.com
 cp .env.example .env            # renseigner : DB (MySQL), MAIL_*, TIKMOS_WHATSAPP, APP_URL=https://tikmos.com
 composer install --no-dev --optimize-autoloader
