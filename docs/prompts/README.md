@@ -1,5 +1,11 @@
 # TIKMOS — Bibliothèque de prompts (360)
 
+## Corrections après l’audit du 20 octobre 2026
+
+La [bibliothèque de remédiation](audit-2026-10-20/README.md) contient **36 fiches**, avec pour chacune un prompt de correction/validation et un prompt de commit/push. Une publication GitHub vérifiée précède le passage à la fiche suivante. Commencer par le [checkpoint 00](audit-2026-10-20/00-publier-audit-et-plan.md), qui archive l’audit et le plan sans corriger l’application.
+
+## Construction initiale
+
 Bibliothèque de prompts **complète et cadrée** pour construire Tikmos de A à Z, module par module,
 interface par interface, **avec tests**. Tout est encadré par le **prompt maître**.
 

@@ -29,6 +29,8 @@ on écrit la spec avant le code, on teste de A à Z.
 | **[32-journal-activite](32-journal-activite.md)** | **V3** — journal d'activité & audit granulaire par acteur |
 | **[33-audit-et-nettoyage](33-audit-et-nettoyage.md)** | **V3** — plan : retrait Sezy, boutique, QA espaces, configurabilité |
 | **[prompts/](prompts/README.md)** | **Bibliothèque de prompts 360** : prompt maître + 19 lots (fondations → vitrine → commerce → blog → back-office → SEO/i18n/PWA → prod) |
+| [Audit UI, UX et modules — 20 octobre 2026](audits/2026-10-20/README.md) | Constats, tests, captures et corrections prioritaires |
+| [Prompts de correction de l’audit](prompts/audit-2026-10-20/README.md) | 36 fiches : correction/validation puis commit/push vérifié, une étape à la fois |
 
 ## Décisions verrouillées
 - **Positionnement** : site **personnel premium orienté offre** — « *Je suis [le Professeur], voici

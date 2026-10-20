@@ -1,0 +1,156 @@
+[
+  {
+    "Path": "/",
+    "Status": 200,
+    "FinalPath": "/",
+    "Title": "Tikmos — Expertise, formation & solutions data/IA",
+    "Milliseconds": 667
+  },
+  {
+    "Path": "/services",
+    "Status": 200,
+    "FinalPath": "/services",
+    "Title": "Services — Tikmos",
+    "Milliseconds": 430
+  },
+  {
+    "Path": "/realisations",
+    "Status": 200,
+    "FinalPath": "/realisations",
+    "Title": "Réalisations — Tikmos",
+    "Milliseconds": 357
+  },
+  {
+    "Path": "/blog",
+    "Status": 200,
+    "FinalPath": "/blog",
+    "Title": "Blog — Tikmos",
+    "Milliseconds": 407
+  },
+  {
+    "Path": "/a-propos",
+    "Status": 200,
+    "FinalPath": "/a-propos",
+    "Title": "À propos — Tikmos",
+    "Milliseconds": 455
+  },
+  {
+    "Path": "/equipe",
+    "Status": 200,
+    "FinalPath": "/equipe",
+    "Title": "L'équipe — Tikmos",
+    "Milliseconds": 382
+  },
+  {
+    "Path": "/temoignages",
+    "Status": 200,
+    "FinalPath": "/temoignages",
+    "Title": "Témoignages — Tikmos",
+    "Milliseconds": 379
+  },
+  {
+    "Path": "/faq",
+    "Status": 200,
+    "FinalPath": "/faq",
+    "Title": "FAQ — Tikmos",
+    "Milliseconds": 389
+  },
+  {
+    "Path": "/boutique",
+    "Status": 200,
+    "FinalPath": "/boutique",
+    "Title": "Boutique — Tikmos",
+    "Milliseconds": 392
+  },
+  {
+    "Path": "/panier",
+    "Status": 200,
+    "FinalPath": "/panier",
+    "Title": "Mon panier — Tikmos",
+    "Milliseconds": 402
+  },
+  {
+    "Path": "/contact",
+    "Status": 200,
+    "FinalPath": "/contact",
+    "Title": "Contact — Tikmos",
+    "Milliseconds": 488
+  },
+  {
+    "Path": "/cgu",
+    "Status": 200,
+    "FinalPath": "/cgu",
+    "Title": "Conditions générales d'utilisation — Tikmos",
+    "Milliseconds": 384
+  },
+  {
+    "Path": "/cgv",
+    "Status": 200,
+    "FinalPath": "/cgv",
+    "Title": "Conditions générales de vente — Tikmos",
+    "Milliseconds": 384
+  },
+  {
+    "Path": "/confidentialite",
+    "Status": 200,
+    "FinalPath": "/confidentialite",
+    "Title": "Confidentialité — Tikmos",
+    "Milliseconds": 352
+  },
+  {
+    "Path": "/cookies",
+    "Status": 200,
+    "FinalPath": "/cookies",
+    "Title": "Politique cookies — Tikmos",
+    "Milliseconds": 393
+  },
+  {
+    "Path": "/connexion",
+    "Status": 200,
+    "FinalPath": "/connexion",
+    "Title": "Tikmos",
+    "Milliseconds": 464
+  },
+  {
+    "Path": "/inscription",
+    "Status": 200,
+    "FinalPath": "/inscription",
+    "Title": "Tikmos",
+    "Milliseconds": 441
+  },
+  {
+    "Path": "/mot-de-passe-oublie",
+    "Status": 200,
+    "FinalPath": "/mot-de-passe-oublie",
+    "Title": "Tikmos",
+    "Milliseconds": 406
+  },
+  {
+    "Path": "/admin",
+    "Status": 200,
+    "FinalPath": "/connexion",
+    "Title": "Tikmos",
+    "Milliseconds": 831
+  },
+  {
+    "Path": "/app",
+    "Status": 200,
+    "FinalPath": "/connexion",
+    "Title": "Tikmos",
+    "Milliseconds": 681
+  },
+  {
+    "Path": "/commander",
+    "Status": 200,
+    "FinalPath": "/connexion",
+    "Title": "Tikmos",
+    "Milliseconds": 789
+  },
+  {
+    "Path": "/audit-page-inexistante",
+    "Status": 404,
+    "FinalPath": "/audit-page-inexistante",
+    "Title": "404 — Tikmos",
+    "Milliseconds": 312
+  }
+]

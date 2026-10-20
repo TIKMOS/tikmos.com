@@ -1,0 +1,156 @@
+[
+  {
+    "path": "/admin",
+    "fields": 0,
+    "h1": "Tableau de bord",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/services",
+    "fields": 0,
+    "h1": "Services",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/realisations",
+    "fields": 0,
+    "h1": "Réalisations",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/blog",
+    "fields": 0,
+    "h1": "Blog",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/boutique",
+    "fields": 0,
+    "h1": "Produits",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/boutique/categories",
+    "fields": 1,
+    "h1": "Catégories",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/commandes",
+    "fields": 0,
+    "h1": "Commandes",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/clients",
+    "fields": 1,
+    "h1": "Clients",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/messages",
+    "fields": 0,
+    "h1": "Messages",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/equipe",
+    "fields": 4,
+    "h1": "Personnel",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/avis",
+    "fields": 0,
+    "h1": "Avis",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/audit",
+    "fields": 5,
+    "h1": "Audit & activité",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages",
+    "fields": 0,
+    "h1": "Réglages",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages/general",
+    "fields": 27,
+    "h1": "Général",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages/accueil",
+    "fields": 41,
+    "h1": "Accueil",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages/faq",
+    "fields": 0,
+    "h1": "FAQ",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages/pages",
+    "fields": 0,
+    "h1": "Pages légales",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages/partenaires",
+    "fields": 0,
+    "h1": "Partenaires",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages/equipe",
+    "fields": 0,
+    "h1": "Équipe",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages/paiements",
+    "fields": 7,
+    "h1": "Paiements",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages/medias",
+    "fields": 10,
+    "h1": "Médias",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  },
+  {
+    "path": "/admin/reglages/fonctionnalites",
+    "fields": 3,
+    "h1": "Fonctionnalités",
+    "overflow": false,
+    "title": "Tikmos Admin"
+  }
+]
