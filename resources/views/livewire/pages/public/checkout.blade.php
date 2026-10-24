@@ -50,6 +50,7 @@ new #[Layout('components.layouts.public')] class extends Component
 
     public function place(OrderService $orders, PaymentService $payments, PaymentSettings $settings): void
     {
+        $this->resetValidation('cart');
         $data = $this->validate();
 
         $method = $this->resolveMethod($settings);
@@ -170,6 +171,8 @@ new #[Layout('components.layouts.public')] class extends Component
                     </div>
                 </x-tk.admin-section>
 
+                <x-tk.cart-error :show-cart-link="true" />
+
                 <x-tk.button type="submit" variant="primary" size="lg" icon="check" class="w-full sm:w-auto">
                     <span wire:loading.remove wire:target="place,confirmOnline">Confirmer ma commande</span>
                     <span wire:loading wire:target="place,confirmOnline">Traitement…</span>
@@ -182,9 +185,9 @@ new #[Layout('components.layouts.public')] class extends Component
                     <h2 class="font-display text-lg font-bold text-content">Votre commande</h2>
                     <div class="mt-4 space-y-3">
                         @foreach ($items as $item)
-                            <div class="flex items-center gap-3 text-sm" wire:key="co-{{ $item['product']->id }}">
+                            <div class="flex items-center gap-3 text-sm" wire:key="co-{{ \Illuminate\Support\Str::slug($item['key']) }}">
                                 <span class="grid h-6 min-w-6 place-items-center rounded-full bg-tk-100 px-1 text-xs font-bold text-content">{{ $item['qty'] }}</span>
-                                <span class="min-w-0 flex-1 truncate text-content">{{ $item['product']->name }}</span>
+                                <span class="min-w-0 flex-1 truncate text-content">{{ $item['product']->name }}@if ($item['size']) · Taille {{ $item['size'] }}@endif</span>
                                 <span class="font-medium text-content">{{ number_format($item['line_total'], 0, ',', ' ') }}</span>
                             </div>
                         @endforeach

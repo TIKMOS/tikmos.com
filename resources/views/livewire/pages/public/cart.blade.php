@@ -10,12 +10,14 @@ new #[Layout('components.layouts.public')] class extends Component
 {
     public function updateQty(CartService $cart, string $key, int $qty): void
     {
+        $this->resetValidation('cart');
         $cart->update($key, $qty);
         $this->dispatch('cart-updated');
     }
 
     public function remove(CartService $cart, string $key): void
     {
+        $this->resetValidation('cart');
         $cart->remove($key);
         $this->dispatch('cart-updated');
         $this->dispatch('tk-toast', type: 'success', message: 'Article retiré.');
@@ -57,6 +59,7 @@ new #[Layout('components.layouts.public')] class extends Component
 
     <x-tk.section>
         <h1 class="font-display text-4xl font-black tracking-[-0.02em] text-content md:text-5xl">Mon panier</h1>
+        <x-tk.cart-error class="mt-5" />
 
         @if ($items->isEmpty())
             <div class="mt-10"><x-tk.empty-state icon="shopping-cart" title="Votre panier est vide">
@@ -69,22 +72,22 @@ new #[Layout('components.layouts.public')] class extends Component
                 <div class="space-y-3">
                     @foreach ($items as $item)
                         @php($product = $item['product'])
-                        <div wire:key="ci-{{ \Illuminate\Support\Str::slug($item['key']) }}" class="flex items-center gap-4 rounded-card border border-line bg-surface p-4">
+                        <div wire:key="ci-{{ \Illuminate\Support\Str::slug($item['key']) }}" class="grid grid-cols-3 items-center gap-4 rounded-card border border-line bg-surface p-4 sm:flex">
                             <div class="h-20 w-20 shrink-0 overflow-hidden rounded-tile bg-canvas">
                                 @if ($product->mainImageUrl('thumb'))<img src="{{ $product->mainImageUrl('thumb') }}" alt="{{ $product->name }}" class="h-full w-full object-cover">@else<div class="grid h-full place-items-center"><x-lucide-package class="h-6 w-6 text-tk-300" /></div>@endif
                             </div>
-                            <div class="min-w-0 flex-1">
+                            <div class="col-span-2 min-w-0 flex-1">
                                 <a href="{{ route('shop.show', $product->slug) }}" wire:navigate class="font-medium text-content hover:underline">{{ $product->name }}</a>
                                 @if ($item['size'])<p class="text-sm text-content">Taille : <span class="font-medium">{{ $item['size'] }}</span></p>@endif
                                 <p class="text-sm text-muted">{{ $product->priceLabel() }}</p>
                             </div>
-                            <div class="flex items-center rounded-btn border border-tk-300">
+                            <div class="col-span-2 flex w-fit items-center rounded-btn border border-tk-300">
                                 <button wire:click="updateQty('{{ $item['key'] }}', {{ $item['qty'] - 1 }})" class="grid h-9 w-9 place-items-center text-content hover:bg-tk-50" aria-label="Moins"><x-lucide-minus class="h-4 w-4" /></button>
                                 <span class="w-8 text-center text-sm font-medium">{{ $item['qty'] }}</span>
                                 <button wire:click="updateQty('{{ $item['key'] }}', {{ $item['qty'] + 1 }})" class="grid h-9 w-9 place-items-center text-content hover:bg-tk-50" aria-label="Plus"><x-lucide-plus class="h-4 w-4" /></button>
                             </div>
                             <p class="hidden w-28 text-right font-display font-bold text-content sm:block">{{ number_format($item['line_total'], 0, ',', ' ') }} FCFA</p>
-                            <button wire:click="remove('{{ $item['key'] }}')" class="grid h-9 w-9 shrink-0 place-items-center rounded-tile text-tk-400 hover:bg-tk-100 hover:text-danger" aria-label="Retirer"><x-lucide-trash-2 class="h-4 w-4" /></button>
+                            <button wire:click="remove('{{ $item['key'] }}')" class="grid h-9 w-9 shrink-0 place-items-center justify-self-end rounded-tile text-tk-400 hover:bg-tk-100 hover:text-danger" aria-label="Retirer"><x-lucide-trash-2 class="h-4 w-4" /></button>
                         </div>
                     @endforeach
                 </div>

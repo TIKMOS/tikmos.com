@@ -16,7 +16,7 @@ new #[Layout('components.layouts.public')] class extends Component
 
     public function addToCart(?string $size = null): void
     {
-        abort_if($this->product->isOutOfStock(), 422);
+        $this->resetValidation('cart');
 
         $size = $size !== null ? trim($size) : null;
 
@@ -128,6 +128,8 @@ new #[Layout('components.layouts.public')] class extends Component
                     @endif
                     <x-tk.whatsapp-button :floating="false" :message="'Bonjour '.config('app.name').', je suis intéressé(e) par : '.$product->name" />
                 </div>
+
+                <x-tk.cart-error :show-cart-link="true" class="mt-5" />
 
                 {{-- Réassurance --}}
                 <div class="mt-6 grid gap-3 sm:grid-cols-3">

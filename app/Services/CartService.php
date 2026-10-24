@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Panier en session. Le prix et la disponibilité sont TOUJOURS recalculés côté serveur
@@ -22,9 +23,15 @@ class CartService
 
     public function add(int $productId, int $qty = 1, ?string $size = null): void
     {
+        $product = Product::active()->find($productId);
+        if ($product === null) {
+            throw ValidationException::withMessages(['cart' => 'Ce produit n’est plus disponible. Modifiez votre panier.']);
+        }
+
         $key = $this->lineKey($productId, $size);
         $cart = $this->raw();
         $cart[$key] = min(self::MAX_QTY, ($cart[$key] ?? 0) + max(1, $qty));
+        $this->assertStock($product, $this->productQuantity($cart, $productId));
         $this->put($cart);
     }
 
@@ -34,7 +41,17 @@ class CartService
         if ($qty <= 0) {
             unset($cart[$key]);
         } else {
+            $previous = $cart[$key] ?? 0;
             $cart[$key] = min(self::MAX_QTY, $qty);
+            // Après une baisse de stock, autoriser une correction progressive du panier.
+            if ($cart[$key] > $previous) {
+                [$productId] = $this->parseKey($key);
+                $product = Product::active()->find($productId);
+                if ($product === null) {
+                    throw ValidationException::withMessages(['cart' => 'Ce produit n’est plus disponible. Modifiez votre panier.']);
+                }
+                $this->assertStock($product, $this->productQuantity($cart, $productId));
+            }
         }
         $this->put($cart);
     }
@@ -53,7 +70,8 @@ class CartService
 
     /**
      * Lignes du panier recalculées depuis la base (produits actifs uniquement).
-     * Purge automatiquement les produits devenus indisponibles.
+     * Purge les produits retirés du catalogue. Les quantités demandées restent visibles
+     * en cas de baisse de stock, afin de ne pas modifier silencieusement la commande.
      *
      * @return Collection<int, array{key: string, product: Product, size: ?string, qty: int, line_total: int}>
      */
@@ -77,12 +95,12 @@ class CartService
         foreach ($cart as $key => $qty) {
             [$productId, $size] = $this->parseKey((string) $key);
             $product = $products->get($productId);
-            if (! $product || $product->isOutOfStock()) {
-                continue; // produit retiré du catalogue ou en rupture → purgé
+            if (! $product) {
+                continue; // produit retiré du catalogue → purgé
             }
-            $qty = (int) $qty;
-            if ($product->stock !== null) {
-                $qty = min($qty, $product->stock);
+            $qty = min(self::MAX_QTY, max(0, (int) $qty));
+            if ($qty === 0) {
+                continue;
             }
             $cleaned[(string) $key] = $qty;
             $items->push([
@@ -114,6 +132,32 @@ class CartService
     public function isEmpty(): bool
     {
         return $this->items()->isEmpty();
+    }
+
+    /** Vérifie la quantité cumulée de toutes les variantes d'un produit. */
+    public function assertStock(Product $product, int $quantity): void
+    {
+        if ($product->stock !== null && $quantity > max(0, $product->stock)) {
+            throw ValidationException::withMessages([
+                'cart' => $product->name.' : '.max(0, $product->stock)
+                    .' unité(s) disponible(s) au total, toutes variantes confondues. Vous en demandez '
+                    .$quantity.'. Modifiez votre panier.',
+            ]);
+        }
+    }
+
+    /** @param array<string, int> $cart */
+    private function productQuantity(array $cart, int $productId): int
+    {
+        $quantity = 0;
+        foreach ($cart as $key => $qty) {
+            [$id] = $this->parseKey((string) $key);
+            if ($id === $productId) {
+                $quantity += max(0, $qty);
+            }
+        }
+
+        return $quantity;
     }
 
     private function lineKey(int $productId, ?string $size): string

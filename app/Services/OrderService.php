@@ -8,12 +8,14 @@ use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\User;
 use App\Notifications\OrderReceived;
 use App\Settings\GeneralSettings;
 use App\Settings\ShopSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
@@ -26,10 +28,31 @@ class OrderService
      */
     public function place(User $user, array $data, PaymentMethod $method = PaymentMethod::Cod): Order
     {
-        return DB::transaction(function () use ($user, $data, $method): Order {
+        $order = DB::transaction(function () use ($user, $data, $method): Order {
             $items = $this->cart->items();
 
             abort_if($items->isEmpty(), 422, 'Votre panier est vide.');
+
+            // Ordre de verrouillage stable ; les données du panier ne réservent aucun stock.
+            $products = Product::active()->whereIn('id', $items->pluck('product.id'))
+                ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+            $items = $items->map(function (array $item) use ($products): array {
+                $product = $products->get($item['product']->id);
+                if ($product === null) {
+                    throw ValidationException::withMessages(['cart' => 'Un produit n’est plus disponible. Modifiez votre panier.']);
+                }
+
+                return [...$item, 'product' => $product, 'line_total' => $product->price * $item['qty']];
+            });
+
+            $quantities = [];
+            foreach ($items as $item) {
+                $id = $item['product']->id;
+                $quantities[$id] = ($quantities[$id] ?? 0) + $item['qty'];
+            }
+            foreach ($products as $product) {
+                $this->cart->assertStock($product, $quantities[$product->id]);
+            }
 
             $subtotal = (int) $items->sum('line_total');
             $deliveryFee = app(ShopSettings::class)->default_delivery_fee;
@@ -61,22 +84,26 @@ class OrderService
                     'line_total' => $item['line_total'],
                 ]);
 
-                // Décrément du stock si géré.
-                if ($item['product']->stock !== null) {
-                    $item['product']->decrement('stock', $item['qty']);
+            }
+
+            // Un seul décrément par produit, après vérification de tous les cumuls sous verrou.
+            foreach ($products as $product) {
+                if ($product->stock !== null) {
+                    $product->decrement('stock', $quantities[$product->id]);
                 }
             }
 
-            $this->cart->clear();
-
-            // Alerte équipe (email de contact) — hors transaction critique mais suffisant ici.
-            $teamEmail = app(GeneralSettings::class)->emails['contact'] ?? null;
-            if ($teamEmail) {
-                Notification::route('mail', $teamEmail)->notify(new OrderReceived($order));
-            }
-
             return $order;
-        });
+        }, attempts: 3);
+
+        // La session et les notifications ne sont pas modifiées lors d'un refus/rollback.
+        $this->cart->clear();
+        $teamEmail = app(GeneralSettings::class)->emails['contact'] ?? null;
+        if ($teamEmail) {
+            Notification::route('mail', $teamEmail)->notify(new OrderReceived($order));
+        }
+
+        return $order;
     }
 
     private function generateNumber(): string

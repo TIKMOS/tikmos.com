@@ -10,7 +10,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 |---|---|---|---|
 | [01](01-transaction-externe-unique.md) | Empêcher une transaction externe de payer plusieurs commandes | Validé localement | 24/10/2026 : F01 reproduit avant correction, puis refus du second paiement avec événement explicite ; unicité fournisseur/référence et règlement atomique. Tests ciblés : 32 réussis, 138 assertions ; suite complète : 242 réussis, 717 assertions ; Larastan : 0 erreur ; Pint conforme. Migration existant/doublons/rollback : SQLite en mémoire validé ; SQL MySQL compilé uniquement, concurrence MySQL et KKiaPay sandbox non validées. Base locale inchangée ; aucun commit/push. Voir la note 01 ci-dessous. |
 | [02](02-montant-paiement-obligatoire.md) | Refuser un paiement en ligne sans montant confirmé | Validé localement | 24/10/2026 : F02 reproduit avant correction ; montant serveur entier, valide et égal au dû désormais requis. Devise contrôlée si fournie, paiement KKiaPay local limité à XOF ; absence du champ de devise documentée comme limite. PaymentTest : 59 réussis, 283 assertions ; suite complète : 282 réussis, 894 assertions ; Larastan : 0 erreur ; Pint conforme. F01, idempotence et COD préservés. HTTP/notifications simulés, SQLite en mémoire ; MySQL et KKiaPay sandbox non validés. Aucune migration locale, aucun commit/push lors de A. Voir note 02. |
-| [03](03-stock-global-variantes.md) | Empêcher le stock négatif entre variantes | À traiter | — |
+| [03](03-stock-global-variantes.md) | Empêcher le stock négatif entre variantes | Validé localement | 24/10/2026 : F03 reproduit (stock 2 → −2 avant correction), puis cumul par produit contrôlé dans le panier et sous verrou en transaction à la commande. Refus explicite, panier corrigeable et rollback validés. CartSizeTest + OrderFlowTest : 24 tests, 125 assertions ; suite : 297 tests, 995 assertions ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette isolée à 360/1440 px validée, stocks NULL préservés. Concurrence MySQL non validée ; base de l'application inchangée. Aucun commit/push lors de A. Voir note 03. |
 | [04](04-expiration-devis.md) | Appliquer la validité des devis côté serveur | À traiter | — |
 | [05](05-rattachement-demande-invite.md) | Permettre au visiteur de retrouver sa demande en sécurité | À traiter | — |
 | [06](06-creation-administrateur.md) | Supprimer les identifiants administrateur de repli | À traiter | — |
@@ -115,6 +115,47 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   à appliquer lors du déploiement de cette correction précédente.
 - **État :** validé localement, sans commit ni push lors de A. Dépendance 01 vérifiée sur
   GitHub/main : `9da1d3c1ae30cd75feb0c6897108cb6c08a56c4e`. Changement de mode d'`artisan` préservé.
+  Aucune autre fiche commencée.
+
+## Note 03 — 24 octobre 2026
+
+- **Cause et preuve avant/après :** le plafond de stock s'appliquait à chaque ligne
+  séparément ; le décrément ne contrôlait pas leur cumul. Le nouveau test du panier
+  historique (deux variantes × deux unités, stock global deux) échouait avant
+  correction avec un stock de −2. Il passe désormais avec refus, stock inchangé,
+  aucune commande ni notification et panier conservé. Audit historique inchangé.
+- **Comportement obtenu :** cumul par produit contrôlé lors des ajouts/augmentations,
+  puis revérifié sur les produits relus sous `lockForUpdate()` dans la transaction
+  de commande. Vérification de tous les produits avant création, un décrément par
+  produit, rollback intégral en cas d'erreur. Panier et notifications modifiés après
+  réussite de la transaction. Quantités conservées après baisse de stock, diminutions
+  progressives et retrait possibles ; stocks `NULL`, tailles valides et COD préservés.
+  Erreur accessible avec quantité disponible, lien de retour au panier et tailles
+  distinctes au récapitulatif. Disposition mobile du panier ajustée pour le rendre corrigeable.
+- **Fichiers :** services `CartService`/`OrderService`, composant `tk/cart-error`,
+  vues publiques `cart`, `checkout`, `shop-show`, tests `CartSizeTest`/`OrderFlowTest`,
+  CSS compilé `app-t2tCysDR.css` remplaçant `app-dfHp-K84.css`, manifeste de build,
+  présente ligne/note et [preuves de validation](../../validations/2026-10-24-stock/README.md).
+- **Contrôles :** tests ciblés → **24 tests, 125 assertions** ; suite Pest complète →
+  **297 tests, 995 assertions** ; Larastan → **0 erreur** ; Pint `--test` sur les quatre
+  fichiers PHP → conforme ; `npm.cmd run build` → réussi. SQLite en mémoire, HTTP
+  imprévu interdit et notifications simulées dans les tests ciblés. Cas de cumul,
+  modification des quantités, baisse du stock à 1/0, lecture périmée, refus de toute
+  la commande, rollback pendant le décrément et succès nominal couverts. Suite complète
+  exécutée avant les derniers ajustements de présentation ; tests ciblés relancés
+  avec les vues finales.
+- **Recette :** nouvelle base SQLite temporaire et données fictives, serveur séparé
+  sur 8011, mail `array` et COD. À 360 px : refus d'ajout/augmentation, panier conservé,
+  pas de débordement horizontal. À 1440 px : stock abaissé avant confirmation, refus
+  explicite, puis retrait d'une variante et commande réussie (une unité, stock final 0,
+  panier vide). Captures dans la note liée. Console sans erreur/avertissement capturé,
+  sélection/ajout/quantités/refus/retrait testés avec Entrée et tabulation. Viewport
+  restauré, serveurs temporaires arrêtés ; serveurs habituels préservés.
+- **Limites et état :** concurrence MySQL **non validée** ; SQLite ne prouve pas les
+  verrous InnoDB. Aucun paiement ni email réel, recette clavier/accessibilité non
+  exhaustive. Aucun changement de schéma ni migration de la base de l'application.
+  Checkpoint 02 `6ad360bcda5d778c93d3c70a166cc9a3e86da654` vérifié sur GitHub/main.
+  Validé localement, sans commit ni push lors de A ; mode étranger d'`artisan` préservé.
   Aucune autre fiche commencée.
 
 ## Modèle de note à remplir après une intervention
