@@ -88,6 +88,9 @@ pour retourner la passerelle active d'un canal.
 | paid_at | timestamp null | |
 | timestamps | | |
 - Index : `reference`, `provider_reference`, `(payable_type, payable_id)`, `state`.
+- Depuis la correction F01 du 24 octobre 2026 : index unique
+  `payments_provider_reference_unique` sur `(provider, provider_reference)`.
+  Les références `NULL` restent autorisées pour les paiements en attente et le COD.
 
 ### payment_events (traçabilité fine — voir aussi `33-journal-activite.md`)
 `id, payment_id, from_state, to_state, source(widget|webhook|admin|verify), note, created_at`.
@@ -112,6 +115,42 @@ pour retourner la passerelle active d'un canal.
    applique la **même** transition idempotente. Réponse **HTTP 200** obligatoire (sinon retries).
 5. **Idempotence** — toute transition passe par `Payment::markSucceeded()` protégé (no-op si déjà
    `succeeded`). Widget et webhook peuvent arriver dans n'importe quel ordre / en double.
+
+### Correction F01 — unicité et cohérence du rattachement (24 octobre 2026)
+
+`PaymentService::settle()` recharge le paiement sous verrou dans une transaction, pour les
+résultats réussis comme échoués. L'enregistrement de la référence externe, le succès du paiement,
+son événement et la réaction de la commande sont atomiques. Un échec tardif sur une instance
+périmée ne peut plus écraser un succès.
+
+La contrainte unique en base arbitre la réutilisation d'une transaction entre deux paiements,
+y compris lorsque leurs lignes sont différentes. Après rollback, le service retourne `false`
+et conserve un événement `provider_reference_conflict` sur le paiement refusé. Il ne masque pas
+les violations d'autres contraintes. Les autres refus de rattachement sont journalisés :
+
+- `provider_mismatch` : fournisseur du webhook différent de celui du paiement local ;
+- `provider_reference_mismatch` : remplacement d'une référence déjà renseignée ;
+- `provider_reference_missing` : succès KKiaPay sans identité externe exploitable.
+
+Les rejeux sur un paiement réussi ne répètent ni sa transition ni sa réaction métier. Les
+références externes restent propres à chaque fournisseur. Aucun changement du format des
+métadonnées du widget n'est introduit : les [sources officielles du SDK JS](https://docs.kkiapay.me/v1/plugin-et-sdk/sdk-javascript)
+documentent `data`, mais l'[exemple de vérification du SDK PHP](https://docs.kkiapay.me/v1/plugin-et-sdk/admin-sdks-server-side/php-admin-sdk)
+ne garantit pas son retour. La correspondance de ces métadonnées dans le contrat réel KKiaPay
+reste à vérifier lors de la recette sandbox ; elle n'est pas présentée comme validée ici.
+
+**Migration d'une installation existante :** la nouvelle migration
+`2026_10_24_000000_add_unique_provider_reference_to_payments.php` détecte les doublons non `NULL`
+par fournisseur, quel que soit leur statut. Elle s'arrête avant tout changement si elle en trouve.
+L'opérateur doit alors réconcilier les paiements concernés avec les justificatifs du fournisseur ;
+aucun paiement historique n'est supprimé ou réaffecté automatiquement. Lors du déploiement,
+effectuer la migration sans écritures concurrentes de paiement. Son rollback retire seulement
+l'index unique et conserve les données ainsi que l'index simple préexistant.
+
+Les tests utilisent SQLite en mémoire, HTTP et notifications simulés. Ils couvrent le refus du
+second paiement, les deux ordres d'arrivée widget/webhook, le rollback métier et les données
+historiques. La concurrence MySQL et les paiements KKiaPay réels ne sont pas validés par ces tests.
+La migration n'a pas été exécutée sur la base locale utilisée par l'application.
 
 ### Widget (extrait, à intégrer au checkout)
 ```html

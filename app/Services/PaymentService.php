@@ -12,6 +12,7 @@ use App\Payments\Enums\PaymentProvider;
 use App\Payments\Enums\PaymentState;
 use App\Payments\PaymentManager;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -92,6 +93,12 @@ class PaymentService
             return false;
         }
 
+        if ($payment->provider !== $provider) {
+            $payment->recordEvent('provider_mismatch', $payment->state, ['received' => $provider]);
+
+            return false;
+        }
+
         // On ne fait jamais confiance au payload : on re-vérifie la transaction.
         $reference = $hook->providerReference ?? $payment->provider_reference;
         if ($reference === null) {
@@ -110,27 +117,46 @@ class PaymentService
      */
     public function settle(Payment $payment, ChargeResult $result): bool
     {
-        if (! $result->isSucceeded()) {
-            $payment->markFailed($result);
+        try {
+            return DB::transaction(function () use ($payment, $result): bool {
+                /** @var Payment $locked */
+                $locked = Payment::whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
+
+                if (! $result->isSucceeded()) {
+                    $locked->markFailed($result);
+
+                    return false;
+                }
+
+                // L'index unique arbitre aussi les appels concurrents sur deux paiements.
+                if (! $locked->markSucceeded($result)) {
+                    return false;
+                }
+
+                $payable = $locked->payable;
+                if ($payable instanceof Payable) {
+                    $payable->onPaymentSucceeded($locked);
+                }
+
+                return true;
+            }, attempts: 3);
+        } catch (UniqueConstraintViolationException $exception) {
+            // SQLite fournit les colonnes ; MySQL fournit le nom de l'index.
+            // Toute autre violation reste une erreur, pas un conflit de paiement.
+            if ($exception->index !== 'payments_provider_reference_unique'
+                && $exception->columns !== ['provider', 'provider_reference']) {
+                throw $exception;
+            }
+
+            // Journaliser après rollback : aucun statut, audit de succès ou effet métier ne subsiste.
+            $payment->refresh();
+            $payment->recordEvent('provider_reference_conflict', $payment->state, [
+                'provider' => $payment->provider,
+                'provider_reference' => $result->providerReference ?? $payment->provider_reference,
+            ]);
 
             return false;
         }
-
-        return DB::transaction(function () use ($payment, $result): bool {
-            /** @var Payment $locked */
-            $locked = Payment::whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
-
-            if (! $locked->markSucceeded($result)) {
-                return false;
-            }
-
-            $payable = $locked->payable;
-            if ($payable instanceof Payable) {
-                $payable->onPaymentSucceeded($locked);
-            }
-
-            return true;
-        });
     }
 
     private function reference(PaymentProvider $provider): string

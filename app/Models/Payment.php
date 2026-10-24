@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Audit\Concerns\Auditable;
 use App\Payments\Data\ChargeResult;
+use App\Payments\Enums\PaymentProvider;
 use App\Payments\Enums\PaymentState;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -86,11 +87,30 @@ class Payment extends Model
      *
      * Retourne true uniquement lors de la première transition réussie
      * (le webhook et le retour widget peuvent tous deux appeler cette méthode).
-     * Contrôle du montant : refus si l'écart dépasse la tolérance.
+     * La référence externe, une fois renseignée, ne peut pas être remplacée.
+     * Le service doit appeler cette méthode sous transaction et verrou de ligne.
+     * Contrôle du montant : refus si le montant fourni diffère.
      */
     public function markSucceeded(ChargeResult $result): bool
     {
         if ($this->isSucceeded()) {
+            return false;
+        }
+
+        $providerReference = $result->providerReference ?? $this->provider_reference;
+
+        if ($this->provider === PaymentProvider::Kkiapay->value && ($providerReference === null || trim($providerReference) === '')) {
+            $this->recordEvent('provider_reference_missing', $this->state);
+
+            return false;
+        }
+
+        if ($this->provider_reference !== null && $this->provider_reference !== $providerReference) {
+            $this->recordEvent('provider_reference_mismatch', $this->state, [
+                'expected' => $this->provider_reference,
+                'received' => $providerReference,
+            ]);
+
             return false;
         }
 
@@ -105,7 +125,7 @@ class Payment extends Model
 
         $this->update([
             'state' => PaymentState::Succeeded,
-            'provider_reference' => $result->providerReference ?? $this->provider_reference,
+            'provider_reference' => $providerReference,
             'method' => $result->method ?? $this->method,
             'paid_at' => now(),
         ]);

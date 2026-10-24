@@ -8,7 +8,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 
 | Fiche | Sujet | État local | Preuves et limites |
 |---|---|---|---|
-| [01](01-transaction-externe-unique.md) | Empêcher une transaction externe de payer plusieurs commandes | À traiter | — |
+| [01](01-transaction-externe-unique.md) | Empêcher une transaction externe de payer plusieurs commandes | Validé localement | 24/10/2026 : F01 reproduit avant correction, puis refus du second paiement avec événement explicite ; unicité fournisseur/référence et règlement atomique. Tests ciblés : 32 réussis, 138 assertions ; suite complète : 242 réussis, 717 assertions ; Larastan : 0 erreur ; Pint conforme. Migration existant/doublons/rollback : SQLite en mémoire validé ; SQL MySQL compilé uniquement, concurrence MySQL et KKiaPay sandbox non validées. Base locale inchangée ; aucun commit/push. Voir la note 01 ci-dessous. |
 | [02](02-montant-paiement-obligatoire.md) | Refuser un paiement en ligne sans montant confirmé | À traiter | — |
 | [03](03-stock-global-variantes.md) | Empêcher le stock négatif entre variantes | À traiter | — |
 | [04](04-expiration-devis.md) | Appliquer la validité des devis côté serveur | À traiter | — |
@@ -44,6 +44,40 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [34](34-recette-kkiapay-sandbox.md) | Valider le cycle KKiaPay en sandbox | À traiter | — |
 | [35](35-recette-pwa.md) | Vérifier la PWA sans l’activer en production | À traiter | — |
 | [36](36-recette-finale-modules.md) | Actualiser l’audit après toutes les corrections publiées | À traiter | — |
+
+## Note 01 — 24 octobre 2026
+
+- **Comportement obtenu :** une transaction externe ne crédite qu'un paiement pour un fournisseur.
+  Le second rattachement retourne `false`, conserve la commande impayée et journalise
+  `provider_reference_conflict` après rollback. Référence déjà renseignée non remplaçable,
+  fournisseur du webhook contrôlé, identité externe obligatoire pour un succès KKiaPay.
+  Rejeux widget/webhook sans deuxième transition ; retour d'échec tardif sans écrasement d'un succès.
+- **Fichiers :** `app/Services/PaymentService.php`, `app/Models/Payment.php`,
+  `database/migrations/2026_10_24_000000_add_unique_provider_reference_to_payments.php`,
+  `tests/Feature/PaymentTest.php`, `tests/Feature/PaymentReferenceMigrationTest.php`,
+  `docs/30-systeme-paiement.md` et cette ligne/note du journal.
+- **Preuve avant/après :** le nouveau test `deux commandes` échouait avant correction :
+  seconde commande attendue `unpaid`, obtenue `paid`. Il passe après correction.
+  L'audit historique est conservé ; son exécution directe sous Windows a rencontré un problème
+  de namespace Pest lié au dossier numérique. La reproduction 1 a donc été reprise dans `tests/`.
+- **Contrôles :** `php vendor/bin/pest tests/Feature/PaymentTest.php tests/Feature/PaymentReferenceMigrationTest.php tests/Feature/OrderFlowTest.php tests/Feature/NotificationsTest.php --compact`
+  → **32 tests, 138 assertions** ; `php artisan test --compact` → **242 tests, 717 assertions** ;
+  `php -d memory_limit=1G vendor/bin/phpstan analyse --no-progress --memory-limit=1G` → **0 erreur** ;
+  Pint `--test` sur les cinq fichiers PHP du lot → conforme. Tests exécutés avec
+  `APP_ENV=testing`, `DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`, `DB_URL` vide,
+  `MAIL_MAILER=array`, `QUEUE_CONNECTION=sync`. HTTP/notifications interceptés dans PaymentTest.
+  Après ajustement du SELECT groupé pour MySQL, les trois tests de migration ont également été
+  relancés : **3 tests, 11 assertions**. Migration, doublons historiques et rollback validés sur
+  une connexion SQLite en mémoire dédiée, sans effacement ni réaffectation de paiements.
+- **Limites :** génération SQL MySQL vérifiée en mode `pretend`, sans connexion ni exécution ;
+  aucun serveur MySQL en écoute locale sur 3306, donc concurrence MySQL **non validée**.
+  Aucun paiement réel ni recette KKiaPay sandbox ; retour réel des métadonnées non validé
+  (sources officielles et décision dans `docs/30-systeme-paiement.md`). Aucun changement d'UI.
+  La migration n'a pas été exécutée sur la base de l'application ; elle devra accompagner
+  le déploiement et s'arrête si des doublons historiques nécessitent une réconciliation manuelle.
+- **État :** validé localement, non publié. Checkpoint documentaire `ae5bc81` vérifié sur
+  GitHub/main avant intervention. Changement de mode préexistant d'`artisan` préservé.
+  Aucune autre fiche commencée.
 
 ## Modèle de note à remplir après une intervention
 

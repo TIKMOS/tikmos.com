@@ -3,21 +3,30 @@
 use App\Enums\OrderStatus;
 use App\Enums\Role;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
+use App\Payments\Data\ChargeResult;
 use App\Payments\Enums\PaymentProvider;
 use App\Payments\Enums\PaymentState;
 use App\Services\CartService;
 use App\Services\PaymentService;
 use App\Settings\PaymentSettings;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Volt\Volt;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
+    Http::preventStrayRequests();
+    Notification::fake();
+
     $this->seed(RolePermissionSeeder::class);
 
     // Clés KKiaPay factices (les appels réseau sont mockés via Http::fake).
@@ -27,6 +36,28 @@ beforeEach(function (): void {
         'payments.gateways.kkiapay.secret' => 'whsec_test',
         'payments.gateways.kkiapay.sandbox' => true,
     ]);
+});
+
+it('refuse de payer deux commandes avec la même transaction externe', function (): void {
+    fakeKkiapay('SUCCESS', 16000);
+    $service = app(PaymentService::class);
+    $firstOrder = payOrder();
+    $secondOrder = payOrder();
+    $firstPayment = $service->open($firstOrder, PaymentProvider::Kkiapay);
+    $secondPayment = $service->open($secondOrder, PaymentProvider::Kkiapay);
+
+    expect($service->verify($firstPayment, 'SAME-EXTERNAL-TXN'))->toBeTrue();
+    $secondAccepted = $service->verify($secondPayment, 'SAME-EXTERNAL-TXN');
+
+    expect($firstOrder->fresh()->payment_status->value)->toBe('paid')
+        ->and($secondOrder->fresh()->payment_status->value)->toBe('unpaid')
+        ->and($secondAccepted)->toBeFalse()
+        ->and($secondPayment->fresh()->state)->toBe(PaymentState::Pending)
+        ->and($secondPayment->fresh()->provider_reference)->toBeNull()
+        ->and($secondPayment->fresh()->paid_at)->toBeNull()
+        ->and($secondPayment->events()->where('type', 'succeeded')->count())->toBe(0)
+        ->and($secondPayment->events()->where('type', 'provider_reference_conflict')->count())->toBe(1)
+        ->and(Payment::where('provider', 'kkiapay')->where('provider_reference', 'SAME-EXTERNAL-TXN')->count())->toBe(1);
 });
 
 function payBuyer(): User
@@ -123,6 +154,158 @@ it('traite un webhook signé et confirme la commande', function (): void {
         ->assertJson(['handled' => true]);
 
     expect($order->fresh()->payment_status->value)->toBe('paid');
+});
+
+it('ne rejoue pas les effets métier entre widget et webhook', function (bool $webhookFirst): void {
+    fakeKkiapay('SUCCESS', 16000);
+    $order = payOrder();
+    $service = app(PaymentService::class);
+    $payment = $service->open($order, PaymentProvider::Kkiapay);
+    $transitions = 0;
+    Event::listen('eloquent.updated: '.Order::class, function () use (&$transitions): void {
+        $transitions++;
+    });
+    $webhook = fn () => $this->withHeaders(['x-kkiapay-secret' => 'whsec_test'])
+        ->postJson('/webhooks/payments/kkiapay', [
+            'transactionId' => 'TXN-REPLAY',
+            'data' => json_encode(['reference' => $payment->reference]),
+        ])->assertOk();
+
+    if ($webhookFirst) {
+        $webhook()->assertJson(['handled' => true]);
+    } else {
+        expect($service->verify($payment, 'TXN-REPLAY'))->toBeTrue();
+    }
+
+    $paidAt = $payment->fresh()->paid_at->toISOString();
+    $confirmedAt = $order->fresh()->confirmed_at->toISOString();
+    $this->travel(1)->minutes();
+    $webhook()->assertJson(['handled' => false]);
+    expect($service->verify($payment, 'TXN-REPLAY'))->toBeFalse()
+        ->and($transitions)->toBe(1)
+        ->and($payment->events()->where('type', 'succeeded')->count())->toBe(1)
+        ->and($payment->fresh()->provider_reference)->toBe('TXN-REPLAY')
+        ->and($payment->fresh()->paid_at->toISOString())->toBe($paidAt)
+        ->and($order->fresh()->confirmed_at->toISOString())->toBe($confirmedAt);
+    Notification::assertNothingSent();
+})->with(['widget puis webhook' => false, 'webhook puis widget' => true]);
+
+it('refuse la transaction déjà utilisée reçue par webhook puis accepte une autre transaction', function (): void {
+    fakeKkiapay('SUCCESS', 16000);
+    $service = app(PaymentService::class);
+    $firstPayment = $service->open(payOrder(), PaymentProvider::Kkiapay);
+    $secondOrder = payOrder();
+    $secondPayment = $service->open($secondOrder, PaymentProvider::Kkiapay);
+    expect($service->verify($firstPayment, 'TXN-USED'))->toBeTrue();
+
+    $this->withHeaders(['x-kkiapay-secret' => 'whsec_test'])
+        ->postJson('/webhooks/payments/kkiapay', [
+            'transactionId' => 'TXN-USED',
+            'data' => json_encode(['reference' => $secondPayment->reference]),
+        ])->assertOk()->assertJson(['handled' => false]);
+
+    expect($secondOrder->fresh()->payment_status->value)->toBe('unpaid')
+        ->and($secondPayment->events()->where('type', 'provider_reference_conflict')->count())->toBe(1)
+        ->and($service->verify($secondPayment, 'TXN-OTHER'))->toBeTrue()
+        ->and($secondPayment->fresh()->provider_reference)->toBe('TXN-OTHER')
+        ->and($secondOrder->fresh()->payment_status->value)->toBe('paid');
+});
+
+it('refuse un webhook dont le fournisseur ne correspond pas au paiement local', function (): void {
+    $order = payOrder();
+    $payment = app(PaymentService::class)->open($order, PaymentProvider::Cod);
+
+    $this->withHeaders(['x-kkiapay-secret' => 'whsec_test'])
+        ->postJson('/webhooks/payments/kkiapay', [
+            'transactionId' => 'TXN-WRONG-PROVIDER',
+            'data' => json_encode(['reference' => $payment->reference]),
+        ])->assertOk()->assertJson(['handled' => false]);
+
+    Http::assertNothingSent();
+    expect($payment->fresh()->state)->toBe(PaymentState::Pending)
+        ->and($order->fresh()->payment_status->value)->toBe('unpaid')
+        ->and($payment->events()->where('type', 'provider_mismatch')->count())->toBe(1);
+});
+
+it('ne remplace pas une référence externe déjà rattachée au paiement local', function (): void {
+    fakeKkiapay('SUCCESS', 16000);
+    $order = payOrder();
+    $service = app(PaymentService::class);
+    $payment = $service->open($order, PaymentProvider::Kkiapay);
+    $payment->update(['provider_reference' => 'TXN-EXPECTED']);
+
+    expect($service->verify($payment, 'TXN-UNEXPECTED'))->toBeFalse()
+        ->and($payment->fresh()->provider_reference)->toBe('TXN-EXPECTED')
+        ->and($payment->state)->toBe(PaymentState::Pending)
+        ->and($order->fresh()->payment_status->value)->toBe('unpaid')
+        ->and($payment->events()->where('type', 'provider_reference_mismatch')->count())->toBe(1);
+});
+
+it('refuse un succès en ligne sans identité de transaction externe', function (?string $reference): void {
+    $order = payOrder();
+    $service = app(PaymentService::class);
+    $payment = $service->open($order, PaymentProvider::Kkiapay);
+
+    expect($service->settle($payment, new ChargeResult(
+        state: PaymentState::Succeeded,
+        providerReference: $reference,
+        amount: 16000,
+    )))->toBeFalse()
+        ->and($payment->fresh()->state)->toBe(PaymentState::Pending)
+        ->and($order->fresh()->payment_status->value)->toBe('unpaid')
+        ->and($payment->events()->where('type', 'provider_reference_missing')->count())->toBe(1);
+})->with([null, '', '   ']);
+
+it('annule le paiement et sa référence si la réaction métier échoue', function (): void {
+    fakeKkiapay('SUCCESS', 16000);
+    $order = payOrder();
+    $service = app(PaymentService::class);
+    $payment = $service->open($order, PaymentProvider::Kkiapay);
+    Event::listen('eloquent.updating: '.Order::class, function (): void {
+        throw new RuntimeException('Échec métier simulé');
+    });
+
+    expect(fn () => $service->verify($payment, 'TXN-ROLLBACK'))
+        ->toThrow(RuntimeException::class, 'Échec métier simulé');
+    expect($payment->fresh()->state)->toBe(PaymentState::Pending)
+        ->and($payment->fresh()->provider_reference)->toBeNull()
+        ->and($payment->fresh()->paid_at)->toBeNull()
+        ->and($payment->events()->where('type', 'succeeded')->count())->toBe(0)
+        ->and($order->fresh()->payment_status->value)->toBe('unpaid');
+});
+
+it('préserve un succès face à un retour échoué utilisant une instance périmée', function (): void {
+    fakeKkiapay('SUCCESS', 16000);
+    $order = payOrder();
+    $service = app(PaymentService::class);
+    $payment = $service->open($order, PaymentProvider::Kkiapay);
+    $stalePayment = $payment->fresh();
+    expect($service->verify($payment, 'TXN-FINAL'))->toBeTrue();
+
+    expect($service->settle($stalePayment, new ChargeResult(
+        state: PaymentState::Failed,
+        providerReference: 'TXN-FINAL',
+    )))->toBeFalse()
+        ->and($payment->fresh()->state)->toBe(PaymentState::Succeeded)
+        ->and($payment->fresh()->provider_reference)->toBe('TXN-FINAL')
+        ->and($payment->events()->where('type', 'succeeded')->count())->toBe(1)
+        ->and($payment->events()->where('type', 'failed')->count())->toBe(0)
+        ->and($order->fresh()->payment_status->value)->toBe('paid');
+});
+
+it('ne masque pas une autre violation de contrainte unique', function (): void {
+    fakeKkiapay('SUCCESS', 16000);
+    $order = payOrder();
+    $service = app(PaymentService::class);
+    $payment = $service->open($order, PaymentProvider::Kkiapay);
+    Event::listen('eloquent.updating: '.Order::class, function () use ($order): void {
+        DB::table('orders')->insert($order->getRawOriginal());
+    });
+
+    expect(fn () => $service->verify($payment, 'TXN-UNRELATED'))
+        ->toThrow(UniqueConstraintViolationException::class);
+    expect($payment->fresh()->state)->toBe(PaymentState::Pending)
+        ->and($payment->events()->where('type', 'provider_reference_conflict')->count())->toBe(0);
 });
 
 it('rejette un webhook à signature invalide', function (): void {
