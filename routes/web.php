@@ -1,11 +1,19 @@
 <?php
 
+use App\Http\Controllers\GuestRequestRecoveryController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::view('/', 'home')->name('home');
+
+Route::get('retrouver-demande', [GuestRequestRecoveryController::class, 'renew'])->name('request-recovery.renew');
+Route::post('retrouver-demande', [GuestRequestRecoveryController::class, 'sendRenewal'])->middleware('throttle:6,1')->name('request-recovery.renew.send');
+Route::get('retrouver-demande/{token}', [GuestRequestRecoveryController::class, 'show'])->name('request-recovery.show');
+Route::post('retrouver-demande/{token}', [GuestRequestRecoveryController::class, 'store'])->middleware(['auth', 'approved', 'throttle:6,1'])->name('request-recovery.store');
+Route::get('verifier-adresse-demande/{id}/{hash}/{token}', [GuestRequestRecoveryController::class, 'verify'])
+    ->middleware(['auth', 'approved', 'throttle:6,1'])->name('request-recovery.verify');
 
 // Vitrine publique
 Volt::route('services', 'pages.public.services-index')->name('services');

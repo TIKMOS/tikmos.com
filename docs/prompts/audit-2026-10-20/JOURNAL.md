@@ -12,7 +12,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [02](02-montant-paiement-obligatoire.md) | Refuser un paiement en ligne sans montant confirmé | Validé localement | 24/10/2026 : F02 reproduit avant correction ; montant serveur entier, valide et égal au dû désormais requis. Devise contrôlée si fournie, paiement KKiaPay local limité à XOF ; absence du champ de devise documentée comme limite. PaymentTest : 59 réussis, 283 assertions ; suite complète : 282 réussis, 894 assertions ; Larastan : 0 erreur ; Pint conforme. F01, idempotence et COD préservés. HTTP/notifications simulés, SQLite en mémoire ; MySQL et KKiaPay sandbox non validés. Aucune migration locale, aucun commit/push lors de A. Voir note 02. |
 | [03](03-stock-global-variantes.md) | Empêcher le stock négatif entre variantes | Validé localement | 24/10/2026 : F03 reproduit (stock 2 → −2 avant correction), puis cumul par produit contrôlé dans le panier et sous verrou en transaction à la commande. Refus explicite, panier corrigeable et rollback validés. CartSizeTest + OrderFlowTest : 24 tests, 125 assertions ; suite : 297 tests, 995 assertions ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette isolée à 360/1440 px validée, stocks NULL préservés. Concurrence MySQL non validée ; base de l'application inchangée. Aucun commit/push lors de A. Voir note 03. |
 | [04](04-expiration-devis.md) | Appliquer la validité des devis côté serveur | Validé localement | 24/10/2026 : F04 reproduit avant correction ; validité contrôlée à la décision, fin du jour incluse dans le fuseau applicatif (UTC), absence de date préservée. État Expiré et renouvellement visibles ; envoi avec date passée refusé ; décisions historiques préservées. Tests ciblés : 45 tests, 244 assertions ; suite : 326 tests, 1 192 assertions ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette navigateur 360/1440 px et clavier réalisée ; utilisateur ayant confirmé l'état Expiré et les boutons sur l'instance fictive 8012, autres cas manuels disponibles. MySQL/concurrence et SMTP réel non validés. Aucune migration de la base habituelle, aucun commit/push lors de A. Voir note 04. |
-| [05](05-rattachement-demande-invite.md) | Permettre au visiteur de retrouver sa demande en sécurité | À traiter | — |
+| [05](05-rattachement-demande-invite.md) | Permettre au visiteur de retrouver sa demande en sécurité | Validé localement | 24/10/2026 : F05 reproduit (lien email attendu 200, obtenu 403). Récupération par lien signé 24 h, compte destinataire vérifié, confirmation et rattachement atomique unique ; accès croisés toujours interdits. Renouvellement neutre et limité, demandes historiques conservées. Nouveaux tests : 29 tests, 164 assertions ; ciblés : 107 tests, 501 assertions ; suite : 355 tests, 1 356 assertions ; ciblés sur vue finale : 51 tests, 282 assertions. Larastan : 0 erreur ; Pint conforme ; build réussi. Recette navigateur mobile/bureau/clavier réalisée ; utilisateur ayant confirmé le devis de 10 000 XOF après rattachement et le message « déjà utilisé » à la réouverture du lien sur l'instance fictive 8013. MySQL/concurrence, migration MySQL et SMTP réel non validés. Nouvelle migration non appliquée à la base habituelle. Aucun commit/push lors de A. Voir note 05. |
 | [06](06-creation-administrateur.md) | Supprimer les identifiants administrateur de repli | À traiter | — |
 | [07](07-reprise-paiement-reservation.md) | Gérer l’abandon et la reprise du paiement | À traiter | — |
 | [08](08-numerotation-commandes.md) | Rendre la numérotation des commandes atomique | À traiter | — |
@@ -197,6 +197,70 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   sans commit ni push lors de A. Checkpoint 03 `88cc961ff7a8050d64932c3b646817a58e2ee419`
   vérifié sur origin/main avant intervention ; mode étranger d'`artisan` préservé.
   Aucune autre fiche commencée.
+
+## Note 05 — 24 octobre 2026
+
+- **Cause et reproduction :** demande invitée sans propriétaire, email de devis
+  vers le détail exigeant à juste titre un propriétaire connecté. Le nouveau test
+  attendait HTTP 200 et obtenait 403 avant correction ; il passe avec récupération
+  légitime et conserve le refus d'accès d'un autre compte. Audit historique inchangé.
+- **Parcours :** lien signé 24 heures avec jeton aléatoire haché en base, connexion
+  ou inscription avec retour au lien, vérification d'adresse par email signé d'une
+  heure puis confirmation POST avec CSRF. Aucune simple égalité d'emails non vérifiés,
+  aucune donnée privée révélée avant rattachement et aucune mutation GET.
+- **Garanties :** demande, compte et jeton relus sous verrou en transaction, mise
+  à jour conditionnelle du propriétaire absent, consommation de tous les liens et
+  événement atomiques. Rejeu et transfert refusés ; mauvais compte et adresse non
+  vérifiée ne consomment rien. Statuts, montants, décisions et historique conservés.
+  Le suivi distingue une mise à jour d'informations d'un nouvel envoi de devis.
+- **Renouvellement :** formulaire accessible depuis la liste client, les liens
+  refusés et la confirmation publique ; référence et adresse initiale requises,
+  réponse neutre, destination serveur uniquement. Limites par IP et destination.
+  Les liens valides antérieurs restent utilisables jusqu'au premier rattachement.
+  Sans email/référence : contact de l'équipe et vérification humaine, aucun transfert
+  automatique d'une ancienne demande.
+- **Fichiers :** nouveau `GuestRequestRecoveryController`, `GuestRequestRecoveryService`,
+  notifications `GuestRequestRecoveryLink` et `GuestRequestEmailVerification`, nouvelle
+  migration `2026_10_24_010000_create_guest_request_claims_table.php`,
+  `GuestRequestRecoveryTest`, routes web, en-têtes de sécurité, trois notifications
+  client existantes, inscription, fiche service, liste/détail client et vues
+  `request-recovery`. Cadre fonctionnel, présente ligne/note et
+  [rapport avec captures](../../validations/2026-10-24-rattachement/README.md).
+  Le bundle initial `app-BOXzao7U.css` est remplacé au contrôle final par le bundle
+  `app-CV94gIVv.css` déjà versionné en 04 ; aucun changement d'asset à publier.
+- **Contrôles :** nouveaux tests → **29 tests, 164 assertions** ; récupération,
+  devis, auth et notifications → **107 tests, 501 assertions** ; suite complète →
+  **355 tests, 1 356 assertions** ; ciblés récupération/détail client relancés sur
+  la vue finale → **51 tests, 282 assertions** ; Larastan → **0 erreur** ; Pint
+  sur 11 fichiers PHP conforme ; build réussi. Première suite complète lancée avant
+  le dernier ajustement Blade ; suite entière réexécutée sur les vues finales avant
+  publication à la demande de l'utilisateur : **355 tests, 1 356 assertions**,
+  Larastan **0 erreur**, Pint conforme. Après les tests, build final et build isolé
+  identiques, manifeste et assets vérifiés ; `public/build` inchangé depuis 04.
+  Bases SQLite en mémoire,
+  notifications simulées et HTTP imprévu interdit dans les nouveaux tests.
+  Succès, signatures, expiration en base, page périmée, vérification d'adresse,
+  comptes croisés, inscription, rejeu, plusieurs liens, rollback, historique et
+  renouvellement couverts ; aucune requête réelle de paiement.
+- **Recette :** base SQLite temporaire distincte sur 8013, mail mémoire et boîte
+  locale interceptée ; comptes fictifs. Connexion, confirmation au clavier, devis
+  retrouvé, rejeu, expiration, mauvais compte, vérification puis rattachement,
+  renouvellement par Tab/Entrée réalisés à 360/1280/1440 px. Aucun débordement observé,
+  aucune erreur/avertissement console capturé ; viewport restauré, onglets de
+  test fermés. Cas manuel distinct ouvert dans Chrome ; l'utilisateur confirme
+  le devis de 10 000 XOF après rattachement et le message « déjà utilisé » à la
+  réouverture du même lien. Les autres cas ne sont pas présentés comme personnellement
+  validés par l'utilisateur. Renouvellement mobile et lien utilisé bureau revérifiés
+  avec le bundle final, captures actualisées ; aucun débordement ni erreur console.
+  Identifiants, liens à jeton et fichiers de
+  recette hors dépôt ; instance 8013 conservée temporairement pour l'essai demandé.
+- **Limites/état :** concurrence réelle et migration MySQL **non validées** ; SMTP
+  réel/délivrabilité et worker de queue réel **non validés**. Nouvelle migration
+  testée sur SQLite isolé uniquement, non appliquée à la base habituelle. Le nouveau
+  parcours nécessite cette migration avant usage sur cette base. Aucun déploiement,
+  commit ou push lors de A. Checkpoint 04 `c37fb7b7720612f674dca4fc9145ba2676709ce2`
+  vérifié sur origin/main ; mode étranger d'`artisan` préservé. Aucune autre fiche
+  commencée.
 
 ## Modèle de note à remplir après une intervention
 

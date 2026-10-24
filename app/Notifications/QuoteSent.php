@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\ServiceRequest;
+use App\Services\GuestRequestRecoveryService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -37,7 +38,8 @@ class QuoteSent extends Notification implements ShouldQueue
         }
 
         return $mail
-            ->action('Voir mon devis', route('app.requests.show', $this->request->reference))
-            ->line('Vous pouvez l\'accepter ou le refuser depuis votre espace.');
+            ->action('Voir mon devis', app(GuestRequestRecoveryService::class)->linkFor($this->request))
+            ->line('Connectez-vous avec l’adresse destinataire. Pour une demande sans compte, vérifiez cette adresse et confirmez le rattachement. Le lien de récupération est personnel, valable 24 heures et à usage unique.')
+            ->line('Vous pouvez accepter ou refuser un devis encore valide depuis votre espace.');
     }
 }

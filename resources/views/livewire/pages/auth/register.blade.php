@@ -53,8 +53,9 @@ new #[Layout('components.layouts.auth')] class extends Component
 
         event(new Registered($user));
         Auth::login($user);
+        session()->regenerate();
 
-        $this->redirect('/app', navigate: true);
+        $this->redirectIntended(default: '/app', navigate: true);
     }
 }; ?>
 

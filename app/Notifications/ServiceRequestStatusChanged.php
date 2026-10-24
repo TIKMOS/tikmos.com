@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\ServiceRequest;
+use App\Services\GuestRequestRecoveryService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -29,6 +30,6 @@ class ServiceRequestStatusChanged extends Notification implements ShouldQueue
             ->subject('Mise à jour de votre demande — '.$this->request->reference)
             ->greeting('Bonjour '.$this->request->name.',')
             ->line('Le statut de votre demande a évolué : '.$this->request->status->label().'.')
-            ->action('Suivre ma demande', route('app.requests.show', $this->request->reference));
+            ->action('Suivre ma demande', app(GuestRequestRecoveryService::class)->linkFor($this->request));
     }
 }

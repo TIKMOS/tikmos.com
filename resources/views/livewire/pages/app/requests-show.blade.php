@@ -101,7 +101,7 @@ new #[Layout('components.layouts.app')] class extends Component
                         <li wire:key="ev-{{ $event->id }}" class="flex gap-3">
                             <span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-gold"></span>
                             <div>
-                                <p class="text-sm font-medium text-content">{{ $event->to_status->label() }}</p>
+                                <p class="text-sm font-medium text-content">{{ $event->from_status === $event->to_status ? 'Informations de la demande mises à jour' : $event->to_status->label() }}</p>
                                 <p class="text-xs text-tk-400">{{ $event->created_at->diffForHumans() }}</p>
                             </div>
                         </li>

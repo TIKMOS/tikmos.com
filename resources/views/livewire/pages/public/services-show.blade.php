@@ -134,6 +134,8 @@ new #[Layout('components.layouts.public')] class extends Component
                         <div class="mt-5 rounded-tile bg-success-soft px-4 py-3 text-sm text-success-ink">
                             <p class="flex items-center gap-2 font-medium"><x-lucide-circle-check class="h-5 w-5" /> Demande envoyée !</p>
                             <p class="mt-1">Votre référence : <span class="font-mono font-bold">{{ $reference }}</span></p>
+                            <p class="mt-2">Si vous avez indiqué un email, utilisez le lien reçu pour retrouver votre demande. Sans compte, vous devrez créer un compte et vérifier cette adresse.</p>
+                            <a href="{{ route('request-recovery.renew') }}" class="mt-2 inline-block font-medium underline">Recevoir un nouveau lien</a>
                         </div>
                     @endif
 

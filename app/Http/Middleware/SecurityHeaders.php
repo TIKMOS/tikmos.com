@@ -15,6 +15,11 @@ class SecurityHeaders
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        if ($request->routeIs('request-recovery.*')) {
+            $response->headers->set('Referrer-Policy', 'no-referrer');
+            $response->headers->set('Cache-Control', 'no-store, private');
+            $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+        }
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
         if (app()->environment('production')) {

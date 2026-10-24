@@ -83,6 +83,32 @@ ne réécrit ni les devis historiques ni les décisions déjà prises. Un nouvel
 exige une date du jour ou future, ou aucune date. Un devis déjà accepté ou refusé
 reste en lecture seule : son montant, sa décision et sa date de décision sont conservés.
 
+**Récupération d'une demande invitée :** les emails de réception, de devis et de
+suivi dirigent une demande sans propriétaire vers un lien signé personnel valable
+24 heures, avec jeton aléatoire dont seul le hachage est stocké. Le destinataire
+se connecte ou s'inscrit avec la même adresse, vérifie l'adresse de son compte
+(email de vérification signé valable une heure), puis confirme le rattachement.
+La vérification d'adresse est demandée dans ce parcours ; elle ne rend pas
+obligatoire une vérification globale pour tous les autres écrans du site.
+
+Un affichage GET ne rattache rien. Le POST avec protection CSRF revérifie sous
+verrou l'échéance, le destinataire, le compte actif et vérifié, et l'absence de
+propriétaire. Le rattachement, l'invalidation de tous les jetons de la demande
+et l'événement d'historique forment une transaction unique. Une tentative refusée
+ne consomme pas le lien ; une demande déjà liée n'est jamais transférée. Montants,
+statuts, validité et décisions du devis sont conservés. L'accès au détail reste
+strictement limité au propriétaire.
+
+Pour une ancienne demande ou un lien expiré, « Retrouver une demande » dans la
+liste client permet de demander un email avec référence et adresse initiale.
+La réponse publique est neutre, sans confirmer l'existence de la demande.
+Le lien est envoyé uniquement à l'adresse enregistrée d'une demande encore sans
+propriétaire. Le renvoi est limité par IP et par couple référence/adresse ; une
+nouvelle émission ne révoque pas les liens encore valides, afin qu'un tiers ne
+puisse pas bloquer le destinataire. Le premier rattachement les consomme tous.
+Sans email ou sans référence, le client contacte l'équipe pour une vérification
+manuelle d'identité ; aucune réaffectation automatique par simple email.
+
 ### P2 — Boutique → commande chaussures (modèle Sezy, paiement à la livraison)
 1. Visiteur parcourt la **boutique**, ouvre une **fiche produit** (taille, prix), **ajoute au panier**.
 2. **Panier maison** (session → fusion à la connexion) → **checkout léger** (coordonnées, adresse de

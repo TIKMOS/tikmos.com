@@ -27,6 +27,8 @@ new #[Layout('components.layouts.app')] class extends Component
         <x-tk.button href="{{ url('/services') }}" variant="primary" icon="plus">Demander un devis</x-tk.button>
     </div>
 
+    <p class="mt-6 text-sm text-muted">Une demande déposée sans compte manque ici ? <a href="{{ route('request-recovery.renew') }}" class="font-medium text-content underline underline-offset-2">Retrouver une demande</a></p>
+
     <div class="mt-8">
         @forelse ($requests as $request)
             <a href="{{ route('app.requests.show', $request->reference) }}" wire:navigate wire:key="req-{{ $request->id }}"
