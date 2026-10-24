@@ -11,7 +11,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [01](01-transaction-externe-unique.md) | Empêcher une transaction externe de payer plusieurs commandes | Validé localement | 24/10/2026 : F01 reproduit avant correction, puis refus du second paiement avec événement explicite ; unicité fournisseur/référence et règlement atomique. Tests ciblés : 32 réussis, 138 assertions ; suite complète : 242 réussis, 717 assertions ; Larastan : 0 erreur ; Pint conforme. Migration existant/doublons/rollback : SQLite en mémoire validé ; SQL MySQL compilé uniquement, concurrence MySQL et KKiaPay sandbox non validées. Base locale inchangée ; aucun commit/push. Voir la note 01 ci-dessous. |
 | [02](02-montant-paiement-obligatoire.md) | Refuser un paiement en ligne sans montant confirmé | Validé localement | 24/10/2026 : F02 reproduit avant correction ; montant serveur entier, valide et égal au dû désormais requis. Devise contrôlée si fournie, paiement KKiaPay local limité à XOF ; absence du champ de devise documentée comme limite. PaymentTest : 59 réussis, 283 assertions ; suite complète : 282 réussis, 894 assertions ; Larastan : 0 erreur ; Pint conforme. F01, idempotence et COD préservés. HTTP/notifications simulés, SQLite en mémoire ; MySQL et KKiaPay sandbox non validés. Aucune migration locale, aucun commit/push lors de A. Voir note 02. |
 | [03](03-stock-global-variantes.md) | Empêcher le stock négatif entre variantes | Validé localement | 24/10/2026 : F03 reproduit (stock 2 → −2 avant correction), puis cumul par produit contrôlé dans le panier et sous verrou en transaction à la commande. Refus explicite, panier corrigeable et rollback validés. CartSizeTest + OrderFlowTest : 24 tests, 125 assertions ; suite : 297 tests, 995 assertions ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette isolée à 360/1440 px validée, stocks NULL préservés. Concurrence MySQL non validée ; base de l'application inchangée. Aucun commit/push lors de A. Voir note 03. |
-| [04](04-expiration-devis.md) | Appliquer la validité des devis côté serveur | À traiter | — |
+| [04](04-expiration-devis.md) | Appliquer la validité des devis côté serveur | Validé localement | 24/10/2026 : F04 reproduit avant correction ; validité contrôlée à la décision, fin du jour incluse dans le fuseau applicatif (UTC), absence de date préservée. État Expiré et renouvellement visibles ; envoi avec date passée refusé ; décisions historiques préservées. Tests ciblés : 45 tests, 244 assertions ; suite : 326 tests, 1 192 assertions ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette navigateur 360/1440 px et clavier réalisée ; utilisateur ayant confirmé l'état Expiré et les boutons sur l'instance fictive 8012, autres cas manuels disponibles. MySQL/concurrence et SMTP réel non validés. Aucune migration de la base habituelle, aucun commit/push lors de A. Voir note 04. |
 | [05](05-rattachement-demande-invite.md) | Permettre au visiteur de retrouver sa demande en sécurité | À traiter | — |
 | [06](06-creation-administrateur.md) | Supprimer les identifiants administrateur de repli | À traiter | — |
 | [07](07-reprise-paiement-reservation.md) | Gérer l’abandon et la reprise du paiement | À traiter | — |
@@ -156,6 +156,46 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   exhaustive. Aucun changement de schéma ni migration de la base de l'application.
   Checkpoint 02 `6ad360bcda5d778c93d3c70a166cc9a3e86da654` vérifié sur GitHub/main.
   Validé localement, sans commit ni push lors de A ; mode étranger d'`artisan` préservé.
+  Aucune autre fiche commencée.
+
+## Note 04 — 24 octobre 2026
+
+- **Cause et reproduction :** l'acceptation contrôlait uniquement le statut Envoyé,
+  sans `valid_until`. Le nouvel appel Livewire direct sur un devis expiré échouait
+  avant correction : statut attendu Sent, obtenu Accepted. L'audit historique est inchangé.
+- **Règle :** validité jusqu'à 23:59:59.999999 du jour indiqué dans `app.timezone`
+  (UTC actuellement), refus dès le lendemain ; sans date, aucune échéance automatique.
+  Expiration calculée à l'affichage et à la décision sans réécriture historique.
+- **Comportement :** `QuoteService` relit demande/devis sous verrou, vérifie propriétaire,
+  permissions, statut et date ; décision/événement atomiques et rejeux sans doublon.
+  Les décisions acceptées/refusées restent conservées et en lecture seule. Envoi avec
+  date passée ou mal formée refusé, erreur visible puis effacée après correction.
+  État Expiré et lien de contact pour demander explicitement le renouvellement.
+- **Fichiers :** modèle `Quote`, nouveau `QuoteService`, vues client `requests-show`
+  et admin `service-request-show`, tests `EspaceClientDevisTest`/`ServicesDevisTest`,
+  cadre fonctionnel, présente ligne/note, [rapport et captures](../../validations/2026-10-24-devis/README.md),
+  CSS `app-CV94gIVv.css` remplaçant `app-t2tCysDR.css` et manifeste de build.
+- **Contrôles :** tests ciblés → **45 tests, 244 assertions** ; suite complète →
+  **326 tests, 1 192 assertions** ; Larastan → **0 erreur** ; Pint sur les quatre
+  fichiers PHP → conforme ; `npm.cmd run build` → réussi. Tests ciblés relancés avec
+  les vues finales après les derniers ajustements de présentation/formulaire.
+  SQLite en mémoire, HTTP imprévu interdit et notifications simulées. Horloge figée :
+  limites de journée et fuseaux UTC/Lagos/New York, page périmée, date changée en base,
+  absence de date, dates d'envoi, décisions/historique, permissions, rejeu et rollback.
+- **Recette :** nouvelle base SQLite temporaire et comptes fictifs sur 8012, mail
+  `array`, double authentification commerciale conservée sans appareil de confiance.
+  Client : expiration, renouvellement au clavier, refus sur page devenue périmée,
+  devis sans date et décision historique. Admin : date passée refusée, correction
+  puis envoi fictif par tabulation/Entrée ; devis accepté en lecture seule. Formats
+  360/1440 px sans débordement observé, console sans erreur/avertissement capturé,
+  viewport restauré et onglets automatisés fermés. L'utilisateur confirme l'état
+  Expiré, l'absence du bouton Accepter et la présence du renouvellement. Instance 8012
+  conservée pour la suite des essais manuels. Plateforme 8000
+  redémarrée à sa demande et vérifiée HTTP 200.
+- **Limites/état :** concurrence MySQL **non validée**, aucun email réel ni recette
+  SMTP. Aucun changement de schéma ou migration de la base habituelle. Validé localement,
+  sans commit ni push lors de A. Checkpoint 03 `88cc961ff7a8050d64932c3b646817a58e2ee419`
+  vérifié sur origin/main avant intervention ; mode étranger d'`artisan` préservé.
   Aucune autre fiche commencée.
 
 ## Modèle de note à remplir après une intervention

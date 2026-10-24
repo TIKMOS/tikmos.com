@@ -8,10 +8,12 @@ use App\Enums\QuoteStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property QuoteStatus $status
  * @property int $amount
+ * @property Carbon|null $valid_until
  */
 #[Fillable([
     'service_request_id', 'reference', 'amount', 'currency',
@@ -39,5 +41,32 @@ class Quote extends Model
     public function amountLabel(): string
     {
         return number_format($this->amount, 0, ',', ' ').' '.$this->currency;
+    }
+
+    /** Une date limite inclut toute la journée dans le fuseau de l'application. */
+    public function isExpired(): bool
+    {
+        if ($this->status === QuoteStatus::Expired) {
+            return true;
+        }
+
+        if ($this->status !== QuoteStatus::Sent || $this->valid_until === null) {
+            return false;
+        }
+
+        $timezone = config('app.timezone');
+        $deadline = Carbon::parse($this->valid_until->format('Y-m-d'), $timezone)->endOfDay();
+
+        return now($timezone)->greaterThan($deadline);
+    }
+
+    public function displayStatus(): QuoteStatus
+    {
+        return $this->isExpired() ? QuoteStatus::Expired : $this->status;
+    }
+
+    public function hasDecision(): bool
+    {
+        return in_array($this->status, [QuoteStatus::Accepted, QuoteStatus::Refused], true);
     }
 }

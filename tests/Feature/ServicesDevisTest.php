@@ -3,19 +3,29 @@
 declare(strict_types=1);
 
 use App\Enums\Publication;
+use App\Enums\QuoteStatus;
 use App\Enums\Role;
 use App\Enums\ServiceCategory;
 use App\Enums\ServiceRequestStatus;
+use App\Models\Quote;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Notifications\QuoteSent;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Volt\Volt;
 
 uses(RefreshDatabase::class);
 
-beforeEach(fn () => $this->seed(RolePermissionSeeder::class));
+beforeEach(function (): void {
+    $this->seed(RolePermissionSeeder::class);
+    Http::preventStrayRequests();
+    Notification::fake();
+});
 
 function svcStaff(string $role): User
 {
@@ -169,3 +179,112 @@ it('interdit l’envoi de devis sans permission quotes.send', function (): void 
         ->call('saveQuote')
         ->assertForbidden();
 });
+
+it('refuse une date passée ou mal formée lors d’un nouvel envoi sans écritures ni notification', function (string $date): void {
+    config(['app.timezone' => 'UTC']);
+    $this->travelTo(Carbon::parse('2026-10-24 12:00:00', 'UTC'));
+    $request = ServiceRequest::factory()->create();
+    $before = $request->fresh()->getAttributes();
+
+    Volt::actingAs(svcStaff(Role::Commercial->value))->test('pages.admin.service-request-show', ['request' => $request])
+        ->set('amount', 750000)->set('validUntil', $date)->call('saveQuote')
+        ->assertHasErrors('validUntil')->assertNotDispatched('tk-toast');
+
+    expect(Quote::count())->toBe(0)
+        ->and($request->fresh()->getAttributes())->toBe($before)
+        ->and($request->events()->count())->toBe(0);
+    Notification::assertNothingSent();
+})->with(['2026-10-23', '2026-02-30', 'pas-une-date', '2026-10-24T23:59:59Z']);
+
+it('autorise une date du jour, future ou aucune échéance pour un nouvel envoi', function (string $date): void {
+    config(['app.timezone' => 'UTC']);
+    $this->travelTo(Carbon::parse('2026-10-24 23:59:59', 'UTC'));
+    $client = svcStaff(Role::Client->value);
+    $request = ServiceRequest::factory()->create(['user_id' => $client->id]);
+
+    Volt::actingAs(svcStaff(Role::Commercial->value))->test('pages.admin.service-request-show', ['request' => $request])
+        ->set('amount', 750000)->set('validUntil', $date)->call('saveQuote')->assertHasNoErrors();
+
+    $request->refresh();
+    expect($request->quote->valid_until?->format('Y-m-d'))->toBe($date ?: null)
+        ->and($request->quote->status)->toBe(QuoteStatus::Sent)
+        ->and($request->status)->toBe(ServiceRequestStatus::Quoted)
+        ->and($request->events()->count())->toBe(1);
+    Notification::assertSentToTimes($client, QuoteSent::class, 1);
+})->with(['2026-10-24', '2026-10-25', '']);
+
+it('revérifie la date d’envoi si le formulaire est resté ouvert après minuit', function (): void {
+    config(['app.timezone' => 'UTC']);
+    $this->travelTo(Carbon::parse('2026-10-24 23:59:59', 'UTC'));
+    $request = ServiceRequest::factory()->create();
+    $component = Volt::actingAs(svcStaff(Role::Commercial->value))->test('pages.admin.service-request-show', ['request' => $request])
+        ->set('amount', 10000)->set('validUntil', '2026-10-24');
+    $this->travelTo(Carbon::parse('2026-10-25 00:00:00', 'UTC'));
+
+    $component->call('saveQuote')->assertHasErrors('validUntil');
+    expect(Quote::count())->toBe(0)->and($request->events()->count())->toBe(0);
+    Notification::assertNothingSent();
+});
+
+it('utilise la date du fuseau applicatif lors de l’envoi', function (): void {
+    config(['app.timezone' => 'Africa/Lagos']);
+    $this->travelTo(Carbon::parse('2026-10-24 23:30:00', 'UTC'));
+    $request = ServiceRequest::factory()->create();
+    $component = Volt::actingAs(svcStaff(Role::Commercial->value))->test('pages.admin.service-request-show', ['request' => $request])
+        ->set('amount', 10000)->set('validUntil', '2026-10-24');
+
+    $component->call('saveQuote')->assertHasErrors('validUntil');
+    expect(Quote::count())->toBe(0);
+    $component->set('validUntil', '2026-10-25')->call('saveQuote')->assertHasNoErrors();
+    expect($request->fresh()->quote->valid_until->format('Y-m-d'))->toBe('2026-10-25');
+});
+
+it('conserve un devis historique expiré lors d’un renvoi invalide puis permet son renouvellement explicite', function (): void {
+    $this->travelTo(Carbon::parse('2026-10-24 12:00:00', 'UTC'));
+    $request = ServiceRequest::factory()->status(ServiceRequestStatus::Quoted)->create();
+    $quote = Quote::create([
+        'service_request_id' => $request->id, 'reference' => 'TKM-Q-HISTORIQUE',
+        'amount' => 500000, 'currency' => 'XOF', 'status' => QuoteStatus::Sent,
+        'valid_until' => '2026-10-23', 'sent_at' => now()->subDays(3),
+    ]);
+    $before = $quote->fresh()->getAttributes();
+    $component = Volt::actingAs(svcStaff(Role::Commercial->value))->test('pages.admin.service-request-show', ['request' => $request])
+        ->assertSee('Expiré');
+    expect($quote->fresh()->getAttributes())->toBe($before);
+
+    $component->set('amount', 600000)->call('saveQuote')->assertHasErrors('validUntil');
+    expect($quote->fresh()->getAttributes())->toBe($before)->and($request->events()->count())->toBe(0);
+    Notification::assertNothingSent();
+
+    $component->set('validUntil', '2026-10-25')->call('saveQuote')->assertHasNoErrors();
+    expect(Quote::count())->toBe(1)
+        ->and($quote->fresh()->reference)->toBe('TKM-Q-HISTORIQUE')
+        ->and($quote->fresh()->amount)->toBe(600000)
+        ->and($quote->fresh()->valid_until->format('Y-m-d'))->toBe('2026-10-25')
+        ->and($quote->fresh()->decided_at)->toBeNull();
+});
+
+it('interdit le renvoi d’un devis déjà décidé même depuis un ancien formulaire ouvert', function (QuoteStatus $status, ServiceRequestStatus $requestStatus): void {
+    $this->travelTo(Carbon::parse('2026-10-24 12:00:00', 'UTC'));
+    $request = ServiceRequest::factory()->status(ServiceRequestStatus::Quoted)->create();
+    $quote = Quote::create([
+        'service_request_id' => $request->id, 'reference' => 'TKM-Q-DECIDE',
+        'amount' => 500000, 'currency' => 'XOF', 'status' => QuoteStatus::Sent,
+        'valid_until' => '2026-10-25', 'sent_at' => now(),
+    ]);
+    $component = Volt::actingAs(svcStaff(Role::Commercial->value))->test('pages.admin.service-request-show', ['request' => $request]);
+    $quote->update(['status' => $status, 'decided_at' => now()]);
+    $request->transitionTo($requestStatus, null, 'Décision historique.');
+    $before = $quote->fresh()->getAttributes();
+    $events = $request->events()->count();
+
+    $component->set('amount', 900000)->call('saveQuote')->assertHasErrors('quote')
+        ->assertSee('Son montant et sa décision sont conservés.');
+    expect($quote->fresh()->getAttributes())->toBe($before)
+        ->and($request->fresh()->status)->toBe($requestStatus)
+        ->and($request->events()->count())->toBe($events);
+    Notification::assertNothingSent();
+})->with([
+    [QuoteStatus::Accepted, ServiceRequestStatus::Accepted],
+    [QuoteStatus::Refused, ServiceRequestStatus::Refused],
+]);

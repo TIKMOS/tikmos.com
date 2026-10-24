@@ -73,6 +73,16 @@
 4. Équipe qualifie (`en étude`), prépare un **devis** (`devis envoyé`) → notif client.
 5. Client **accepte/refuse** → `acceptée` → projet `en cours` → `livrée`. Échanges + documents.
 
+**Validité des devis :** une date `valid_until` inclut toute la journée indiquée
+jusqu'à 23:59:59.999999, dans le fuseau `config('app.timezone')` (actuellement UTC).
+Sans date, aucune échéance automatique n'est appliquée. La validité est relue côté
+serveur au moment de la décision ; un devis expiré ne peut plus être accepté ou
+refusé. L'espace client affiche « Expiré » et propose de contacter l'équipe pour
+un renouvellement, en précisant la référence du devis. Cette expiration affichée
+ne réécrit ni les devis historiques ni les décisions déjà prises. Un nouvel envoi
+exige une date du jour ou future, ou aucune date. Un devis déjà accepté ou refusé
+reste en lecture seule : son montant, sa décision et sa date de décision sont conservés.
+
 ### P2 — Boutique → commande chaussures (modèle Sezy, paiement à la livraison)
 1. Visiteur parcourt la **boutique**, ouvre une **fiche produit** (taille, prix), **ajoute au panier**.
 2. **Panier maison** (session → fusion à la connexion) → **checkout léger** (coordonnées, adresse de

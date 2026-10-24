@@ -1,12 +1,11 @@
 <?php
 
-use App\Enums\QuoteStatus;
 use App\Enums\ServiceRequestStatus;
-use App\Models\Quote;
 use App\Models\ServiceRequest;
+use App\Models\User;
 use App\Notifications\QuoteSent;
 use App\Notifications\ServiceRequestStatusChanged;
-use App\Support\ReferenceGenerator;
+use App\Services\QuoteService;
 use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
@@ -71,36 +70,18 @@ new #[Layout('components.layouts.admin')] class extends Component
         $this->dispatch('tk-toast', type: 'success', message: 'Demande affectée.');
     }
 
-    public function saveQuote(): void
+    public function saveQuote(QuoteService $quotes): void
     {
-        abort_unless(Auth::user()?->can('quotes.send'), 403);
-
-        $data = $this->validate([
-            'amount' => ['required', 'integer', 'min:0'],
-            'currency' => ['required', 'string', 'max:8'],
-            'validUntil' => ['nullable', 'date'],
-            'quoteBody' => ['nullable', 'string', 'max:5000'],
+        $this->resetValidation();
+        $staff = Auth::user();
+        abort_unless($staff instanceof User, 403);
+        $this->request->refresh()->load('quote');
+        $quote = $quotes->send($this->request, $staff, [
+            'amount' => $this->amount,
+            'currency' => $this->currency,
+            'validUntil' => $this->validUntil,
+            'quoteBody' => $this->quoteBody,
         ]);
-
-        $quote = $this->request->quote ?: new Quote([
-            'service_request_id' => $this->request->id,
-            'reference' => ReferenceGenerator::quote(),
-        ]);
-
-        $quote->fill([
-            'amount' => $data['amount'],
-            'currency' => $data['currency'],
-            'valid_until' => $data['validUntil'] ?: null,
-            'body' => $data['quoteBody'] ?: null,
-            'status' => QuoteStatus::Sent,
-            'sent_at' => now(),
-        ]);
-        $quote->save();
-
-        // Le statut de la demande passe à « Devis envoyé ».
-        if ($this->request->status !== ServiceRequestStatus::Quoted) {
-            $this->request->transitionTo(ServiceRequestStatus::Quoted, Auth::user(), 'Devis '.$quote->reference.' envoyé.');
-        }
 
         $this->request->refresh()->load(['quote', 'events.author']);
         $this->notifyClient(new QuoteSent($this->request));
@@ -144,20 +125,25 @@ new #[Layout('components.layouts.admin')] class extends Component
             {{-- Devis --}}
             @can('quotes.send')
                 <x-tk.admin-section title="Devis" icon="receipt">
-                    <form wire:submit="saveQuote" class="space-y-4">
+                    @error('quote')<p role="alert" class="mb-4 rounded-tile bg-danger-soft p-4 text-sm text-danger-ink">{{ $message }}</p>@enderror
+                    @if ($request->quote?->hasDecision())
+                        <p class="text-sm text-content">Ce devis a déjà fait l’objet d’une décision. Son montant et sa décision sont conservés.</p>
+                    @else
+                    <form wire:submit="saveQuote" class="space-y-4" novalidate>
                         <div class="grid gap-4 sm:grid-cols-3">
-                            <x-tk.field label="Montant" :error="$errors->first('amount')"><x-tk.input wire:model="amount" type="number" min="0" /></x-tk.field>
-                            <x-tk.field label="Devise"><x-tk.input wire:model="currency" /></x-tk.field>
-                            <x-tk.field label="Valide jusqu'au"><x-tk.input wire:model="validUntil" type="date" /></x-tk.field>
+                            <x-tk.field label="Montant" for="quote-amount" :error="$errors->first('amount')"><x-tk.input id="quote-amount" wire:model="amount" type="number" min="0" /></x-tk.field>
+                            <x-tk.field label="Devise" for="quote-currency" :error="$errors->first('currency')"><x-tk.input id="quote-currency" wire:model="currency" /></x-tk.field>
+                            <x-tk.field label="Valide jusqu'au" for="quote-valid-until" :error="$errors->first('validUntil')" :hint="'Date incluse ('.config('app.timezone').'). Sans date : aucune échéance.'"><x-tk.input id="quote-valid-until" wire:model="validUntil" type="date" :min="now(config('app.timezone'))->toDateString()" /></x-tk.field>
                         </div>
-                        <x-tk.field label="Détail / conditions">
-                            <textarea wire:model="quoteBody" rows="3" class="w-full rounded-input border border-tk-300 bg-surface px-4 py-3 text-[15px] text-content focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/10"></textarea>
+                        <x-tk.field label="Détail / conditions" for="quote-body">
+                            <textarea id="quote-body" wire:model="quoteBody" rows="3" class="w-full rounded-input border border-tk-300 bg-surface px-4 py-3 text-[15px] text-content focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/10"></textarea>
                         </x-tk.field>
                         <x-tk.button type="submit" variant="primary" icon="send">{{ $request->quote ? 'Mettre à jour & renvoyer' : 'Créer & envoyer le devis' }}</x-tk.button>
-                        @if ($request->quote)
-                            <p class="text-sm text-muted">Devis actuel : <span class="font-mono font-bold text-content">{{ $request->quote->reference }}</span> — {{ $request->quote->amountLabel() }} · {{ $request->quote->status->label() }}</p>
-                        @endif
                     </form>
+                    @endif
+                    @if ($request->quote)
+                        <p class="mt-3 text-sm text-muted">Devis actuel : <span class="font-mono font-bold text-content">{{ $request->quote->reference }}</span> — {{ $request->quote->amountLabel() }} · {{ $request->quote->displayStatus()->label() }}</p>
+                    @endif
                 </x-tk.admin-section>
             @endcan
 
