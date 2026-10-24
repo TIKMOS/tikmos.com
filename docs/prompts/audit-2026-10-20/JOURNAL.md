@@ -9,7 +9,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | Fiche | Sujet | État local | Preuves et limites |
 |---|---|---|---|
 | [01](01-transaction-externe-unique.md) | Empêcher une transaction externe de payer plusieurs commandes | Validé localement | 24/10/2026 : F01 reproduit avant correction, puis refus du second paiement avec événement explicite ; unicité fournisseur/référence et règlement atomique. Tests ciblés : 32 réussis, 138 assertions ; suite complète : 242 réussis, 717 assertions ; Larastan : 0 erreur ; Pint conforme. Migration existant/doublons/rollback : SQLite en mémoire validé ; SQL MySQL compilé uniquement, concurrence MySQL et KKiaPay sandbox non validées. Base locale inchangée ; aucun commit/push. Voir la note 01 ci-dessous. |
-| [02](02-montant-paiement-obligatoire.md) | Refuser un paiement en ligne sans montant confirmé | À traiter | — |
+| [02](02-montant-paiement-obligatoire.md) | Refuser un paiement en ligne sans montant confirmé | Validé localement | 24/10/2026 : F02 reproduit avant correction ; montant serveur entier, valide et égal au dû désormais requis. Devise contrôlée si fournie, paiement KKiaPay local limité à XOF ; absence du champ de devise documentée comme limite. PaymentTest : 59 réussis, 283 assertions ; suite complète : 282 réussis, 894 assertions ; Larastan : 0 erreur ; Pint conforme. F01, idempotence et COD préservés. HTTP/notifications simulés, SQLite en mémoire ; MySQL et KKiaPay sandbox non validés. Aucune migration locale, aucun commit/push lors de A. Voir note 02. |
 | [03](03-stock-global-variantes.md) | Empêcher le stock négatif entre variantes | À traiter | — |
 | [04](04-expiration-devis.md) | Appliquer la validité des devis côté serveur | À traiter | — |
 | [05](05-rattachement-demande-invite.md) | Permettre au visiteur de retrouver sa demande en sécurité | À traiter | — |
@@ -77,6 +77,44 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   le déploiement et s'arrête si des doublons historiques nécessitent une réconciliation manuelle.
 - **État :** validé localement, non publié. Checkpoint documentaire `ae5bc81` vérifié sur
   GitHub/main avant intervention. Changement de mode préexistant d'`artisan` préservé.
+  Aucune autre fiche commencée.
+
+## Note 02 — 24 octobre 2026
+
+- **Cause et preuve avant/après :** le modèle ignorait le contrôle d'un montant `NULL` ; la
+  passerelle appliquait `(int)` avant validation, avec troncature de fractions et conversion
+  de types invalides. Le nouveau test `sans montant confirmé` échouait avant correction :
+  commande attendue `unpaid`, obtenue `paid`. Il passe après correction ; l'audit historique
+  reste inchangé.
+- **Comportement obtenu :** succès en ligne soumis à un montant entier non négatif confirmé
+  côté serveur, strictement égal au montant du paiement local. Zéro distingué d'une absence.
+  Devise éventuelle contrôlée ; configuration locale KKiaPay autre que XOF refusée. Réponses
+  HTTP/JSON incomplètes et statut en attente distingués d'un échec réel. Rejeux sans double
+  transition, contrainte F01 conservée et confirmation COD sans montant de passerelle préservée.
+  Les journaux KKiaPay reçoivent uniquement un petit ensemble de champs normalisés, sans
+  recopier secrets, données client ou valeurs mal formées.
+- **Fichiers :** `app/Models/Payment.php`, `app/Payments/Gateways/KkiapayGateway.php`,
+  `app/Payments/Data/ChargeResult.php`, `app/Services/PaymentService.php`,
+  `tests/Feature/PaymentTest.php`, `docs/30-systeme-paiement.md` et cette ligne/note du journal.
+- **Contrôles :** `php vendor/bin/pest tests/Feature/PaymentTest.php --compact` →
+  **59 tests, 283 assertions** ; `php artisan test --compact` → **282 tests, 894 assertions** ;
+  `php -d memory_limit=1G vendor/bin/phpstan analyse --no-progress --memory-limit=1G` →
+  **0 erreur** ; Pint `--test` sur les cinq fichiers PHP concernés → conforme.
+  Environnement : `APP_ENV=testing`, `DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`,
+  `DB_URL` vide, `MAIL_MAILER=array`, `QUEUE_CONNECTION=sync`. Appels HTTP et notifications
+  simulés dans PaymentTest. Cas couverts : absence et valeur nulle, chaînes invalides,
+  booléens, structures, négatifs, fractions, dépassement entier, montants nominaux et zéro,
+  devises, HTTP non réussi, JSON/statut inexploitable, webhook avec montant client contradictoire,
+  nouvelle vérification après réponse incomplète, non-divulgation dans les événements et COD.
+- **Limites :** la documentation officielle indique XOF et montre `amount`, mais ne garantit
+  ni présence ni format d'un champ de devise dans la réponse. La lecture défensive de `currency`
+  est documentée ; son absence n'est pas présentée comme une confirmation indépendante de devise.
+  Sources et décisions dans `docs/30-systeme-paiement.md`. Aucun paiement réel ni recette
+  KKiaPay sandbox ; MySQL/concurrence non testés. Aucun changement d'UI, build frontend ou schéma.
+  Aucune migration exécutée sur la base de l'application ; la migration de la fiche 01 reste
+  à appliquer lors du déploiement de cette correction précédente.
+- **État :** validé localement, sans commit ni push lors de A. Dépendance 01 vérifiée sur
+  GitHub/main : `9da1d3c1ae30cd75feb0c6897108cb6c08a56c4e`. Changement de mode d'`artisan` préservé.
   Aucune autre fiche commencée.
 
 ## Modèle de note à remplir après une intervention

@@ -49,15 +49,44 @@ final class KkiapayGateway implements PaymentGateway
             'transactionId' => $providerReference,
         ]);
 
-        $data = $response->json() ?? [];
-        $status = strtoupper((string) ($data['status'] ?? ''));
+        $body = $response->json();
+        $data = is_array($body) ? $body : [];
+        $status = is_string($data['status'] ?? null) ? strtoupper($data['status']) : '';
+        $amount = $this->amount($data['amount'] ?? null);
+        $currency = $data['currency'] ?? null;
+        $currency = is_string($currency) && preg_match('/\A[A-Z]{3}\z/', $currency) === 1 ? $currency : null;
+
+        $validationError = match (true) {
+            ! $response->successful() => 'verification_unavailable',
+            ! in_array($status, ['SUCCESS', 'FAILED', 'PENDING'], true) => 'verification_incomplete',
+            $status === 'SUCCESS' => match (true) {
+                ! isset($data['amount']) => 'amount_missing',
+                $amount === null => 'amount_invalid',
+                array_key_exists('currency', $data) && $currency === null => 'currency_invalid',
+                default => null,
+            },
+            default => null,
+        };
+
+        $state = $validationError !== null ? PaymentState::Pending : match ($status) {
+            'SUCCESS' => PaymentState::Succeeded,
+            'FAILED' => PaymentState::Failed,
+            default => PaymentState::Pending,
+        };
 
         return new ChargeResult(
-            state: $status === 'SUCCESS' ? PaymentState::Succeeded : PaymentState::Failed,
+            state: $state,
             providerReference: $providerReference,
-            amount: isset($data['amount']) ? (int) $data['amount'] : null,
+            amount: $amount,
             method: $this->method($data['source'] ?? null),
-            raw: is_array($data) ? $data : [],
+            raw: [
+                'http_status' => $response->status(),
+                'status' => in_array($status, ['SUCCESS', 'FAILED', 'PENDING'], true) ? $status : 'UNKNOWN',
+                'amount' => $amount,
+                'currency' => $currency,
+            ],
+            currency: $currency,
+            validationError: $validationError,
         );
     }
 
@@ -89,13 +118,40 @@ final class KkiapayGateway implements PaymentGateway
             : 'https://api.kkiapay.me';
     }
 
+    /** Montant XOF entier, sans conversion silencieuse de fraction, booléen ou dépassement. */
+    private function amount(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value >= 0 ? $value : null;
+        }
+
+        if (is_float($value)) {
+            return is_finite($value) && $value >= 0 && floor($value) === $value && $value < PHP_INT_MAX
+                ? (int) $value
+                : null;
+        }
+
+        if (! is_string($value) || $value === '' || ! ctype_digit($value)) {
+            return null;
+        }
+
+        $digits = ltrim($value, '0');
+        $maximum = (string) PHP_INT_MAX;
+        if (strlen($digits) > strlen($maximum)
+            || (strlen($digits) === strlen($maximum) && strcmp($digits, $maximum) > 0)) {
+            return null;
+        }
+
+        return (int) $value;
+    }
+
     private function method(mixed $source): ?string
     {
-        return match (strtoupper((string) $source)) {
+        return match (is_string($source) ? strtoupper($source) : '') {
             'MOBILE_MONEY', 'MOMO' => 'momo',
             'CARD' => 'card',
             'WALLET' => 'wallet',
-            default => $source ? strtolower((string) $source) : null,
+            default => null,
         };
     }
 }

@@ -122,6 +122,14 @@ class PaymentService
                 /** @var Payment $locked */
                 $locked = Payment::whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
 
+                if ($result->validationError !== null || $result->state === PaymentState::Pending) {
+                    if (! $locked->state->isFinal()) {
+                        $locked->recordEvent($result->validationError ?? 'verification_pending', $locked->state);
+                    }
+
+                    return false;
+                }
+
                 if (! $result->isSucceeded()) {
                     $locked->markFailed($result);
 

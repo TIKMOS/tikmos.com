@@ -89,7 +89,7 @@ class Payment extends Model
      * (le webhook et le retour widget peuvent tous deux appeler cette méthode).
      * La référence externe, une fois renseignée, ne peut pas être remplacée.
      * Le service doit appeler cette méthode sous transaction et verrou de ligne.
-     * Contrôle du montant : refus si le montant fourni diffère.
+     * Un succès en ligne exige un montant confirmé entier et cohérent.
      */
     public function markSucceeded(ChargeResult $result): bool
     {
@@ -114,10 +114,45 @@ class Payment extends Model
             return false;
         }
 
+        $isOnline = PaymentProvider::tryFrom($this->provider)?->isOnline() ?? false;
+        if ($isOnline && $result->amount === null) {
+            $this->recordEvent('amount_missing', $this->state);
+
+            return false;
+        }
+
+        if ($isOnline && $result->amount < 0) {
+            $this->recordEvent('amount_invalid', $this->state);
+
+            return false;
+        }
+
         if ($result->amount !== null && $result->amount !== $this->amount) {
             $this->recordEvent('amount_mismatch', $this->state, [
                 'expected' => $this->amount,
                 'received' => $result->amount,
+            ]);
+
+            return false;
+        }
+
+        // XOF est la seule devise documentée par KKiaPay ; son retour n'est pas garanti.
+        if ($this->provider === PaymentProvider::Kkiapay->value && $this->currency !== 'XOF') {
+            $this->recordEvent('currency_unsupported', $this->state, ['supported' => 'XOF']);
+
+            return false;
+        }
+
+        if ($result->currency !== null && preg_match('/\A[A-Z]{3}\z/', $result->currency) !== 1) {
+            $this->recordEvent('currency_invalid', $this->state);
+
+            return false;
+        }
+
+        if ($result->currency !== null && $result->currency !== $this->currency) {
+            $this->recordEvent('currency_mismatch', $this->state, [
+                'expected' => $this->currency,
+                'received' => $result->currency,
             ]);
 
             return false;

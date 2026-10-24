@@ -152,6 +152,45 @@ second paiement, les deux ordres d'arrivée widget/webhook, le rollback métier 
 historiques. La concurrence MySQL et les paiements KKiaPay réels ne sont pas validés par ces tests.
 La migration n'a pas été exécutée sur la base locale utilisée par l'application.
 
+### Correction F02 — montant confirmé obligatoire (24 octobre 2026)
+
+Un succès en ligne exige un montant confirmé égal au `Payment.amount` enregistré côté serveur.
+Le widget et le webhook ne fournissent que les identifiants à revérifier ; leurs montants et
+devises éventuels ne peuvent pas remplacer la réponse de vérification serveur.
+
+La passerelle valide le montant avant toute conversion : entier non négatif, chaîne composée
+uniquement de chiffres dans la plage des entiers PHP, ou nombre JSON sans fraction représentable
+comme entier PHP. Booléens, tableaux, objets, fractions, chaînes non numériques et dépassements
+sont refusés. Zéro est une valeur présente : il n'est accepté que si zéro est dû. Le modèle
+refuse également un succès en ligne sans montant lorsqu'il reçoit directement un `ChargeResult`.
+La confirmation interne du COD conserve son fonctionnement sans montant de passerelle.
+
+Les [devises supportées par KKiaPay](https://docs.kkiapay.me/v1/paiements/devises-supportees)
+se limitent à XOF dans la documentation consultée le 24 octobre 2026. L'[exemple officiel de
+vérification PHP](https://docs.kkiapay.me/v1/plugin-et-sdk/admin-sdks-server-side/php-admin-sdk)
+contient `amount`, mais ne garantit aucun champ de devise ni son format. Le
+[SDK PHP officiel](https://github.com/kkiapay/php-sdk/blob/master/src/Kkiapay.php) restitue le JSON
+de l'API sans ajouter de confirmation de devise. En conséquence :
+
+- le paiement local KKiaPay doit être en XOF, même si aucune devise n'est renvoyée ;
+- si la réponse contient un champ `currency`, sa lecture défensive exige un code ISO 4217
+  de trois lettres majuscules, identique à la devise locale ; ce champ n'est pas présenté comme
+  garanti par le contrat documenté ;
+- l'absence du champ reste une **limite de vérification indépendante de la devise**. La recette
+  sandbox devra confirmer le payload réel ; aucune confirmation fournie par le client n'est utilisée.
+
+Les réponses HTTP non réussies, JSON non exploitable, statut inconnu et transaction en attente
+ne deviennent pas un échec bancaire confirmé. Elles retournent `false` et conservent le paiement
+non confirmé. Un statut `FAILED` reçu par HTTP réussi conserve son événement `failed`. Les refus
+sont distingués par `amount_missing`, `amount_invalid`, `amount_mismatch`, `currency_invalid`,
+`currency_mismatch`, `currency_unsupported`, `verification_unavailable`, `verification_incomplete`
+et `verification_pending`. Le premier succès et sa réaction métier restent atomiques et idempotents.
+
+Le DTO transporte la devise éventuelle et le motif interne de validation. Les données d'audit
+KKiaPay sont limitées au statut HTTP, au statut de transaction reconnu et au montant/devise
+normalisés : ni corps brut, ni clés, jetons ou données client. Les valeurs mal formées ne sont pas
+recopiées dans le journal. Aucun changement de schéma ou de frontend n'est nécessaire pour F02.
+
 ### Widget (extrait, à intégrer au checkout)
 ```html
 <script src="https://cdn.kkiapay.me/k.js"></script>
