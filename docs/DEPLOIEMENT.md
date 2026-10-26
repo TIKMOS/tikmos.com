@@ -154,6 +154,25 @@ php artisan event:cache
 > Si le front a changé **en local** : `nvm use 22 && npm run build`, committer `public/build`, puis `git pull` côté serveur (aucun build serveur).
 
 ## 6. Vérifications live (smoke)
+
+### Réservations de stock en ligne — correction 07
+
+La migration `2026_10_26_000000_add_stock_reservation_to_orders.php` doit être appliquée
+sur la cible autorisée avant d'utiliser le nouveau parcours. Elle conserve les commandes
+historiques sans réservation automatique ; réconcilier séparément leurs paiements/stocks.
+Cette migration n'a pas été exécutée sur la base habituelle pendant la validation locale.
+
+Le cron Laravel existant doit appeler `php artisan schedule:run` chaque minute. Il exécute
+`orders:expire-reservations` en processus via `Schedule::call()`, sans `proc_open`. Vérifier
+séparément ce fonctionnement sur la cible et surveiller les erreurs du planificateur :
+une panne du cron retarde la remise en vente du stock, mais ne prolonge pas la réservation.
+La commande ne doit pas être lancée sur la base habituelle pour une simple recette.
+
+Une confirmation tardive est enregistrée comme paiement reçu à vérifier ; préparation
+bloquée, aucun remboursement automatique. Procédure et limites :
+[cycle de paiement F07](30-systeme-paiement.md#correction-f07--réservation-et-reprise-26-octobre-2026),
+[preuves locales](validations/2026-10-26-paiement/README.md).
+
 - [ ] `/` , `/services`, `/blog`, `/boutique`, `/contact` répondent (200).
 - [ ] Demande de devis → email reçu (équipe + accusé).
 - [ ] Commande WhatsApp / checkout → commande créée, email équipe.

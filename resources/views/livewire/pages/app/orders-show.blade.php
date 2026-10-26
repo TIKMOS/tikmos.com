@@ -2,6 +2,10 @@
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Payments\Enums\PaymentProvider;
+use App\Services\OrderReservationService;
+use App\Services\PaymentService;
+use App\Settings\PaymentSettings;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
@@ -9,10 +13,61 @@ new #[Layout('components.layouts.app')] class extends Component
 {
     public Order $order;
 
+    public string $paymentMessage = '';
+
     public function mount(Order $order): void
     {
         abort_unless($order->user_id === auth()->id(), 403);
+        app(OrderReservationService::class)->expire($order);
+        $order->refresh();
         $this->order = $order->load('items');
+    }
+
+    public function resumePayment(PaymentService $payments): void
+    {
+        $this->resetValidation('payment');
+        try {
+            $payment = $payments->resumeOrder($this->order, auth()->user());
+        } finally {
+            $this->order->refresh()->load('items');
+        }
+        $this->paymentMessage = 'Le résultat sera vérifié côté serveur. Ne lancez pas un second paiement si vous avez déjà été débité.';
+        $this->dispatch('open-order-payment', reference: $payment->reference, amount: $payment->amount,
+            orderNumber: $this->order->number, name: $this->order->contact_name, phone: $this->order->contact_phone);
+    }
+
+    public function widgetInterrupted(string $reason = 'closed'): void
+    {
+        abort_unless($this->order->fresh()->user_id === auth()->id(), 403);
+        // Fermeture/échec côté navigateur ne prouve aucun résultat bancaire.
+        app(OrderReservationService::class)->expire($this->order);
+        $this->order->refresh()->load('items');
+        $this->paymentMessage = 'Aucun paiement confirmé par cette fenêtre. Si vous avez été débité, ne payez pas une seconde fois : contactez l’équipe avec votre référence de commande. Sinon, vous pouvez reprendre avant l’échéance.';
+    }
+
+    public function confirmOnline(string $reference, string $transactionId, PaymentService $payments): void
+    {
+        abort_unless($this->order->fresh()->user_id === auth()->id(), 403);
+        abort_if($transactionId === '' || strlen($transactionId) > 255, 422);
+        $payment = $this->order->payments()->where('provider', PaymentProvider::Kkiapay->value)
+            ->where('reference', $reference)->firstOrFail();
+        $payments->verify($payment, $transactionId);
+        $this->order->refresh()->load('items');
+        $this->paymentMessage = $this->order->payment_review_required
+            ? 'Paiement reçu après libération du stock : vérification manuelle nécessaire. Ne payez pas à nouveau.'
+            : ($this->order->payment_status === \App\Enums\OrderPaymentStatus::Paid
+                ? 'Paiement confirmé. Merci pour votre commande.'
+                : 'Vérification non concluante. Aucun succès confirmé. Si vous avez été débité, contactez l’équipe avant tout nouvel essai.');
+    }
+
+    /** @return array<string, mixed> */
+    public function with(): array
+    {
+        $settings = app(PaymentSettings::class);
+        $config = array_merge((array) config('payments.gateways.kkiapay'), $settings->kkiapayConfig());
+
+        return ['onlineEnabled' => $settings->onlineEnabled(),
+            'widgetConfig' => ['key' => $config['public_key'] ?? '', 'sandbox' => $settings->kkiapay_sandbox]];
     }
 
     public function confirmReceived(): void
@@ -38,6 +93,38 @@ new #[Layout('components.layouts.app')] class extends Component
             <x-tk.badge :tone="$order->payment_status->tone()">{{ $order->payment_status->label() }}</x-tk.badge>
         </div>
     </div>
+
+    @if ($order->payment_method === \App\Enums\PaymentMethod::Online)
+        <section class="mt-6 rounded-card border border-line bg-surface p-5 sm:p-6" aria-labelledby="payment-heading"
+            x-data="tkOrderPayment($wire, @js($widgetConfig))" x-on:open-order-payment.window="open($event.detail)">
+            <h2 id="payment-heading" class="font-display text-xl font-bold text-content">Paiement de votre commande</h2>
+            @if ($order->payment_review_required)
+                <p class="mt-2 font-medium text-content">Paiement reçu — vérification nécessaire</p>
+                <p class="mt-2 text-sm text-muted">Le stock a été libéré ou la commande annulée avant la confirmation du paiement. L’équipe doit vérifier la disponibilité et convenir de la suite avec vous. Ne payez pas à nouveau. Aucun remboursement automatique n’a été effectué.</p>
+                <x-tk.button :href="route('contact')" variant="secondary" class="mt-4">Contacter l’équipe</x-tk.button>
+            @elseif ($order->payment_status === \App\Enums\OrderPaymentStatus::Paid)
+                <p class="mt-2 text-sm text-success-ink">Votre paiement est confirmé.</p>
+            @elseif ($order->canResumePayment())
+                <p class="mt-2 text-sm text-muted">Vos articles sont réservés jusqu’au {{ $order->reservation_expires_at->timezone(config('app.timezone'))->format('d/m/Y à H:i') }} ({{ config('app.timezone') }}). Fermer la fenêtre ne supprime pas votre commande et ne prolonge pas ce délai.</p>
+                @if ($onlineEnabled)
+                    <x-tk.button wire:click="resumePayment" wire:loading.attr="disabled" wire:target="resumePayment,confirmOnline,widgetInterrupted" x-bind:disabled="busy" class="mt-4 w-full sm:w-auto">Reprendre le paiement</x-tk.button>
+                    <button type="button" x-show="busy" x-cloak x-on:click="interrupted()" class="mt-3 block min-h-[44px] text-sm font-medium text-content underline underline-offset-4">J’ai fermé la fenêtre de paiement</button>
+                @else
+                    <p class="mt-3 text-sm text-muted">Le paiement en ligne est momentanément indisponible. Contactez l’équipe si vous avez déjà été débité.</p>
+                    <x-tk.button :href="route('contact')" variant="secondary" class="mt-4">Contacter l’équipe</x-tk.button>
+                @endif
+            @else
+                <p class="mt-2 font-medium text-content">{{ $order->reservation_expires_at ? 'Réservation expirée ou commande annulée' : 'Commande antérieure : vérification nécessaire' }}</p>
+                <p class="mt-2 text-sm text-muted">Le paiement ne peut plus être relancé ici. Si vous avez déjà été débité, contactez l’équipe avec votre numéro de commande. Sinon, contactez-nous pour vérifier la disponibilité avant une nouvelle commande.</p>
+                <x-tk.button :href="route('contact')" variant="secondary" class="mt-4">Contacter l’équipe</x-tk.button>
+            @endif
+            <div class="mt-3 text-sm text-content" role="status" aria-live="polite">
+                @if ($paymentMessage)<p>{{ $paymentMessage }}</p>@endif
+                <p x-text="message"></p>
+            </div>
+            @error('payment')<p role="alert" class="mt-3 text-sm text-danger">{{ $message }}</p>@enderror
+        </section>
+    @endif
 
     <div class="mt-8 grid gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">

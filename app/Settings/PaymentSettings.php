@@ -32,7 +32,17 @@ class PaymentSettings extends Settings
 
     public function onlineEnabled(): bool
     {
-        return in_array($this->mode, ['online', 'both'], true);
+        if (! in_array($this->mode, ['online', 'both'], true) || config('payments.currency') !== 'XOF') {
+            return false;
+        }
+        $config = array_merge((array) config('payments.gateways.kkiapay'), $this->kkiapayConfig());
+        foreach (['public_key', 'private_key', 'secret'] as $key) {
+            if (! is_string($config[$key] ?? null) || trim($config[$key]) === '' || preg_match('/\s/', $config[$key])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function codEnabled(): bool

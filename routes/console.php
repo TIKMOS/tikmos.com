@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
+Schedule::call(fn () => Artisan::call('orders:expire-reservations'))
+    ->everyMinute()->name('tk-order-reservations')->withoutOverlapping();
+
 /*
 | Planificateur — un seul cron pilote tout :
 |   * * * * * cd /chemin/projet && php artisan schedule:run >> /dev/null 2>&1

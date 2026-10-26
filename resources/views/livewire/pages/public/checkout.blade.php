@@ -10,6 +10,8 @@ use App\Services\PaymentService;
 use App\Settings\PaymentSettings;
 use App\Settings\ShopSettings;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 
@@ -32,8 +34,12 @@ new #[Layout('components.layouts.public')] class extends Component
 
     public string $payment_method = 'cod';
 
+    #[Locked]
+    public string $checkoutToken;
+
     public function mount(CartService $cart, PaymentSettings $payments): void
     {
+        $this->checkoutToken = (string) Str::uuid();
         if ($cart->isEmpty()) {
             $this->redirect(route('cart'), navigate: true);
 
@@ -54,20 +60,13 @@ new #[Layout('components.layouts.public')] class extends Component
         $data = $this->validate();
 
         $method = $this->resolveMethod($settings);
-        $order = $orders->place(auth()->user(), $data, $method);
+        $order = $orders->place(auth()->user(), $data, $method, $this->checkoutToken);
         $this->dispatch('cart-updated');
 
         if ($method === PaymentMethod::Online) {
-            // Ouvre une transaction en attente et déclenche le widget KKiaPay côté client.
+            // Le détail persistant permet la reprise après fermeture/rafraîchissement.
             $payment = $payments->open($order, PaymentProvider::Kkiapay);
-
-            $this->dispatch('open-kkiapay',
-                amount: $order->total,
-                reference: $payment->reference,
-                orderNumber: $order->number,
-                name: $order->contact_name,
-                phone: $order->contact_phone,
-            );
+            $this->redirect(route('app.orders.show', $order->number), navigate: true);
 
             return;
         }
@@ -90,7 +89,7 @@ new #[Layout('components.layouts.public')] class extends Component
             return;
         }
 
-        session()->flash('toast', ['type' => 'error', 'message' => "Le paiement n'a pas pu être confirmé. Réessayez ou choisissez le paiement à la livraison."]);
+        $this->redirect(route('app.orders.show', $payment->payable->number), navigate: true);
     }
 
     private function resolveMethod(PaymentSettings $settings): PaymentMethod
@@ -98,11 +97,11 @@ new #[Layout('components.layouts.public')] class extends Component
         if ($this->payment_method === 'online' && $settings->onlineEnabled()) {
             return PaymentMethod::Online;
         }
+        if ($this->payment_method === 'cod' && $settings->codEnabled()) {
+            return PaymentMethod::Cod;
+        }
 
-        abort_unless($settings->codEnabled() || $settings->onlineEnabled(), 422);
-
-        // Repli : si le COD est désactivé mais l'online dispo, on force l'online.
-        return $settings->codEnabled() ? PaymentMethod::Cod : PaymentMethod::Online;
+        throw \Illuminate\Validation\ValidationException::withMessages(['payment_method' => 'Le mode de paiement choisi est indisponible. Choisissez un mode proposé ou contactez l’équipe.']);
     }
 
     /** @return array<string, mixed> */
@@ -117,8 +116,6 @@ new #[Layout('components.layouts.public')] class extends Component
             'deliveryFee' => app(ShopSettings::class)->default_delivery_fee,
             'onlineEnabled' => $settings->onlineEnabled(),
             'codEnabled' => $settings->codEnabled(),
-            'kkiapayKey' => $settings->kkiapay_public_key ?: (string) (config('payments.gateways.kkiapay.public_key') ?? ''),
-            'kkiapaySandbox' => $settings->kkiapay_sandbox,
         ];
     }
 }; ?>
@@ -132,12 +129,12 @@ new #[Layout('components.layouts.public')] class extends Component
 
         <div class="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
             {{-- Formulaire --}}
-            <form wire:submit="place" class="space-y-5">
+            <form wire:submit="place" class="min-w-0 space-y-5">
                 <x-tk.admin-section title="Livraison" description="Où devons-nous livrer votre commande ?" icon="map-pin">
                     <div class="space-y-4">
                         <div class="grid gap-4 sm:grid-cols-2">
                             <x-tk.field label="Nom complet" :error="$errors->first('contact_name')"><x-tk.input wire:model="contact_name" icon="user" /></x-tk.field>
-                            <x-tk.field label="Téléphone" :error="$errors->first('contact_phone')"><x-tk.phone wire:model="contact_phone" :invalid="$errors->has('contact_phone')" /></x-tk.field>
+                            <x-tk.field label="Téléphone" :error="$errors->first('contact_phone')"><x-tk.phone wire:model="contact_phone" class="min-w-0" :invalid="$errors->has('contact_phone')" /></x-tk.field>
                         </div>
                         <x-tk.field label="Adresse de livraison" :error="$errors->first('delivery_address')">
                             <textarea wire:model="delivery_address" rows="2" placeholder="Quartier, rue, repère…" class="w-full rounded-input border border-tk-300 bg-surface px-4 py-3 text-[15px] text-content focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/10"></textarea>
@@ -149,6 +146,10 @@ new #[Layout('components.layouts.public')] class extends Component
 
                 <x-tk.admin-section title="Paiement" icon="wallet">
                     <div class="space-y-3">
+                        @if (! $onlineEnabled)
+                            <p class="text-sm text-muted">Le paiement en ligne est actuellement indisponible.</p>
+                        @endif
+                        @error('payment_method')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
                         @if ($onlineEnabled)
                             <label class="flex cursor-pointer items-center gap-3 rounded-tile border-2 p-4 transition"
                                 :class="$wire.payment_method === 'online' ? 'border-ink bg-sky/40' : 'border-line hover:border-tk-300'">
@@ -173,14 +174,14 @@ new #[Layout('components.layouts.public')] class extends Component
 
                 <x-tk.cart-error :show-cart-link="true" />
 
-                <x-tk.button type="submit" variant="primary" size="lg" icon="check" class="w-full sm:w-auto">
+                <x-tk.button type="submit" variant="primary" size="lg" icon="check" class="w-full sm:w-auto" wire:loading.attr="disabled" wire:target="place,confirmOnline" :disabled="! $onlineEnabled && ! $codEnabled">
                     <span wire:loading.remove wire:target="place,confirmOnline">Confirmer ma commande</span>
                     <span wire:loading wire:target="place,confirmOnline">Traitement…</span>
                 </x-tk.button>
             </form>
 
             {{-- Récap --}}
-            <div>
+            <div class="min-w-0">
                 <div class="rounded-card border border-line bg-surface p-6">
                     <h2 class="font-display text-lg font-bold text-content">Votre commande</h2>
                     <div class="mt-4 space-y-3">
@@ -202,31 +203,4 @@ new #[Layout('components.layouts.public')] class extends Component
         </div>
     </x-tk.section>
 
-    @if ($onlineEnabled && $kkiapayKey)
-        @push('scripts')
-            <script src="https://cdn.kkiapay.me/k.js"></script>
-        @endpush
-
-        <div
-            x-data="{ ref: null }"
-            x-on:open-kkiapay.window="
-                ref = $event.detail.reference;
-                openKkiapayWidget({
-                    amount: $event.detail.amount,
-                    key: @js($kkiapayKey),
-                    sandbox: @js($kkiapaySandbox),
-                    phone: $event.detail.phone,
-                    name: $event.detail.name,
-                    data: JSON.stringify({ reference: $event.detail.reference, order: $event.detail.orderNumber }),
-                });
-            "
-            x-init="
-                window.addSuccessListener?.((response) => {
-                    if (ref && response?.transactionId) {
-                        $wire.confirmOnline(ref, response.transactionId);
-                    }
-                });
-            "
-        ></div>
-    @endif
 </div>

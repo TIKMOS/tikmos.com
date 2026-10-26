@@ -102,17 +102,19 @@ pour retourner la passerelle active d'un canal.
 
 ## 4. Flux « paiement en ligne » (KKiaPay)
 
-1. **Init (serveur)** — au checkout, on crée un `Payment` (`pending`, montant recalculé serveur,
-   `reference` unique) via `PaymentManager::active('shop')->initialize(...)`.
-2. **Widget (client)** — la page charge `k.js` et appelle `openKkiapayWidget({ amount, key,
-   sandbox, data: {reference}, callback, paymentmethod, countries:['BJ'] })`. `data` porte **notre**
-   référence pour le rapprochement.
+1. **Init (serveur)** — le checkout crée une commande avec réservation de 15 minutes et un
+   `Payment` en attente via `PaymentService::open()`, puis dirige vers le détail de la commande.
+   Montant recalculé côté serveur, référence locale unique, jeton de checkout unique contre le rejeu.
+2. **Widget (client)** — « Reprendre le paiement » sur le détail obtient le paiement existant
+   via `resumeOrder()`, charge `k.js` à la demande et ouvre le widget avec la seule clé publique.
+   `data` contient notre référence et le numéro de commande pour le rapprochement.
 3. **Succès côté client** — `addSuccessListener(r => …)` renvoie un `transactionId`. On l'envoie au
-   serveur (Livewire action) qui appelle **`verify(transactionId)`** (SDK PHP `verifyTransaction`) →
+   serveur (Livewire action) qui appelle **`verify(transactionId)`** (driver HTTP KKiaPay) →
    si `status = SUCCESS` et `amount` conforme → transition `succeeded` + marque la commande payée.
-4. **Webhook (asynchrone, source de vérité)** — KKiaPay POST sur `/webhooks/kkiapay`. On **vérifie la
-   signature** (`x-kkiapay-secret` = hash secret), on normalise, on `verify()` par sécurité, puis on
-   applique la **même** transition idempotente. Réponse **HTTP 200** obligatoire (sinon retries).
+4. **Webhook (asynchrone)** — endpoint `/webhooks/payments/kkiapay`. Le driver contrôle
+   `x-kkiapay-secret` selon l'intégration existante, puis revérifie la transaction auprès du serveur
+   KKiaPay avant la même transition idempotente. Le contrat réel, notamment les métadonnées,
+   reste à confirmer en sandbox ; aucune validation fournisseur n'est déduite de nos simulations.
 5. **Idempotence** — toute transition passe par `Payment::markSucceeded()` protégé (no-op si déjà
    `succeeded`). Widget et webhook peuvent arriver dans n'importe quel ordre / en double.
 
@@ -191,7 +193,77 @@ KKiaPay sont limitées au statut HTTP, au statut de transaction reconnu et au mo
 normalisés : ni corps brut, ni clés, jetons ou données client. Les valeurs mal formées ne sont pas
 recopiées dans le journal. Aucun changement de schéma ou de frontend n'est nécessaire pour F02.
 
-### Widget (extrait, à intégrer au checkout)
+### Correction F07 — réservation et reprise (26 octobre 2026)
+
+Une nouvelle commande en ligne réserve le stock pendant **15 minutes** à compter de sa
+création. La limite est exclusive : à l'instant de l'échéance, aucun nouveau paiement ne peut
+être lancé. Les réessais ne prolongent pas le délai. `reservation_expires_at` porte l'échéance,
+`stock_reservation` mémorise les quantités effectivement retirées par produit, cumulées entre
+variantes, et `reservation_released_at` empêche une deuxième restitution. Un stock non géré
+(`NULL`) n'est jamais transformé en stock géré.
+
+| Situation | Paiement et commande | Stock et prochaine action |
+|---|---|---|
+| Création en ligne | Commande en attente, paiement local en attente | Réservation 15 minutes ; payer depuis son détail |
+| Fermeture/erreur du widget | Aucune conclusion bancaire tirée du navigateur | Commande conservée ; reprise avant échéance si aucun débit constaté |
+| Réponse serveur `FAILED` | Paiement échoué, commande non payée | Même paiement local réutilisé, sans nouveau retrait ni prolongation |
+| Réponse réseau/incomplète | Aucun succès ni échec bancaire inventé | Consulter la commande ; contacter l'équipe si déjà débité |
+| Succès confirmé avant échéance | Paiement réussi, commande payée et confirmée | Réservation consommée, aucun nouveau décrément |
+| Expiration ou annulation avant paiement | Paiement non confirmé ; reprise refusée | Quantités libérées une seule fois, contact pour une nouvelle disponibilité |
+| Succès confirmé après libération/annulation | Paiement enregistré comme réussi, commande payée avec `payment_review_required` | Aucune nouvelle consommation automatique, préparation bloquée, vérification humaine |
+
+Ouverture/reprise, règlement et expiration verrouillent d'abord la commande ; le paiement
+vient ensuite pour le règlement, les produits dans un ordre stable pour la restitution.
+Les transitions, quantités et événements métier sont transactionnels. Les contraintes F01,
+le contrôle du montant F02 et le cumul du stock F03 restent en place. Les rejeux ne créent
+pas de nouvelle commande, notification de commande ou réaction de succès. Un jeton de
+checkout rejoué ne vide pas un nouveau panier ajouté entre-temps.
+
+`orders:expire-reservations` est planifiée chaque minute par `Schedule::call()` (pas de
+sous-processus, compatible avec le cron existant). Elle ignore les commandes payées et les
+anciennes commandes sans métadonnées. L'affichage du détail et une tentative de reprise
+appliquent également l'expiration ; le règlement revérifie l'échéance même avant le prochain
+passage du cron. Le cron peut restituer physiquement le stock avec jusqu'à un intervalle de
+planification de retard, sans prolonger le droit de payer.
+
+Le mode en ligne nécessite `online` ou `both`, XOF et trois clés publiques/privées/secret
+non vides et sans espaces, après surcharge par les réglages. Cela vérifie la configuration
+locale, **pas la validité réelle du compte marchand ou des clés**. Seule la clé publique est
+transmise au widget. Si la configuration change pendant un checkout, le choix devenu
+indisponible est refusé, sans conversion silencieuse en COD. Le COD reste indépendant des
+clés et n'a pas d'expiration automatique de stock.
+
+Le [SDK Javascript officiel](https://docs.kkiapay.me/v1/plugin-et-sdk/sdk-javascript) documente
+`openKkiapayWidget`, `addSuccessListener` et `addFailedListener`. Il ne documente pas de callback
+de fermeture dans la page consultée : le bouton « J’ai fermé la fenêtre de paiement » permet
+de sortir de cet état sans inventer d'événement fournisseur. Aucune fermeture ou erreur JS
+ne marque la banque en échec et aucun payload brut de ces callbacks n'est journalisé.
+
+**Paiement tardif :** l'événement `stock_review_required` conserve la nécessité de revue.
+Le détail client et la gestion signalent le paiement reçu. Les avances de préparation et
+l'encaissement manuel COD sont refusés pour cette commande en ligne. L'opérateur doit
+vérifier le justificatif fournisseur, les stocks réellement disponibles et contacter le
+client pour convenir d'une exécution ou d'un remboursement par un canal autorisé. Aucun
+remboursement ni déblocage automatique n'est implémenté ou annoncé. Un traitement technique
+explicite et audité reste nécessaire pour solder ce cas ; ne pas effacer le drapeau pour
+contourner le contrôle.
+
+**Installations existantes :** migration additive
+`2026_10_26_000000_add_stock_reservation_to_orders.php`, sans modification des anciennes
+migrations ni des montants/statuts historiques. Les anciennes commandes gardent les trois
+champs de réservation et le jeton à `NULL`, sans restitution déduite de leur âge. Une ancienne
+confirmation de paiement valide reste traitée ; aucun nouveau lancement depuis le détail
+n'est autorisé sans revue préalable. Réconcilier ces dossiers manuellement, sans réaffectation
+silencieuse. Un produit supprimé ou devenu non géré lors d'une libération n'est pas recréé :
+un avertissement contenant seulement les identifiants techniques demande une revue.
+
+Les tests simulés ne garantissent ni l'idempotence bancaire de plusieurs fenêtres ou appareils,
+ni l'arrêt d'une opération déjà engagée chez le fournisseur. Le client déjà débité est invité
+à contacter l'équipe avant un réessai. Concurrence MySQL, signature/payloads et fonctionnement
+réel du widget KKiaPay, SMTP et cron de production restent non validés. Recette fournisseur
+complète en fiche 34. [Rapport de validation F07](validations/2026-10-26-paiement/README.md).
+
+### Widget (illustration du contrat ; intégration effective dans `resources/js/order-payment.js`)
 ```html
 <script src="https://cdn.kkiapay.me/k.js"></script>
 <script>

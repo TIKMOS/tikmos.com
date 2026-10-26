@@ -524,7 +524,7 @@ it('rejette un webhook à signature invalide', function (): void {
     expect($order->fresh()->payment_status->value)->toBe('unpaid');
 });
 
-it('déclenche le widget KKiaPay au checkout en mode en ligne', function (): void {
+it('conserve la commande en ligne puis dirige vers son paiement reprenable', function (): void {
     $s = app(PaymentSettings::class);
     $s->mode = 'online';
     $s->kkiapay_public_key = 'pk_test';
@@ -539,8 +539,8 @@ it('déclenche le widget KKiaPay au checkout en mode en ligne', function (): voi
         ->set('contact_phone', '+229 91000000')
         ->set('delivery_address', 'Rue 12')
         ->call('place')
-        ->assertDispatched('open-kkiapay')
-        ->assertNoRedirect();
+        ->assertNotDispatched('open-kkiapay')
+        ->assertRedirect();
 
     $order = Order::where('user_id', $user->id)->first();
     expect($order->payment_method->value)->toBe('online')

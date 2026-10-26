@@ -10,6 +10,7 @@ use App\Payments\Data\ChargeResult;
 use App\Payments\Data\WebhookResult;
 use App\Payments\Enums\PaymentProvider;
 use App\Payments\Enums\PaymentState;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -41,13 +42,17 @@ final class KkiapayGateway implements PaymentGateway
 
     public function verify(string $providerReference): ChargeResult
     {
-        $response = Http::withHeaders([
-            'x-api-key' => (string) ($this->config['public_key'] ?? ''),
-            'x-private-key' => (string) ($this->config['private_key'] ?? ''),
-            'x-secret-key' => (string) ($this->config['secret'] ?? ''),
-        ])->asJson()->post($this->baseUrl().'/api/v1/transactions/status', [
-            'transactionId' => $providerReference,
-        ]);
+        try {
+            $response = Http::timeout(15)->withHeaders([
+                'x-api-key' => (string) ($this->config['public_key'] ?? ''),
+                'x-private-key' => (string) ($this->config['private_key'] ?? ''),
+                'x-secret-key' => (string) ($this->config['secret'] ?? ''),
+            ])->asJson()->post($this->baseUrl().'/api/v1/transactions/status', [
+                'transactionId' => $providerReference,
+            ]);
+        } catch (ConnectionException) {
+            return new ChargeResult(state: PaymentState::Pending, validationError: 'verification_unavailable');
+        }
 
         $body = $response->json();
         $data = is_array($body) ? $body : [];

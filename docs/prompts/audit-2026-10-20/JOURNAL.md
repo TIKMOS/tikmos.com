@@ -14,7 +14,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [04](04-expiration-devis.md) | Appliquer la validité des devis côté serveur | Validé localement | 24/10/2026 : F04 reproduit avant correction ; validité contrôlée à la décision, fin du jour incluse dans le fuseau applicatif (UTC), absence de date préservée. État Expiré et renouvellement visibles ; envoi avec date passée refusé ; décisions historiques préservées. Tests ciblés : 45 tests, 244 assertions ; suite : 326 tests, 1 192 assertions ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette navigateur 360/1440 px et clavier réalisée ; utilisateur ayant confirmé l'état Expiré et les boutons sur l'instance fictive 8012, autres cas manuels disponibles. MySQL/concurrence et SMTP réel non validés. Aucune migration de la base habituelle, aucun commit/push lors de A. Voir note 04. |
 | [05](05-rattachement-demande-invite.md) | Permettre au visiteur de retrouver sa demande en sécurité | Validé localement | 24/10/2026 : F05 reproduit (lien email attendu 200, obtenu 403). Récupération par lien signé 24 h, compte destinataire vérifié, confirmation et rattachement atomique unique ; accès croisés toujours interdits. Renouvellement neutre et limité, demandes historiques conservées. Nouveaux tests : 29 tests, 164 assertions ; ciblés : 107 tests, 501 assertions ; suite : 355 tests, 1 356 assertions ; ciblés sur vue finale : 51 tests, 282 assertions. Larastan : 0 erreur ; Pint conforme ; build réussi. Recette navigateur mobile/bureau/clavier réalisée ; utilisateur ayant confirmé le devis de 10 000 XOF après rattachement et le message « déjà utilisé » à la réouverture du lien sur l'instance fictive 8013. MySQL/concurrence, migration MySQL et SMTP réel non validés. Nouvelle migration non appliquée à la base habituelle. Aucun commit/push lors de A. Voir note 05. |
 | [06](06-creation-administrateur.md) | Supprimer les identifiants administrateur de repli | Validé localement | 24/10/2026 : F06 reproduit (0 compte attendu, 3 créés sans configuration). Seeding courant sans compte ; provisionnement initial explicite d'un seul SuperAdmin, configuration obligatoire sans repli, secret validé et non affiché. Comptes existants conservés sans réinitialisation ni promotion ; transaction et refus des collisions. Provisionnement : 40 tests, 174 assertions ; ciblés gestion/auth : 76 tests, 283 assertions ; démonstration : 1 test, 18 assertions ; suite finale : 395 tests, 1 530 assertions. Larastan app + seeders/config : 0 erreur en séquentiel ; Pint conforme. MySQL/concurrence, SMTP et configuration/comptes déployés non validés. Base habituelle, comptes réels et cache de l'application inchangés. Aucun commit/push lors de A. Voir note 06. |
-| [07](07-reprise-paiement-reservation.md) | Gérer l’abandon et la reprise du paiement | À traiter | — |
+| [07](07-reprise-paiement-reservation.md) | Gérer l’abandon et la reprise du paiement | Validé localement | 26/10/2026 : F07 reproduit (stock retiré sans échéance). Réservation en ligne 15 minutes, reprise sur même commande/paiement, jeton de checkout contre les rejeux, restitution unique, paiement tardif enregistré avec revue manuelle et préparation bloquée. Config en ligne contrôlée, COD préservé. Ciblés : 116 tests, 597 assertions ; suite complète : 428 tests, 1 719 assertions ; JavaScript : 5 tests ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette 360/1440 px, utilisateur confirmant fermeture/reprise/succès simulé. MySQL/concurrence, migration MySQL, KKiaPay sandbox, SMTP et cron réel non validés. Migration non appliquée à la base habituelle ; aucun commit/push lors de A. Voir note 07. |
 | [08](08-numerotation-commandes.md) | Rendre la numérotation des commandes atomique | À traiter | — |
 | [09](09-anti-abus-formulaires.md) | Limiter les abus des formulaires publics | À traiter | — |
 | [10](10-otp-delai-et-experience.md) | Sécuriser et clarifier le challenge 2FA | À traiter | — |
@@ -322,6 +322,61 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   syntaxe des quatre fichiers PHP conformes. Liens locaux présents et liens
   officiels Laravel HTTP 200. SQLite en mémoire ; base, comptes réels et cache
   de configuration habituels préservés. Limites précédentes inchangées.
+
+## Note 07 — 26 octobre 2026
+
+- **Cause et reproduction :** décrément du stock et vidage du panier avant paiement,
+  aucune échéance et aucune reprise depuis le détail. Le nouveau test F07 échouait
+  avant correction : échéance attendue à +15 minutes, valeur obtenue NULL après
+  retrait d'une unité. Audit historique inchangé, aucune opération bancaire réelle.
+- **Cycle :** réservation de 15 minutes, limite exclusive et sans prolongation ;
+  quantités retirées mémorisées par produit, cumul des variantes et stocks NULL
+  conservés. Reprise de la même commande et du même paiement local, même après échec
+  confirmé ; jeton unique de checkout, pas de double création/notification/retrait
+  ni effacement d'un nouveau panier lors d'un rejeu. Fermeture/erreur JS ne décide
+  pas du résultat bancaire. Refus explicite d'un mode devenu indisponible.
+- **Atomicité :** verrous commande puis paiement ou produits ordonnés, transitions
+  transactionnelles. Échéance revérifiée sur page ouverte, au règlement, à la reprise
+  et par la commande planifiée chaque minute `orders:expire-reservations` en processus.
+  Restitution unique après expiration/annulation et rollback testé. F01/F02/F03
+  préservés ; erreurs réseau non confondues avec un échec bancaire.
+- **Succès tardif :** paiement reçu conservé, `payment_review_required` et événement
+  `stock_review_required`, aucun nouveau décrément ni confirmation de préparation.
+  Gestion bloquée et contact client pour revue autorisée ; aucun remboursement
+  automatique ni déblocage silencieux. Anciennes commandes sans métadonnées laissées
+  intactes, sans restitution déduite de leur âge ; nouveau lancement soumis à revue.
+- **Fichiers :** modèle Order, services Order/Payment et nouveau OrderReservationService,
+  PaymentSettings, passerelle KKiaPay, nouvelle commande d'expiration et migration
+  additive `2026_10_26_000000_add_stock_reservation_to_orders.php`, routes console,
+  vues checkout/détail client/gestion commandes, module JS de reprise, tests Payment,
+  PaymentRecovery, OrderReservationMigration et JavaScript. Documentation paiement/
+  déploiement, présente ligne/note et [rapport avec captures](../../validations/2026-10-26-paiement/README.md).
+  Manifeste, CSS `app-Cz4owPm2.css` et JS `app-BEZyNR1Z.js` remplacent les anciens bundles.
+- **Contrôles :** ciblés paiement/commande/stock/migration → **116 tests, 597 assertions** ;
+  suite Pest complète → **428 tests, 1 719 assertions** ; JavaScript simulé → **5 tests**.
+  Larastan app + migration/routes console séquentiel → **0 erreur** ; Pint et syntaxe
+  sur 12 fichiers PHP conformes ; build réussi et manifeste vérifié. Suite complète
+  avant le dernier ajustement de présentation mobile `min-w-0` ; ciblés relancés sur
+  la vue finale, puis bundle et rendu final revérifiés. SQLite en mémoire, HTTP et
+  notifications simulés. Migration testée sur structure historique fictive sans
+  réécrire commandes/paiements. Aucune base habituelle utilisée par ces tests.
+- **Recette :** nouvelle SQLite temporaire sur 8014, horloge figée et faux widget
+  hors dépôt, aucun appel bancaire. Checkout → détail, fermeture/reprise au clavier,
+  succès simulé et rafraîchissement, expiration, paiement tardif et blocage de gestion
+  vérifiés à 360/1440 px. Débordement mobile du téléphone corrigé localement au checkout.
+  Pas de débordement ni erreur/avertissement console observé sur les vues finales.
+  L'utilisateur confirme fermeture, reprise et succès ; les autres scénarios ne sont
+  pas présentés comme personnellement validés par lui. Dimensions restaurées, onglet
+  de contrôle fermé ; instance isolée conservée temporairement pour ses essais.
+  Identifiants, routeur, guide et SDK fictif hors dépôt. Clavier des actions de
+  paiement testé, sans certification exhaustive des panneaux historiques de gestion.
+- **Limites/état :** MySQL/concurrence réelle et migration MySQL **non validés** ;
+  KKiaPay sandbox, idempotence bancaire multi-appareils, SMTP et cron de production
+  **non validés**. Recette fournisseur complète en fiche 34. Migration non appliquée
+  à la base habituelle ; aucun compte réel, email/paiement réel ou déploiement.
+  Checkpoint 06 `e002883f59801b49fd50bdc7d59e445de528958e` vérifié sur origin/main.
+  Validé localement sans commit ni push ; mode étranger d'artisan préservé, index
+  inchangé. Correction 08 non commencée.
 
 ## Modèle de note à remplir après une intervention
 

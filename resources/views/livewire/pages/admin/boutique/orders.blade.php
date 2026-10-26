@@ -3,6 +3,9 @@
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Enums\PaymentMethod;
+use App\Services\OrderReservationService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
@@ -40,22 +43,31 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function setStatus(string $status): void
     {
         $this->authorizeUpdate();
-        $order = $this->selected();
         $target = OrderStatus::from($status);
+        $order = DB::transaction(function () use ($target): ?Order {
+            $order = Order::whereKey($this->selectedId)->lockForUpdate()->first();
+            if (! $order || ! $order->status->canTransitionTo($target)
+                || ($target !== OrderStatus::Cancelled && $order->payment_method === PaymentMethod::Online
+                    && ($order->payment_status !== OrderPaymentStatus::Paid || $order->payment_review_required))) {
+                return null;
+            }
+            $stamps = match ($target) {
+                OrderStatus::Confirmed => ['confirmed_at' => now()],
+                OrderStatus::Shipped => ['shipped_at' => now()],
+                OrderStatus::Delivered => ['delivered_at' => now()],
+                default => [],
+            };
+            $order->update(['status' => $target, ...$stamps]);
+            app(OrderReservationService::class)->releaseIfDue($order);
 
-        if (! $order || ! $order->status->canTransitionTo($target)) {
+            return $order;
+        }, attempts: 3);
+        if (! $order) {
             $this->dispatch('tk-toast', type: 'error', message: 'Transition non autorisée.');
 
             return;
         }
 
-        $stamps = match ($target) {
-            OrderStatus::Confirmed => ['confirmed_at' => now()],
-            OrderStatus::Shipped => ['shipped_at' => now()],
-            OrderStatus::Delivered => ['delivered_at' => now()],
-            default => [],
-        };
-        $order->update(['status' => $target, ...$stamps]);
         $order->user?->notify(new \App\Notifications\OrderStatusChanged($order));
         $this->dispatch('tk-toast', type: 'success', message: 'Statut mis à jour : '.$target->label());
     }
@@ -63,7 +75,9 @@ new #[Layout('components.layouts.admin')] class extends Component
     public function markPaid(): void
     {
         $this->authorizeUpdate();
-        $this->selected()?->update(['payment_status' => OrderPaymentStatus::Paid]);
+        $order = $this->selected();
+        abort_unless($order?->payment_method === PaymentMethod::Cod, 422);
+        $order->update(['payment_status' => OrderPaymentStatus::Paid]);
         $this->dispatch('tk-toast', type: 'success', message: 'Encaissement enregistré.');
     }
 
@@ -151,17 +165,21 @@ new #[Layout('components.layouts.admin')] class extends Component
 
                 @can('shop.orders.update')
                     <div class="mt-6 space-y-3 border-t border-line pt-4">
+                        @if ($order->payment_review_required)
+                            <p role="status" class="text-sm text-content">Paiement reçu après libération du stock ou annulation. Vérifiez la transaction et contactez le client pour convenir de la suite. Aucun remboursement automatique. La préparation reste bloquée.</p>
+                        @endif
                         @if (! empty($order->status->nextStates()))
                             <div>
                                 <p class="mb-1.5 text-xs font-semibold uppercase tracking-wider text-tk-400">Faire avancer</p>
                                 <div class="flex flex-wrap gap-2">
                                     @foreach ($order->status->nextStates() as $next)
+                                        @continue($next !== \App\Enums\OrderStatus::Cancelled && $order->payment_method === \App\Enums\PaymentMethod::Online && ($order->payment_review_required || $order->payment_status !== \App\Enums\OrderPaymentStatus::Paid))
                                         <x-tk.button wire:click="setStatus('{{ $next->value }}')" variant="{{ $next === \App\Enums\OrderStatus::Cancelled ? 'secondary' : 'primary' }}" size="sm">{{ $next->label() }}</x-tk.button>
                                     @endforeach
                                 </div>
                             </div>
                         @endif
-                        @if ($order->payment_status !== \App\Enums\OrderPaymentStatus::Paid)
+                        @if ($order->payment_method === \App\Enums\PaymentMethod::Cod && $order->payment_status !== \App\Enums\OrderPaymentStatus::Paid)
                             <x-tk.button wire:click="markPaid" variant="secondary" size="sm" icon="wallet">Marquer payée (COD encaissé)</x-tk.button>
                         @endif
                     </div>

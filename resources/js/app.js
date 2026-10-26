@@ -1,3 +1,5 @@
+import './order-payment'
+
 // Enregistrement du service worker (PWA installable + offline) — activé seulement
 // si la fonctionnalité PWA est activée dans l'admin (méta `tk-pwa`).
 if ('serviceWorker' in navigator && document.querySelector('meta[name="tk-pwa"]')) {

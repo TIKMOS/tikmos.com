@@ -4,18 +4,23 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\OrderPaymentStatus;
+use App\Models\Order;
 use App\Models\Payment;
+use App\Models\User;
 use App\Payments\Contracts\Payable;
 use App\Payments\Data\ChargeRequest;
 use App\Payments\Data\ChargeResult;
 use App\Payments\Enums\PaymentProvider;
 use App\Payments\Enums\PaymentState;
 use App\Payments\PaymentManager;
+use App\Settings\PaymentSettings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Orchestration entre passerelles (PaymentManager) et modèles (Payment/Payable).
@@ -32,14 +37,56 @@ class PaymentService
      */
     public function open(Payable&Model $payable, PaymentProvider $provider): Payment
     {
+        return DB::transaction(function () use ($payable, $provider): Payment {
+            // Même ordre de verrouillage pour ouverture, règlement et expiration.
+            $payable = $payable->newQuery()->whereKey($payable->getKey())->lockForUpdate()->firstOrFail();
+            if (! $payable instanceof Payable) {
+                throw new \LogicException('Le modèle relu ne prend pas en charge les paiements.');
+            }
+            if ($payable instanceof Order && $payable->payment_status !== OrderPaymentStatus::Unpaid) {
+                throw ValidationException::withMessages(['payment' => 'Cette commande a déjà été réglée.']);
+            }
+
+            return $this->openLocked($payable, $provider);
+        }, attempts: 3);
+    }
+
+    public function resumeOrder(Order $order, User $user): Payment
+    {
+        $payment = DB::transaction(function () use ($order, $user): ?Payment {
+            $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->user_id === $user->id, 403);
+            app(OrderReservationService::class)->releaseIfDue($locked);
+            if (! $locked->canResumePayment() || ! app(PaymentSettings::class)->onlineEnabled()) {
+                return null;
+            }
+
+            return $this->openLocked($locked, PaymentProvider::Kkiapay);
+        }, attempts: 3);
+        // Refuser après commit pour conserver une restitution devenue nécessaire.
+        if ($payment === null) {
+            throw ValidationException::withMessages(['payment' => 'Paiement indisponible ou réservation expirée. Consultez l’état de la commande et contactez l’équipe si vous avez été débité.']);
+        }
+
+        return $payment;
+    }
+
+    private function openLocked(Payable&Model $payable, PaymentProvider $provider): Payment
+    {
         /** @var Payment|null $existing */
         $existing = $payable->morphMany(Payment::class, 'payable')
             ->where('provider', $provider->value)
-            ->where('state', PaymentState::Pending->value)
+            ->whereIn('state', $payable instanceof Order
+                ? [PaymentState::Pending->value, PaymentState::Failed->value]
+                : [PaymentState::Pending->value])
             ->latest()
             ->first();
 
         if ($existing) {
+            if ($existing->amount !== $payable->payableAmount() || $existing->currency !== config('payments.currency', 'XOF')) {
+                throw ValidationException::withMessages(['payment' => 'Le montant du paiement nécessite une vérification par l’équipe.']);
+            }
+
             return $existing;
         }
 
@@ -119,6 +166,11 @@ class PaymentService
     {
         try {
             return DB::transaction(function () use ($payment, $result): bool {
+                // L'expiration verrouille aussi la commande en premier : pas de course
+                // entre restitution du stock et confirmation d'un paiement.
+                $order = $payment->payable_type === (new Order)->getMorphClass()
+                    ? Order::whereKey($payment->payable_id)->lockForUpdate()->firstOrFail()
+                    : null;
                 /** @var Payment $locked */
                 $locked = Payment::whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
 
@@ -141,7 +193,7 @@ class PaymentService
                     return false;
                 }
 
-                $payable = $locked->payable;
+                $payable = $order ?? $locked->payable;
                 if ($payable instanceof Payable) {
                     $payable->onPaymentSucceeded($locked);
                 }

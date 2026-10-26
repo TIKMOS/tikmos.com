@@ -9,6 +9,7 @@ use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Payments\Contracts\Payable;
+use App\Services\OrderReservationService;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -25,12 +26,17 @@ use Illuminate\Support\Carbon;
  * @property int $subtotal
  * @property int $delivery_fee
  * @property Carbon|null $received_confirmed_at
+ * @property Carbon|null $reservation_expires_at
+ * @property Carbon|null $reservation_released_at
+ * @property array<int, int>|null $stock_reservation
+ * @property bool $payment_review_required
  */
 #[Fillable([
     'number', 'user_id', 'status', 'payment_method', 'payment_status',
     'subtotal', 'delivery_fee', 'total', 'contact_name', 'contact_phone',
     'delivery_address', 'delivery_city', 'notes',
     'confirmed_at', 'shipped_at', 'delivered_at', 'received_confirmed_at',
+    'reservation_expires_at', 'reservation_released_at', 'stock_reservation', 'payment_review_required', 'checkout_token',
 ])]
 class Order extends Model implements Payable
 {
@@ -39,7 +45,7 @@ class Order extends Model implements Payable
     /** @return array<int, string> */
     protected function auditAttributes(): array
     {
-        return ['status', 'payment_status', 'payment_method', 'total'];
+        return ['status', 'payment_status', 'payment_method', 'total', 'reservation_released_at', 'payment_review_required'];
     }
 
     protected function auditGroup(): string
@@ -60,6 +66,10 @@ class Order extends Model implements Payable
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',
             'received_confirmed_at' => 'datetime',
+            'reservation_expires_at' => 'datetime',
+            'reservation_released_at' => 'datetime',
+            'stock_reservation' => 'array',
+            'payment_review_required' => 'boolean',
         ];
     }
 
@@ -97,11 +107,18 @@ class Order extends Model implements Payable
      */
     public function onPaymentSucceeded(Payment $payment): void
     {
-        $this->update([
-            'payment_status' => OrderPaymentStatus::Paid,
-            'confirmed_at' => $this->confirmed_at ?? now(),
-            'status' => $this->status === OrderStatus::Pending ? OrderStatus::Confirmed : $this->status,
-        ]);
+        app(OrderReservationService::class)->paymentSucceeded($this, $payment);
+    }
+
+    public function canResumePayment(): bool
+    {
+        return $this->payment_method === PaymentMethod::Online
+            && $this->payment_status === OrderPaymentStatus::Unpaid
+            && $this->status === OrderStatus::Pending
+            && ! $this->payment_review_required
+            && $this->stock_reservation !== null
+            && $this->reservation_released_at === null
+            && $this->reservation_expires_at?->isFuture() === true;
     }
 
     public function totalLabel(): string
