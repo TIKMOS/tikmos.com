@@ -14,6 +14,7 @@ use App\Notifications\OrderReceived;
 use App\Settings\GeneralSettings;
 use App\Settings\PaymentSettings;
 use App\Settings\ShopSettings;
+use App\Support\OrderNumberAllocator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -30,6 +31,9 @@ class OrderService
     public function place(User $user, array $data, PaymentMethod $method = PaymentMethod::Cod, ?string $checkoutToken = null): Order
     {
         $order = DB::transaction(function () use ($user, $data, $method, $checkoutToken): Order {
+            // Écriture et verrou annuel avant toute lecture (SQLite DEFERRED compris).
+            $numbers = app(OrderNumberAllocator::class);
+            $year = $numbers->lockCurrentYear();
             // Sérialise le rejeu du même checkout avant la lecture du panier.
             User::whereKey($user->id)->lockForUpdate()->firstOrFail();
             if ($checkoutToken !== null && $existing = Order::where('checkout_token', $checkoutToken)->first()) {
@@ -70,7 +74,7 @@ class OrderService
             $total = $subtotal + $deliveryFee;
 
             $order = Order::create([
-                'number' => $this->generateNumber(),
+                'number' => $numbers->nextForYear($year),
                 'user_id' => $user->id,
                 'status' => OrderStatus::Pending,
                 'payment_method' => $method,
@@ -123,13 +127,5 @@ class OrderService
         }
 
         return $order;
-    }
-
-    private function generateNumber(): string
-    {
-        $year = now()->year;
-        $seq = Order::whereYear('created_at', $year)->count() + 1;
-
-        return sprintf('TKM-CMD-%d-%05d', $year, $seq);
     }
 }

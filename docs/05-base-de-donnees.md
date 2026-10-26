@@ -125,7 +125,7 @@ is_published(bool)`. Photo via medialibrary. *(Hérité de sezy, à repalettiser
 ### orders (commandes boutique)
 | Colonne | Type | Notes |
 |---|---|---|
-| id, reference | | `TKM-CMD-…` |
+| id, number | identifiant + string unique | `TKM-CMD-YYYY-00001`, numéros historiques conservés |
 | user_id | FK null | invité possible |
 | name, email, phone, address | | livraison |
 | channel | enum | whatsapp · site |
@@ -136,6 +136,24 @@ is_published(bool)`. Photo via medialibrary. *(Hérité de sezy, à repalettiser
 | currency | string | |
 | note | text null | |
 - Relations : `hasMany items`, `hasMany events` (timeline statut).
+
+### order_number_sequences — correction 08
+
+`year` (entier, clé primaire) et `last_number` (entier non négatif). Le compteur
+annuel est verrouillé et incrémenté dans la transaction de création de commande.
+L'année provient du fuseau `app.timezone` ; le compteur ne dépend ni du nombre de
+commandes restantes ni de `created_at`. Une suppression ne diminue jamais ce compteur.
+Un rollback annule aussi l'allocation non validée ; la séquence n'est pas garantie
+sans trous. La contrainte unique sur `orders.number` reste présente.
+
+Nouvelle migration : `2026_10_26_010000_create_order_number_sequences_table.php`.
+Sur une installation historique, elle exige des plafonds annuels explicitement
+vérifiés, incluant les numéros supprimés connus, dans `ORDER_NUMBER_SEQUENCE_FLOORS`.
+Elle refuse les données incompatibles avant de créer la table et ne réécrit aucune
+commande. Les références des autres modules ne changent pas.
+
+Voir les [conditions de déploiement](DEPLOIEMENT.md#numérotation-atomique-des-commandes--correction-08)
+et les [preuves et limites](validations/2026-10-26-numerotation/README.md).
 
 ### order_items
 `id, order_id(FK), product_id(FK null), name(snapshot), size, unit_price(int), qty, line_total(int)`.

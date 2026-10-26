@@ -15,7 +15,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [05](05-rattachement-demande-invite.md) | Permettre au visiteur de retrouver sa demande en sécurité | Validé localement | 24/10/2026 : F05 reproduit (lien email attendu 200, obtenu 403). Récupération par lien signé 24 h, compte destinataire vérifié, confirmation et rattachement atomique unique ; accès croisés toujours interdits. Renouvellement neutre et limité, demandes historiques conservées. Nouveaux tests : 29 tests, 164 assertions ; ciblés : 107 tests, 501 assertions ; suite : 355 tests, 1 356 assertions ; ciblés sur vue finale : 51 tests, 282 assertions. Larastan : 0 erreur ; Pint conforme ; build réussi. Recette navigateur mobile/bureau/clavier réalisée ; utilisateur ayant confirmé le devis de 10 000 XOF après rattachement et le message « déjà utilisé » à la réouverture du lien sur l'instance fictive 8013. MySQL/concurrence, migration MySQL et SMTP réel non validés. Nouvelle migration non appliquée à la base habituelle. Aucun commit/push lors de A. Voir note 05. |
 | [06](06-creation-administrateur.md) | Supprimer les identifiants administrateur de repli | Validé localement | 24/10/2026 : F06 reproduit (0 compte attendu, 3 créés sans configuration). Seeding courant sans compte ; provisionnement initial explicite d'un seul SuperAdmin, configuration obligatoire sans repli, secret validé et non affiché. Comptes existants conservés sans réinitialisation ni promotion ; transaction et refus des collisions. Provisionnement : 40 tests, 174 assertions ; ciblés gestion/auth : 76 tests, 283 assertions ; démonstration : 1 test, 18 assertions ; suite finale : 395 tests, 1 530 assertions. Larastan app + seeders/config : 0 erreur en séquentiel ; Pint conforme. MySQL/concurrence, SMTP et configuration/comptes déployés non validés. Base habituelle, comptes réels et cache de l'application inchangés. Aucun commit/push lors de A. Voir note 06. |
 | [07](07-reprise-paiement-reservation.md) | Gérer l’abandon et la reprise du paiement | Validé localement | 26/10/2026 : F07 reproduit (stock retiré sans échéance). Réservation en ligne 15 minutes, reprise sur même commande/paiement, jeton de checkout contre les rejeux, restitution unique, paiement tardif enregistré avec revue manuelle et préparation bloquée. Config en ligne contrôlée, COD préservé. Ciblés : 116 tests, 597 assertions ; suite complète : 428 tests, 1 719 assertions ; JavaScript : 5 tests ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette 360/1440 px, utilisateur confirmant fermeture/reprise/succès simulé. MySQL/concurrence, migration MySQL, KKiaPay sandbox, SMTP et cron réel non validés. Migration non appliquée à la base habituelle ; aucun commit/push lors de A. Voir note 07. |
-| [08](08-numerotation-commandes.md) | Rendre la numérotation des commandes atomique | À traiter | — |
+| [08](08-numerotation-commandes.md) | Rendre la numérotation des commandes atomique | Validé localement | 26/10/2026 : collision de count()+1 reproduite sur historique troué ; compteur annuel persistant, verrouillé et incrémenté dans la transaction de commande. Format/anciens numéros/URLs conservés, changement d'année dans le fuseau applicatif, suppression sans recul du compteur et rollback couverts. Initialisation historique exigeant des plafonds vérifiés, aucune renumérotation. Ciblés : 157 tests, 746 assertions ; suite finale : 469 tests, 1 868 assertions ; concurrence SQLite : 3 tests, 32 assertions, avec quatre processus distincts dans deux scénarios. Larastan : 0 erreur ; Pint/syntaxe conformes sur huit fichiers PHP. Migration et concurrence MySQL non validées ; base habituelle inchangée, aucun paiement/email réel ni commit/push lors de A. Voir note 08. |
 | [09](09-anti-abus-formulaires.md) | Limiter les abus des formulaires publics | À traiter | — |
 | [10](10-otp-delai-et-experience.md) | Sécuriser et clarifier le challenge 2FA | À traiter | — |
 | [11](11-suppression-compte-texte.md) | Aligner la suppression de compte avec son fonctionnement réel | À traiter | — |
@@ -377,6 +377,75 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   Checkpoint 06 `e002883f59801b49fd50bdc7d59e445de528958e` vérifié sur origin/main.
   Validé localement sans commit ni push ; mode étranger d'artisan préservé, index
   inchangé. Correction 08 non commencée.
+
+## Note 08 — 26 octobre 2026
+
+- **Cause et reproduction :** `count()+1` par année de `created_at` ne représente
+  pas le dernier numéro attribué et n'est pas une allocation concurrente. Le
+  nouveau test attendait `TKM-CMD-2026-00004` après les références fictives `00001`
+  et `00003` ; avant correction, tentative de `00003` et violation de l'unicité
+  SQLite. Preuve isolée, sans prétendre avoir reproduit une concurrence MySQL.
+- **Stratégie :** compteur annuel persistant, première instruction SQL de création
+  en écriture (`upsert` sans remise à zéro), puis verrou de ligne, incrément et
+  commande dans la même transaction que les articles/stock. Trois tentatives
+  transactionnelles existantes conservées ; erreur non récupérable propagée avec
+  rollback. Format lisible et index unique préservés. Année capturée dans
+  `app.timezone`, compteur indépendant par année ; suppression sans recul,
+  rollback annulant l'allocation non validée et aucune garantie de continuité.
+  Rejeu du checkout sans nouvelle allocation ni notification. Références devis
+  et demandes (`ReferenceGenerator`) inchangées.
+- **Historique :** nouvelle migration additive, prévalidation avant le DDL et
+  plafonds `ORDER_NUMBER_SEQUENCE_FLOORS` explicitement vérifiés pour chaque année
+  historique, incluant les suppressions connues ; refus de configuration absente,
+  insuffisante ou invalide et de références canoniques incompatibles. Maxima lus
+  depuis les numéros, jamais depuis `created_at`. Aucun attribut de commande ou
+  paiement historique réécrit. Suppressions introuvables en archive impossibles
+  à déduire ; préparation, arrêt des écrivains, cache et restauration des plafonds
+  documentés pour un futur déploiement autorisé.
+- **Fichiers :** `OrderService`, nouveau `OrderNumberAllocator`, `config/orders.php`,
+  `.env.example` (variable vide), migration
+  `2026_10_26_010000_create_order_number_sequences_table.php`, tests
+  `OrderNumberingTest`, `OrderNumberMigrationTest`, `OrderNumberConcurrencyTest`
+  et processus auxiliaire `tests/Support/order-number-worker.php`. Schéma de base,
+  déploiement, présente ligne/note et [rapport de validation et démonstration](../../validations/2026-10-26-numerotation/README.md).
+  Aucune vue ni aucun asset modifié ; build inutile pour ce lot.
+- **Contrôles :** ciblés numérotation/migration/commande/paiement/reprise/stock →
+  **157 tests, 746 assertions** ; suite Pest complète finale → **469 tests,
+  1 868 assertions** ; Larastan sur app/configuration/migration/processus →
+  **0 erreur**, analyse séquentielle `--debug` ; Pint et syntaxe des huit fichiers
+  PHP conformes. SQLite isolé, notifications simulées et HTTP imprévu interdit
+  dans les nouveaux scénarios. Un premier lancement complet a échoué sur un
+  instantané de démonstration capturé avant lecture des valeurs par défaut ;
+  préparation corrigée sans retirer d'assertion. Fichier Blade compilé manquant
+  également rencontré lors de deux suites simultanées ; relance complète seule
+  réussie, aucun correctif applicatif étranger.
+- **Concurrence et démonstration :** concurrence seule → **3 tests, 32 assertions** :
+  exigence d'une transaction et deux scénarios à quatre processus PHP/connexions
+  SQLite indépendants, clients/produits distincts, barrière de départ et verrou
+  maintenu 200 ms. Chevauchement réel, numéros uniques, compteurs et retraits de
+  stock contrôlés. Démonstration Pest `demonstration 08` : anciennes références
+  `00001`/`00003` conservées, plafond fictif 10, créations `00011`/`00012`, suppression
+  de `00012`, puis `00013` ; relance seule finale → **1 test, 8 assertions**.
+  Ancienne URL testée HTTP 200 pour le propriétaire.
+  Démonstration reproductible proposée, sans prétendre à une validation personnelle
+  de l'utilisateur.
+- **Limites/état :** migration et concurrence MySQL **non validées** ; SMTP réel,
+  KKiaPay sandbox et production **non testés**. Aucun paiement/email réel,
+  migration de la base habituelle, commande d'expiration ou commande de cache
+  habituelle ; aucun compte réel modifié. Checkpoint 07
+  `eba6da6df8995689907f22cb14f410c610077111` vérifié sur origin/main. Validé
+  localement, sans commit ni push ; mode étranger d'artisan préservé, index inchangé.
+  Aucune autre correction commencée.
+
+- **Revalidation avant B — 26 octobre 2026 :** empreintes temporaires de A
+  indisponibles, revue des fichiers et contrôles relancés : ciblés **157 tests,
+  746 assertions**, puis suite complète seule **469 tests, 1 868 assertions**,
+  tous réussis. Larastan **0 erreur**, Pint et syntaxe conformes sur huit fichiers
+  PHP. Concurrence SQLite et démonstration incluses dans ces suites ; vues et
+  configuration de test sur chemins temporaires dédiés. Liens locaux présents,
+  variables administrateur/plafond vides et ajouts revus sans secret. Aucun code,
+  asset ou schéma habituel modifié lors de cette revalidation ; limites externes
+  conservées. Seuls les treize fichiers de la fiche sont destinés au commit.
 
 ## Modèle de note à remplir après une intervention
 

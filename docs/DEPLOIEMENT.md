@@ -142,6 +142,11 @@ Cron unique (hébergement mutualisé compatible) :
 Le scheduler traite la file (`queue:work --stop-when-empty`) pour les emails.
 
 ## 5. Déploiements suivants
+
+**Avant la migration du compteur de commandes (correction 08), suivre les
+préconditions ci-dessous.** Un historique existant exige une initialisation
+explicite ; ne pas lancer la séquence générale sans cette préparation.
+
 ```bash
 git pull
 composer install --no-dev --optimize-autoloader
@@ -152,6 +157,59 @@ php artisan view:cache
 php artisan event:cache
 ```
 > Si le front a changé **en local** : `nvm use 22 && npm run build`, committer `public/build`, puis `git pull` côté serveur (aucun build serveur).
+
+### Numérotation atomique des commandes — correction 08
+
+La migration additive `2026_10_26_010000_create_order_number_sequences_table.php`
+crée un compteur annuel sans renuméroter les commandes ni modifier leurs URLs.
+Elle doit précéder l'utilisation du nouvel allocateur. Procédure pour un futur
+déploiement autorisé ; **aucune de ces opérations n'a été exécutée sur la base
+habituelle pendant la validation locale** :
+
+1. Arrêter toutes les écritures de commandes : trafic, traitements et workers
+   concernés. Les anciennes et nouvelles versions ne doivent pas écrire ensemble.
+   Sauvegarder la base et, s'il existe déjà, le compteur annuel.
+2. Pour chaque année des numéros `TKM-CMD-YYYY-…`, relever le maximum attribué dans
+   les données et les archives, y compris les commandes supprimées. L'année de
+   `created_at` n'est pas une source de vérité. Une année entièrement supprimée
+   doit aussi être renseignée si des numéros y ont déjà été attribués.
+3. Renseigner `ORDER_NUMBER_SEQUENCE_FLOORS` avec un objet JSON de plafonds vérifiés.
+   Exemple **fictif**, à remplacer par les valeurs auditées de la cible :
+
+   ```dotenv
+   ORDER_NUMBER_SEQUENCE_FLOORS='{"2025":240,"2026":4200}'
+   ```
+
+   Chaque année historique présente exige une valeur entière non négative, au
+   moins égale au maximum actuel. Les références canoniques mal formées et les
+   séquences hors limites sont refusées sans modification des commandes. Le code
+   ne peut pas déduire des numéros supprimés absents des archives : établir ce
+   plafond avant de poursuivre. Sur une installation neuve sans historique, la
+   variable peut rester vide.
+4. Sur la cible autorisée, rendre cette configuration disponible à Laravel avant
+   la migration : si elle était cachée, `php artisan config:clear`, puis appliquer
+   `php artisan migrate --force` et reconstruire le cache avec
+   `php artisan config:cache`. La variable ne sert qu'à l'initialisation de la
+   migration ; la modifier ensuite ne réinitialise pas le compteur persistant.
+5. Vérifier les compteurs, la contrainte unique `orders.number` et le caractère
+   transactionnel des tables commandes/articles/produits sur MySQL (InnoDB), puis
+   reprendre les écritures après le contrôle fonctionnel autorisé.
+
+Une commande supprimée ne libère pas son numéro. Une transaction annulée annule
+aussi son incrément ; ce numéro non validé peut donc être utilisé ultérieurement.
+Les plafonds et suppressions peuvent créer des trous, sans garantie de continuité.
+Tout import futur doit réconcilier explicitement les compteurs vers le haut avant
+la reprise des créations ; aucun recalcul silencieux n'est effectué à l'exécution.
+
+Le rollback de cette migration supprime uniquement la table de compteurs. Il
+détruit toutefois la mémoire des numéros supprimés : conserver sa sauvegarde et
+reconstituer des plafonds vérifiés avant toute réinstallation. Ne pas abaisser un
+compteur existant ni revenir à l'ancien écrivain sur une base continuant à recevoir
+des commandes.
+
+[Stratégie, démonstration et contrôles locaux](validations/2026-10-26-numerotation/README.md).
+La migration et la concurrence MySQL restent **non validées** ; la concurrence
+réellement testée concerne SQLite avec des processus indépendants.
 
 ## 6. Vérifications live (smoke)
 
