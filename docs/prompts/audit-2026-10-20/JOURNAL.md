@@ -13,7 +13,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [03](03-stock-global-variantes.md) | Empêcher le stock négatif entre variantes | Validé localement | 24/10/2026 : F03 reproduit (stock 2 → −2 avant correction), puis cumul par produit contrôlé dans le panier et sous verrou en transaction à la commande. Refus explicite, panier corrigeable et rollback validés. CartSizeTest + OrderFlowTest : 24 tests, 125 assertions ; suite : 297 tests, 995 assertions ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette isolée à 360/1440 px validée, stocks NULL préservés. Concurrence MySQL non validée ; base de l'application inchangée. Aucun commit/push lors de A. Voir note 03. |
 | [04](04-expiration-devis.md) | Appliquer la validité des devis côté serveur | Validé localement | 24/10/2026 : F04 reproduit avant correction ; validité contrôlée à la décision, fin du jour incluse dans le fuseau applicatif (UTC), absence de date préservée. État Expiré et renouvellement visibles ; envoi avec date passée refusé ; décisions historiques préservées. Tests ciblés : 45 tests, 244 assertions ; suite : 326 tests, 1 192 assertions ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette navigateur 360/1440 px et clavier réalisée ; utilisateur ayant confirmé l'état Expiré et les boutons sur l'instance fictive 8012, autres cas manuels disponibles. MySQL/concurrence et SMTP réel non validés. Aucune migration de la base habituelle, aucun commit/push lors de A. Voir note 04. |
 | [05](05-rattachement-demande-invite.md) | Permettre au visiteur de retrouver sa demande en sécurité | Validé localement | 24/10/2026 : F05 reproduit (lien email attendu 200, obtenu 403). Récupération par lien signé 24 h, compte destinataire vérifié, confirmation et rattachement atomique unique ; accès croisés toujours interdits. Renouvellement neutre et limité, demandes historiques conservées. Nouveaux tests : 29 tests, 164 assertions ; ciblés : 107 tests, 501 assertions ; suite : 355 tests, 1 356 assertions ; ciblés sur vue finale : 51 tests, 282 assertions. Larastan : 0 erreur ; Pint conforme ; build réussi. Recette navigateur mobile/bureau/clavier réalisée ; utilisateur ayant confirmé le devis de 10 000 XOF après rattachement et le message « déjà utilisé » à la réouverture du lien sur l'instance fictive 8013. MySQL/concurrence, migration MySQL et SMTP réel non validés. Nouvelle migration non appliquée à la base habituelle. Aucun commit/push lors de A. Voir note 05. |
-| [06](06-creation-administrateur.md) | Supprimer les identifiants administrateur de repli | À traiter | — |
+| [06](06-creation-administrateur.md) | Supprimer les identifiants administrateur de repli | Validé localement | 24/10/2026 : F06 reproduit (0 compte attendu, 3 créés sans configuration). Seeding courant sans compte ; provisionnement initial explicite d'un seul SuperAdmin, configuration obligatoire sans repli, secret validé et non affiché. Comptes existants conservés sans réinitialisation ni promotion ; transaction et refus des collisions. Provisionnement : 40 tests, 174 assertions ; ciblés gestion/auth : 76 tests, 283 assertions ; démonstration : 1 test, 18 assertions ; suite finale : 395 tests, 1 530 assertions. Larastan app + seeders/config : 0 erreur en séquentiel ; Pint conforme. MySQL/concurrence, SMTP et configuration/comptes déployés non validés. Base habituelle, comptes réels et cache de l'application inchangés. Aucun commit/push lors de A. Voir note 06. |
 | [07](07-reprise-paiement-reservation.md) | Gérer l’abandon et la reprise du paiement | À traiter | — |
 | [08](08-numerotation-commandes.md) | Rendre la numérotation des commandes atomique | À traiter | — |
 | [09](09-anti-abus-formulaires.md) | Limiter les abus des formulaires publics | À traiter | — |
@@ -261,6 +261,67 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   commit ou push lors de A. Checkpoint 04 `c37fb7b7720612f674dca4fc9145ba2676709ce2`
   vérifié sur origin/main ; mode étranger d'`artisan` préservé. Aucune autre fiche
   commencée.
+
+## Note 06 — 24 octobre 2026
+
+- **Cause et reproduction :** `DatabaseSeeder` appelait automatiquement un
+  `AdminSeeder` avec trois identités prédéfinies, un mot de passe de repli faible
+  et une réaffectation des rôles par `syncRoles`. Le nouveau test de seeding
+  courant échouait avant correction : **0 compte attendu, 3 obtenus** sur SQLite
+  en mémoire. Il passe après correction. L'audit historique est conservé ; cela
+  ne prouve pas l'emploi du repli par les comptes déployés, qui n'ont pas été examinés.
+- **Mécanisme :** le seeding courant initialise seulement les rôles/permissions.
+  Création initiale volontaire par `php artisan db:seed --class=AdminSeeder`,
+  avec `TIKMOS_ADMIN_NAME`, `TIKMOS_ADMIN_EMAIL`, `TIKMOS_ADMIN_PASSWORD` obligatoires,
+  lus via `config/admin.php`, sans identité personnelle ni secret par défaut.
+  Nom/email validés et normalisés ; secret de 16 caractères minimum avec majuscule,
+  minuscule, chiffre et symbole, 72 octets UTF-8 maximum et sans octet nul.
+  Secret haché, jamais affiché ; aucun email ou hachage configuré dans la sortie.
+- **Comptes existants :** répétition avec la même adresse d'un SuperAdmin sans
+  modification de profil, mot de passe, statut, 2FA ou rôles supplémentaires.
+  Pas de réactivation d'un compte suspendu. Refus des collisions avec client/autre
+  rôle/compte supprimé et des correspondances de casse ambiguës. Refus d'un second
+  administrateur initial sous une autre adresse ; comptes suivants via le personnel.
+  Verrou commun du rôle, transaction de création/affectation et rollback testé.
+  Le nouvel administrateur reste soumis au challenge 2FA, sans appareil de confiance
+  ni vérification d'email déclarée artificiellement.
+- **Fichiers :** `config/admin.php`, `database/seeders/AdminSeeder.php`,
+  `database/seeders/DatabaseSeeder.php`, `.env.example`,
+  `tests/Feature/Admin/AdministratorProvisioningTest.php`, `docs/DEPLOIEMENT.md`,
+  présente ligne/note et [rapport de validation et démonstration](../../validations/2026-10-24-admin/README.md).
+  Aucun changement de vue, asset ou schéma ; pas de build frontend nécessaire.
+- **Contrôles :** provisionnement → **40 tests, 174 assertions** ; provisionnement,
+  gestion utilisateur et authentification → **76 tests, 283 assertions** ;
+  démonstration ciblée rejouée sur la version finale → **1 test, 18 assertions** ;
+  suite Pest complète finale → **395 tests, 1 530 assertions**. Larastan niveau 6
+  sur `app`, les deux seeders et la configuration → **0 erreur** ; premier lancement
+  parallèle sans résultat sous Windows, remplacé par `--debug` en séquentiel.
+  Contrôle d'affichage console corrigé sans suppression d'erreur ni baseline ;
+  Pint sur quatre fichiers PHP conforme. SQLite en mémoire, notifications simulées
+  et HTTP imprévu interdit dans les nouveaux tests. Aucune sortie de secret.
+- **Démonstration :** filtre Pest `demonstration F06`, décrit dans le rapport :
+  refus sans configuration, seeding avec zéro utilisateur, création fictive unique,
+  puis répétition avec autre secret et nom sans modifier le compte existant.
+  Secret généré en mémoire, non affiché ; aucune donnée fictive persistée dans la
+  base habituelle. Le guide documente le retrait des variables de provisionnement,
+  la gestion du cache et la revue séparée des anciens accès autorisés.
+- **Limites/état :** concurrence MySQL **non validée**, comptes/configuration de
+  production **non examinés**, SMTP réel et cache de production **non recettés**.
+  Aucun compte réel créé, rôle révoqué ou mot de passe réel changé. Aucune migration
+  de la base habituelle, aucun cache applicatif modifié, aucun déploiement, commit
+  ou push. Checkpoint 05 `64fa40ee2355dc2d5c670f19a8290e2f9a5ebf4e` vérifié sur
+  origin/main ; mode étranger d'`artisan` préservé et index vide. Aucune autre fiche
+  commencée.
+
+- **Revalidation avant B — 26 octobre 2026 :** sept fichiers présents identiques
+  aux empreintes de A ; `config/admin.php`, absent du dossier, rétabli sans valeur
+  de repli et sélectionné explicitement pour publication. Chargement vérifié avec
+  des données fictives en mémoire, sans affichage de secret. Ciblés gestion/auth/
+  provisionnement relancés : **76 tests, 283 assertions** ; suite complète :
+  **395 tests, 1 530 assertions** ; Larastan séquentiel : **0 erreur** ; Pint et
+  syntaxe des quatre fichiers PHP conformes. Liens locaux présents et liens
+  officiels Laravel HTTP 200. SQLite en mémoire ; base, comptes réels et cache
+  de configuration habituels préservés. Limites précédentes inchangées.
 
 ## Modèle de note à remplir après une intervention
 

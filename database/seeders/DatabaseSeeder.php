@@ -11,12 +11,13 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        // Rôles/permissions + compte administrateur. Le contenu de démonstration
+        // Rôles/permissions uniquement : aucun compte privilégié implicite.
+        // L'administrateur initial se provisionne explicitement avec AdminSeeder.
+        // Le contenu de démonstration
         // (services, réalisations, blog, boutique, avis, FAQ, équipe, partenaires)
         // est seedé par les migrations dédiées.
         $this->call([
             RolePermissionSeeder::class,
-            AdminSeeder::class,
         ]);
     }
 }
