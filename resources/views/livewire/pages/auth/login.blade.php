@@ -46,10 +46,15 @@ new #[Layout('components.layouts.auth')] class extends Component
             session()->put('2fa.user_id', $user->id);
             session()->put('2fa.remember', $this->remember);
 
-            $code = $twoFactor->sendCode($user);
-
-            if ($twoFactor->showsDevCode()) {
-                session()->flash('2fa.dev_code', $code);
+            session()->forget(['2fa.dev_code', '2fa.resend_error']);
+            try {
+                $code = $twoFactor->sendCode($user);
+                if ($twoFactor->showsDevCode()) {
+                    session()->flash('2fa.dev_code', $code);
+                }
+            } catch (ValidationException $exception) {
+                // Un nouveau login avec le bon mot de passe conserve les quotas du compte.
+                session()->flash('2fa.resend_error', $exception->errors()['resend'][0]);
             }
 
             $this->redirectRoute('two-factor.challenge', navigate: true);
@@ -58,6 +63,7 @@ new #[Layout('components.layouts.auth')] class extends Component
         }
 
         Auth::login($user, $this->remember);
+        session()->forget(['2fa.user_id', '2fa.remember', '2fa.dev_code', '2fa.resend_error']);
         session()->regenerate();
 
         $this->redirectIntended(default: $user->homeRoute(), navigate: true);

@@ -34,7 +34,11 @@ return [
     'two_factor' => [
         'enabled' => (bool) env('TIKMOS_2FA_ENABLED', true),
         'ttl' => 600,          // durée de validité du code (secondes)
-        'max_attempts' => 3,   // essais avant blocage
+        'max_attempts' => 3,   // codes incorrects par fenêtre, tous challenges confondus
+        'attempt_window' => 900,
+        'resend_delay' => 60,
+        'max_sends' => 5,      // premier envoi inclus, par compte
+        'send_window' => 900,
         'remember_days' => 30, // durée de confiance d'un appareil
         // Mode développement : affiche le code OTP à l'écran. N'a d'effet QUE si APP_ENV=local.
         'dev_show_code' => (bool) env('TIKMOS_DEV_SHOW_CODE', true),

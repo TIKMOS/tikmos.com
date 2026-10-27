@@ -17,7 +17,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [07](07-reprise-paiement-reservation.md) | Gérer l’abandon et la reprise du paiement | Validé localement | 26/10/2026 : F07 reproduit (stock retiré sans échéance). Réservation en ligne 15 minutes, reprise sur même commande/paiement, jeton de checkout contre les rejeux, restitution unique, paiement tardif enregistré avec revue manuelle et préparation bloquée. Config en ligne contrôlée, COD préservé. Ciblés : 116 tests, 597 assertions ; suite complète : 428 tests, 1 719 assertions ; JavaScript : 5 tests ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette 360/1440 px, utilisateur confirmant fermeture/reprise/succès simulé. MySQL/concurrence, migration MySQL, KKiaPay sandbox, SMTP et cron réel non validés. Migration non appliquée à la base habituelle ; aucun commit/push lors de A. Voir note 07. |
 | [08](08-numerotation-commandes.md) | Rendre la numérotation des commandes atomique | Validé localement | 26/10/2026 : collision de count()+1 reproduite sur historique troué ; compteur annuel persistant, verrouillé et incrémenté dans la transaction de commande. Format/anciens numéros/URLs conservés, changement d'année dans le fuseau applicatif, suppression sans recul du compteur et rollback couverts. Initialisation historique exigeant des plafonds vérifiés, aucune renumérotation. Ciblés : 157 tests, 746 assertions ; suite finale : 469 tests, 1 868 assertions ; concurrence SQLite : 3 tests, 32 assertions, avec quatre processus distincts dans deux scénarios. Larastan : 0 erreur ; Pint/syntaxe conformes sur huit fichiers PHP. Migration et concurrence MySQL non validées ; base habituelle inchangée, aucun paiement/email réel ni commit/push lors de A. Voir note 08. |
 | [09](09-anti-abus-formulaires.md) | Limiter les abus des formulaires publics | Validé localement | 27/10/2026 : quatrième appel direct accepté avant correction sur les deux formulaires, puis refus serveur sans enregistrement/notification supplémentaire. Quotas communs : 3 par session/compte et 20 par IP sur 10 min ; 5 par coordonnée déclarée sur 30 min. Réservation sous verrou, clés HMAC, champs conservés et délai affiché ; validation, honeypot et récupération invitée préservés. Ciblés finaux : 91 tests, 493 assertions ; suite : 491 tests, 2 048 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette navigateur 360/1440 px et clavier réalisée, cinq captures ; utilisateur confirmant refus, texte conservé et reprise. MySQL, SMTP et cache partagé entre processus/serveurs non validés. Base/cache habituels préservés, aucun commit/push lors de A. Voir note 09. |
-| [10](10-otp-delai-et-experience.md) | Sécuriser et clarifier le challenge 2FA | À traiter | — |
+| [10](10-otp-delai-et-experience.md) | Sécuriser et clarifier le challenge 2FA | Validé localement | 27/10/2026 : trois défauts reproduits avant correction. Quotas serveur communs par compte : renvoi après 60 s, 5 envois / 900 s, 3 codes incorrects / 900 s, sans remise à zéro par renvoi ou nouveau challenge. Confiance décochée, erreurs distinctes, code remplacé/consommé sous verrou et protection après perte du bail. Authentification finale : 58 tests, 256 assertions ; suite finale : 521 tests, 2 219 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette mobile/bureau/clavier, sept captures ; utilisateur confirmant confiance décochée et renvoi correct. MySQL, SMTP réel et cache partagé/concurrence distribuée non validés. Base/cache habituels préservés, aucun commit/push lors de A. Voir note 10. |
 | [11](11-suppression-compte-texte.md) | Aligner la suppression de compte avec son fonctionnement réel | À traiter | — |
 | [12](12-parcours-devis-unifie.md) | Unifier le bouton Demander un devis et le suivi client | À traiter | — |
 | [13](13-frais-livraison.md) | Annoncer les frais de livraison avant confirmation | À traiter | — |
@@ -504,6 +504,53 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   `23c49870a0e3b3c0c9ac68e210a55628cf428e1a` vérifié sur origin/main. Mode étranger
   d'artisan et index préservés. Validé localement sans commit ni push ; aucune
   autre fiche commencée.
+
+## Note 10 — 27 octobre 2026
+
+- **Cause/reproduction :** renvoi OTP sans délai dédié, compteur d'essais remis à
+  zéro à chaque envoi et confiance de 30 jours cochée. Trois nouveaux tests exigeant
+  le comportement sûr échouaient avant modification : **3 échecs, 14 assertions**.
+  Ils passent après correction ; l'audit historique n'a pas été réécrit.
+- **Règles :** code 600 s, intervalle d'envoi 60 s, 5 envois (premier inclus) sur
+  900 s, 3 comparaisons incorrectes sur 900 s. Fenêtres fixes par compte, communes
+  aux sessions/challenges, conservées après renvoi et succès ; refus sans prolongation.
+  Clés et empreinte HMAC, cache persistant et verrou partagé par compte. Quota réservé
+  avant le transport ; ancien code préservé sur exception, nouveau code activé seulement
+  après remise au canal et contrôle du verrou. Perte du bail : refus sans réécriture
+  de l'état plus récent. Consommation unique. Timeout du transport à vérifier séparément.
+- **Interface/fichiers :** `TwoFactorService`, `config/tikmos.php`, vues login et
+  challenge, `TwoFactorTest`, documentation auth/déploiement et présente ligne/note.
+  Confiance volontaire, cookies historiques préservés ; code dev verrouillé et visible
+  seulement en local. Messages incorrect/expiré/blocage, délai accessible, champ/erreurs
+  effacés sur renvoi réussi. Compteur réinitialisé aussi lorsque la durée serveur est
+  identique à celle du rendu précédent. [Rapport et sept captures](../../validations/2026-10-27-otp/README.md).
+  Manifeste et CSS `app-DpDeyuAx.css` remplaçant `app-r-zsVh6O.css`, JS/polices inchangés.
+- **Validation finale :** `php vendor/bin/pest tests/Feature/Auth --compact` →
+  **58 tests, 256 assertions** ; puis `php vendor/bin/pest --compact` → **521 tests,
+  2 219 assertions**, tous réussis après le contrôle du bail. Suites séquentielles,
+  SQLite/cache isolés, notifications simulées et HTTP imprévu interdit dans les tests OTP.
+  Larastan app séquentiel `--debug` → **0 erreur** ; Pint/syntaxe conformes sur cinq
+  fichiers PHP ; build final réussi (7,02 s), manifeste cohérent. Cas supplémentaires :
+  seuils et délais exacts, codes remplacés/consommés, nouvelles connexions, confiance
+  volontaire, appareils approuvés/expirés, cache inadapté, transport en erreur,
+  contention/perte du bail simulées et mode production sans code dev.
+- **Recette :** instance privée avec SQLite, cache fichier, sessions et vues compilées
+  dédiés, notifications interceptées ; aucun compte ou mot de passe réel. Mobile
+  360 px et bureau 1440 px, focus sur erreur, Tab/Espace/Entrée, renvoi depuis page
+  ouverte, blocage conservé dans un nouvel onglet, reprise après délai et connexion
+  légitime jusqu'au tableau de bord. Aucun débordement horizontal ni erreur console
+  observé. L'utilisateur confirme la confiance décochée et le renvoi après délai,
+  avec champ/erreur effacés et compteur réinitialisé ; les autres cas techniques ne
+  sont pas présentés comme personnellement validés par lui. Dimensions réinitialisées,
+  onglets fermés et seul serveur F10 arrêté après confirmation.
+- **Limites/état :** MySQL, concurrence réelle et cache partagé entre processus/serveurs,
+  autres pilotes, charge de production, SMTP/délivrabilité et timeouts réels **non validés**.
+  Recréation d'adaptateur database sur SQLite et perte du bail simulée ne prouvent pas
+  une concurrence distribuée. Codes de l'ancien espace de cache non repris, expiration
+  naturelle sans purge. Base/cache habituels, comptes et appareils réels inchangés ;
+  aucune migration habituelle, aucun email réel ou déploiement. Checkpoint 09
+  `0c46a653ee73ef2ce64df96c76fc72dd26741b97` vérifié sur origin/main. Mode étranger
+  d'artisan et index préservés. Aucun commit ni push ; correction 11 non commencée.
 
 ## Modèle de note à remplir après une intervention
 

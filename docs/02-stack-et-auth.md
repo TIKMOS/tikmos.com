@@ -126,3 +126,64 @@ copiée stable et testée). Upgrade L4 envisageable en phase 5 :
 - **Prod** : MySQL, `APP_ENV=production`, `APP_DEBUG=false`, caches Laravel, `storage:link`, HTTPS,
   queue `database` + cron `schedule:run`. Détail : `04-conventions-architecture.md` §12.
 - `.env` : adapter `APP_NAME="Tikmos"`, `APP_URL=https://tikmos.com`, coordonnées WhatsApp, mail.
+
+## 8. Challenge OTP — correction 10 (27 octobre 2026)
+
+Les limites de `config/tikmos.php` sont appliquées par `TwoFactorService`, y compris
+aux appels Livewire directs et aux nouvelles connexions avec un mot de passe correct :
+
+| Règle par compte | Valeur par défaut |
+|---|---|
+| Validité du dernier code | 600 secondes ; refus à l'instant d'expiration |
+| Intervalle minimal entre envois | 60 secondes |
+| Plafond d'envois, premier envoi compris | 5 sur 900 secondes |
+| Codes incorrects avant blocage | 3 sur 900 secondes |
+
+Les fenêtres fixes commencent respectivement au premier envoi réservé et au premier
+code incorrect. Ni un renvoi, ni un nouveau challenge, ni une connexion réussie
+n'effacent ces compteurs. Un refus ne prolonge pas les fenêtres. Les formats invalides
+sont rejetés par la validation du formulaire avant comparaison du code ; un code absent,
+expiré ou déjà consommé n'ouvre aucune session et ne compte pas comme une comparaison
+incorrecte. Après trois comparaisons incorrectes, validation **et** renvoi sont bloqués
+jusqu'à la fin de la fenêtre. À sa fin, demander un nouveau code si le précédent a expiré.
+
+Les clés sont liées à l'identifiant serveur du compte, sous la forme
+`2fa:v2:<HMAC-SHA256(APP_KEY, identifiant)>`, avec un verrou `:lock`.
+Aucune adresse email ou IP déclarée ne sert d'identité. Deux comptes sur la même IP
+ont des compteurs distincts ; changer de session ou d'IP ne réinitialise pas ceux d'un
+compte. Aucun code en clair n'est stocké dans cet état : son empreinte est un HMAC.
+
+Le service utilise `cache.limiter` si configuré, sinon `cache.default`. Un cache
+persistant avec verrous est obligatoire hors tests ; `array` n'est accepté qu'en
+environnement `testing`. Les pilotes acceptés sont database, file, Redis, Memcached
+et DynamoDB. Un cache non adapté, inaccessible ou sans clé applicative entraîne un
+refus temporaire, sans authentification. Les logs ne contiennent que la classe de
+l'exception, jamais le code, les identifiants ou le message du transport.
+
+Envoi et vérification utilisent le même verrou par compte. Le quota et le délai
+d'envoi sont réservés avant le transport ; un échec consomme cette réservation pour
+éviter des appels illimités au fournisseur. Le dernier code reste valable si le
+transport lève une exception. Un nouveau code remis sans exception au canal mail
+remplace l'ancien uniquement si le verrou appartient toujours à l'appel ; cela
+**ne prouve pas sa délivrance**. Un transport ayant perdu son bail ne réécrit pas un
+code ni des quotas plus récents. La réussite consomme le code
+une seule fois. Une panne après remise au transport peut rendre la réception ambiguë :
+attendre le délai puis demander un nouveau code. Voir les exigences de timeout dans
+[le déploiement](DEPLOIEMENT.md).
+
+Le champ de confiance est décoché par défaut. Les cookies et appareils déjà approuvés
+gardent leur fonctionnement ; un nouvel appareil n'est enregistré qu'après OTP valide
+et choix explicite. Le code de développement, également verrouillé contre les
+modifications de propriété Livewire, ne peut être affiché qu'en `APP_ENV=local` avec
+`TIKMOS_DEV_SHOW_CODE=true`. Une valeur de session résiduelle n'est pas affichée dans
+les autres environnements et est effacée.
+
+Le challenge distingue code incorrect, expiré/déjà utilisé, renvoi indisponible et
+validation bloquée. Le délai est annoncé dans l'erreur puis affiché par un compteur
+visuel sans annonce vocale chaque seconde. Le serveur reste l'autorité à chaque action.
+Un renvoi réussi vide le champ et efface les erreurs précédentes ; la case de confiance
+conserve le choix volontaire. Le format historique des cookies et la table des appareils
+ne changent pas. Les codes encore présents dans l'ancien espace de cache `2fa:code:*`
+ne sont pas repris : ils expirent naturellement, sans purge ; demander un nouveau code.
+
+Preuves et limites : [recette OTP](validations/2026-10-27-otp/README.md).

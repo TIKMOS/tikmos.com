@@ -285,3 +285,45 @@ bloquée, aucun remboursement automatique. Procédure et limites :
 
 ## CI
 `.gitlab-ci.yml` lance **Pint + Larastan + Pest** à chaque push (sans Node).
+
+## Conditions du cache et du transport OTP (correction 10)
+
+Le challenge 2FA nécessite un cache persistant avec verrous. Il emploie
+`cache.limiter` lorsqu'il est défini, sinon `cache.default`. Les compteurs et
+l'empreinte du code se trouvent dans **le même** store. Le pilote `array` est réservé
+aux tests, les pilotes sans verrous et le failover vers un store non partagé sont
+refusés. Une erreur de cache bloque temporairement le challenge au lieu de permettre
+une connexion sans OTP. Aucun effacement du cache habituel n'est nécessaire.
+
+Sur plusieurs processus ou serveurs, partager le même stockage, les verrous, le
+préfixe de cache et `APP_KEY`. Le pilote fichier exige un stockage commun assurant
+les verrous ; des disques locaux séparés ne protègent pas un déploiement à plusieurs
+serveurs. Synchroniser leurs horloges. Une perte/éviction ou un changement de store,
+de préfixe ou de clé peut faire perdre les quotas et invalider les codes ; ne pas
+utiliser un cache régulièrement purgé pour cette protection.
+
+Le verrou par compte dure **60 secondes**, et couvre l'envoi synchrone ainsi que
+la consommation du code. Configurer un timeout de transport strictement inférieur à
+ce bail, en laissant une marge pour les accès au cache. Le timeout global effectif
+(connexion, lecture, éventuelles reprises) doit rester inférieur à 60 secondes.
+Vérifier séparément ce comportement avec le transport de production ; il n'a pas été
+validé par la recette avec notifications simulées. Un autre appel pendant le verrou
+est refusé avec un délai de réessai de 2 secondes. Une panne d'envoi réserve néanmoins
+le délai de 60 secondes et une place dans le quota ; elle ne remplace pas le code
+encore valide si le transport lève une exception. Une remise au transport sans
+exception ne garantit pas la réception de l'email. Le service revérifie la propriété
+du verrou après le transport : un envoi ayant perdu son bail est refusé sans
+réécrire le code ni les compteurs plus récents. Ce garde-fou ne remplace pas le
+réglage du timeout, ni une recette de concurrence sur le stockage de production.
+
+Seuils par compte dans `config/tikmos.php` : code 600 s, renvoi 60 s, 5 envois sur
+900 s, 3 comparaisons incorrectes sur 900 s. Les compteurs survivent aux renvois,
+aux nouvelles sessions et aux succès jusqu'à la fin de leurs fenêtres fixes.
+Le premier envoi est inclus. Aucun quota fondé sur un email non vérifié.
+
+Avant production, vérifier séparément le cache partagé, la concurrence réelle,
+les timeouts et la délivrabilité SMTP. Les tests SQLite avec recréation d'adaptateur
+et la recette fichier ne constituent pas une validation distribuée ou MySQL.
+Garder `APP_ENV=production`, `APP_DEBUG=false` ; le code de développement ne doit
+jamais apparaître sur le challenge. Aucun compte ou appareil déjà déployé n'a été
+modifié dans cette correction.
