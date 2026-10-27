@@ -18,7 +18,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [08](08-numerotation-commandes.md) | Rendre la numérotation des commandes atomique | Validé localement | 26/10/2026 : collision de count()+1 reproduite sur historique troué ; compteur annuel persistant, verrouillé et incrémenté dans la transaction de commande. Format/anciens numéros/URLs conservés, changement d'année dans le fuseau applicatif, suppression sans recul du compteur et rollback couverts. Initialisation historique exigeant des plafonds vérifiés, aucune renumérotation. Ciblés : 157 tests, 746 assertions ; suite finale : 469 tests, 1 868 assertions ; concurrence SQLite : 3 tests, 32 assertions, avec quatre processus distincts dans deux scénarios. Larastan : 0 erreur ; Pint/syntaxe conformes sur huit fichiers PHP. Migration et concurrence MySQL non validées ; base habituelle inchangée, aucun paiement/email réel ni commit/push lors de A. Voir note 08. |
 | [09](09-anti-abus-formulaires.md) | Limiter les abus des formulaires publics | Validé localement | 27/10/2026 : quatrième appel direct accepté avant correction sur les deux formulaires, puis refus serveur sans enregistrement/notification supplémentaire. Quotas communs : 3 par session/compte et 20 par IP sur 10 min ; 5 par coordonnée déclarée sur 30 min. Réservation sous verrou, clés HMAC, champs conservés et délai affiché ; validation, honeypot et récupération invitée préservés. Ciblés finaux : 91 tests, 493 assertions ; suite : 491 tests, 2 048 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette navigateur 360/1440 px et clavier réalisée, cinq captures ; utilisateur confirmant refus, texte conservé et reprise. MySQL, SMTP et cache partagé entre processus/serveurs non validés. Base/cache habituels préservés, aucun commit/push lors de A. Voir note 09. |
 | [10](10-otp-delai-et-experience.md) | Sécuriser et clarifier le challenge 2FA | Validé localement | 27/10/2026 : trois défauts reproduits avant correction. Quotas serveur communs par compte : renvoi après 60 s, 5 envois / 900 s, 3 codes incorrects / 900 s, sans remise à zéro par renvoi ou nouveau challenge. Confiance décochée, erreurs distinctes, code remplacé/consommé sous verrou et protection après perte du bail. Authentification finale : 58 tests, 256 assertions ; suite finale : 521 tests, 2 219 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette mobile/bureau/clavier, sept captures ; utilisateur confirmant confiance décochée et renvoi correct. MySQL, SMTP réel et cache partagé/concurrence distribuée non validés. Base/cache habituels préservés, aucun commit/push lors de A. Voir note 10. |
-| [11](11-suppression-compte-texte.md) | Aligner la suppression de compte avec son fonctionnement réel | À traiter | — |
+| [11](11-suppression-compte-texte.md) | Aligner la suppression de compte avec son fonctionnement réel | Validé localement | 27/10/2026 : écart texte/SoftDeletes et deux refus serveur manquants reproduits avant correction. Fermeture logique annoncée sans promesse d'effacement, mot de passe et confirmation exigés ; accès revérifié avant les actions, autre session et reconnexion refusées. Profil, relations et décisions conservés ; encadré de confidentialité ajouté sans réécrire le CMS. Ciblés : 84 tests, 377 assertions ; suite : 538 tests, 2 315 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi, bundle inchangé. Recette mobile/bureau/clavier, cinq captures ; utilisateur confirmant textes, confirmation et refus de reconnexion. MySQL, SMTP, sessions distribuées et décisions de conservation/effacement non validés. Base/cache/comptes réels inchangés, aucun commit/push lors de A. Voir note 11. |
 | [12](12-parcours-devis-unifie.md) | Unifier le bouton Demander un devis et le suivi client | À traiter | — |
 | [13](13-frais-livraison.md) | Annoncer les frais de livraison avant confirmation | À traiter | — |
 | [14](14-libelles-statuts-navigation.md) | Clarifier les statuts de commande et le vocabulaire | À traiter | — |
@@ -551,6 +551,54 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   aucune migration habituelle, aucun email réel ou déploiement. Checkpoint 09
   `0c46a653ee73ef2ce64df96c76fc72dd26741b97` vérifié sur origin/main. Mode étranger
   d'artisan et index préservés. Aucun commit ni push ; correction 11 non commencée.
+
+## Note 11 — 27 octobre 2026
+
+- **Cause/reproduction :** le bouton promettait une suppression définitive et
+  l'effacement alors que `User::SoftDeletes` conserve le profil et ses relations.
+  Confirmation seulement visuelle. Deux tests exigeant le refus sans confirmation
+  et le refus de l'export avec un objet authentifié chargé avant fermeture échouaient
+  avant correction : **2 échecs, 2 assertions**. Ce dernier cas n'est pas présenté
+  comme un contournement HTTP du middleware. Audit historique inchangé.
+- **Comportement/fichiers :** vue compte, composant partagé d'information,
+  composant légal, confidentialité, résultat sur connexion, `LegalRgpdTest`, cadre
+  fonctionnel et présente ligne/note. Mot de passe actuel et case de compréhension
+  exigés côté serveur ; refus/annulation sans fermeture et mot de passe effacé du
+  composant. Utilisateur actif revérifié en base avant les actions. Fermeture logique,
+  déconnexion et session courante invalidée, résultat sans promesse d'effacement
+  ou de réactivation. Profil, rôles, mot de passe, demandes/devis/décisions, commandes,
+  paiements et appareils conservés. Autres sessions non purgées mais accès refusé
+  à leur prochaine résolution d'identité ; cookies approuvés sans accès au compte fermé.
+  Export autorisé préservé et sans données croisées. Pas de modification de `User`
+  ni de migration. Corps et version CMS conservés ; formulations historiques à
+  réviser séparément dans l'éditeur. Effacement/anonymisation orientés vers le contact
+  existant, sans automatisation ni durée inventée.
+- **Validation finale :** LegalRgpdTest + Admin/LegalDocsTest + authentification →
+  **84 tests, 377 assertions** ; test ciblé de deux sessions database → **1 test,
+  7 assertions** (inclus dans les ciblés), puis suite complète → **538 tests,
+  2 315 assertions**, tous réussis. Pest séquentiel, SQLite/cache/sessions et vues
+  isolés, notifications simulées et HTTP imprévu interdit dans les nouveaux tests.
+  Larastan séquentiel `--debug` sur app et vues Volt compte/connexion → **0 erreur**.
+  Pint et syntaxe conformes sur six fichiers PHP/Blade. Build réussi (7,32 s),
+  manifeste cohérent ; bundle versionné inchangé, aucun asset à publier.
+- **Recette :** [rapport et cinq captures](../../validations/2026-10-27-compte/README.md).
+  Compte fictif sur SQLite, cache fichier, sessions et stockage dédiés ; notifications
+  interceptées. Mobile 360 px, bureau 1440 px, clavier, focus sur mot de passe/erreur
+  et retour après annulation, fermeture, résultat, reconnexion et ancien onglet.
+  Aucun débordement horizontal ni erreur console observé. Recouvrement ponctuel
+  du texte de confidentialité par WhatsApp sur mobile, préexistant et hors lot.
+  L'utilisateur confirme textes, confirmation et refus de reconnexion sur un second
+  compte fictif ; les autres cas techniques ne sont pas attribués à sa validation
+  personnelle. Dimensions restaurées, onglets fermés et seul serveur F11 arrêté.
+- **Limites/état :** MySQL, SMTP/délivrabilité et sessions/caches distribués
+  **non validés**. Deux sessions SQLite ne prouvent pas une révocation distribuée
+  instantanée, notamment pour des requêtes déjà engagées. Contenus CMS et comptes
+  déployés non examinés ; conservation, périmètre et procédure d'effacement restant
+  à décider/valider séparément. Contrôle technique, aucune validation juridique.
+  Aucun compte réel fermé/restauré/anonymisé, aucun email réel, migration habituelle,
+  purge ou déploiement. Checkpoint 10 `49b7ae245654fc87562a9a7ecfd54bf349339234`
+  vérifié sur origin/main. Mode étranger d'artisan et index préservés.
+  Aucun commit ni push ; correction 12 non commencée.
 
 ## Modèle de note à remplir après une intervention
 

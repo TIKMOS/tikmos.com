@@ -15,6 +15,10 @@
             @endif
         </div>
 
+        @isset($notice)
+            <div class="mt-6">{{ $notice }}</div>
+        @endisset
+
         <div
             x-data="{
                 active: @js($toc[0]['id'] ?? ''),

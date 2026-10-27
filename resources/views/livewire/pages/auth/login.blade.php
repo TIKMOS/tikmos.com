@@ -98,6 +98,13 @@ new #[Layout('components.layouts.auth')] class extends Component
     <h2 class="font-display text-3xl font-extrabold text-content">Connexion</h2>
     <p class="mt-1.5 text-sm text-muted">Accédez à votre espace {{ config('app.name') }}.</p>
 
+    @if (session('account_closed'))
+        <div role="status" class="mt-5 rounded-tile border border-line bg-surface p-4 text-sm text-content">
+            <p>Votre compte est fermé et vous êtes déconnecté. Vos données n’ont pas été automatiquement effacées.</p>
+            <a href="{{ route('privacy') }}" wire:navigate class="mt-2 inline-block font-medium underline underline-offset-2">Comprendre la conservation de mes données</a>
+        </div>
+    @endif
+
     <form wire:submit="login" class="mt-8 space-y-5">
         <x-tk.field label="Email" for="email" :error="$errors->first('email')">
             <x-tk.input wire:model="email" id="email" type="email" icon="mail" placeholder="vous@exemple.com" autocomplete="email" autofocus :invalid="$errors->has('email')" />

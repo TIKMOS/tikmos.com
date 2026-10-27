@@ -203,3 +203,48 @@ sécurisée introduite en 05.
 
 Cache, verrous et conditions de partage : [déploiement](DEPLOIEMENT.md#protection-des-formulaires-publics--correction-09).
 Preuves et limites : [validation 09](validations/2026-10-27-formulaires/README.md).
+
+### Fermeture du compte — correction 11, 27 octobre 2026
+
+« Fermer mon compte » ferme l'accès après vérification du mot de passe actuel et
+confirmation explicite. L'annulation et les confirmations incomplètes ne ferment
+pas le compte. Le mot de passe saisi est effacé du composant après refus,
+annulation ou succès ; il n'est pas changé. La fermeture utilise `User::SoftDeletes`
+(`deleted_at`) : elle ne supprime physiquement ni n'anonymise le profil.
+Le champ métier `status`, les rôles et le mot de passe restent conservés.
+
+Les demandes, devis et décisions, événements, commandes, articles et paiements
+restent conservés avec leurs liens. Les enregistrements d'appareils approuvés ne
+sont pas purgés. La session courante est invalidée, son jeton CSRF renouvelé et la
+déconnexion applique le comportement Laravel du jeton « se souvenir de moi ».
+Les autres sessions ne sont pas toutes physiquement supprimées : aux requêtes
+suivantes, le fournisseur d'authentification ne retrouve plus l'utilisateur fermé.
+Les identifiants et les cookies d'appareils approuvés ne permettent pas de se
+reconnecter. Les actions du compte revérifient aussi un utilisateur actif en base,
+au lieu de se fier à un objet authentifié chargé avant fermeture.
+Aucun parcours de réactivation n'est proposé par cette correction.
+
+Avant fermeture, l'export existant reste disponible : profil, demandes avec devis,
+commandes et articles. Il ne constitue pas un export exhaustif de tous les
+stockages, journaux, pièces jointes ou sauvegardes.
+
+Une demande d'effacement ou d'anonymisation suit un examen distinct via la page
+existante `/contact`. Aucun traitement automatique, délai de
+conservation ou procédure de décision juridique n'est créé ici. Restent à définir
+et valider par les responsables : identité du demandeur, périmètre des données et
+copies, conservation par catégorie, traitement des documents et transactions,
+responsabilités, modalités de réponse et exécution de la décision. Aucun effacement
+ni anonymisation n'est réputé accompli par le bouton de fermeture.
+
+La page `/confidentialite` lit le document CMS publié `LegalDocument.key=privacy`.
+Un encadré technique partagé avec « Mon compte » précise ce fonctionnement avant
+le corps éditorial. Le corps, la publication et la version CMS ne sont pas
+réécrits. Les anciennes formulations du contenu CMS, notamment la suppression
+depuis « Mon compte » et la suppression/anonymisation après conservation, doivent
+être examinées séparément dans l'éditeur existant `/admin/reglages/pages`, puis
+validées avant publication. Leur présence dans les données initiales ne prouve
+pas le contenu effectivement déployé. Les comptes et contenus réels n'ont pas été
+modifiés ni audités dans cette intervention.
+
+Cette description est technique et ne constitue pas une validation juridique.
+Preuves, parcours et limites : [validation 11](validations/2026-10-27-compte/README.md).
