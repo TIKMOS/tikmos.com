@@ -1,5 +1,6 @@
 <?php
 
+use App\Settings\DeliverySettings;
 use App\Settings\FeatureSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\HomepageSettings;
@@ -26,6 +27,7 @@ return [
         HomepageSettings::class,
         ReviewsSettings::class,
         ShopSettings::class,
+        DeliverySettings::class,
         SeoSettings::class,
         FeatureSettings::class,
         PaymentSettings::class,

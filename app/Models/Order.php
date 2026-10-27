@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Audit\Concerns\Auditable;
+use App\Enums\DeliveryPricing;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
@@ -25,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property int $total
  * @property int $subtotal
  * @property int $delivery_fee
+ * @property string|null $delivery_pricing
  * @property Carbon|null $received_confirmed_at
  * @property Carbon|null $reservation_expires_at
  * @property Carbon|null $reservation_released_at
@@ -33,7 +35,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'number', 'user_id', 'status', 'payment_method', 'payment_status',
-    'subtotal', 'delivery_fee', 'total', 'contact_name', 'contact_phone',
+    'subtotal', 'delivery_fee', 'delivery_pricing', 'total', 'contact_name', 'contact_phone',
     'delivery_address', 'delivery_city', 'notes',
     'confirmed_at', 'shipped_at', 'delivered_at', 'received_confirmed_at',
     'reservation_expires_at', 'reservation_released_at', 'stock_reservation', 'payment_review_required', 'checkout_token',
@@ -112,7 +114,8 @@ class Order extends Model implements Payable
 
     public function canResumePayment(): bool
     {
-        return $this->payment_method === PaymentMethod::Online
+        return $this->deliveryIsFinal()
+            && $this->payment_method === PaymentMethod::Online
             && $this->payment_status === OrderPaymentStatus::Unpaid
             && $this->status === OrderStatus::Pending
             && ! $this->payment_review_required
@@ -124,6 +127,35 @@ class Order extends Model implements Payable
     public function totalLabel(): string
     {
         return number_format($this->total, 0, ',', ' ').' FCFA';
+    }
+
+    public function deliveryIsFinal(): bool
+    {
+        return $this->total === $this->subtotal + $this->delivery_fee
+            && (($this->delivery_pricing === DeliveryPricing::Free->value && $this->delivery_fee === 0)
+                || ($this->delivery_pricing === DeliveryPricing::Fixed->value && $this->delivery_fee > 0));
+    }
+
+    public function totalHeading(): string
+    {
+        return $this->deliveryIsFinal() ? 'Total' : ($this->delivery_pricing === 'unknown' ? 'Total hors livraison' : 'Montant enregistré');
+    }
+
+    public function deliveryLabel(): string
+    {
+        if ($this->deliveryIsFinal()) {
+            return $this->delivery_fee === 0 ? 'Gratuite' : number_format($this->delivery_fee, 0, ',', ' ').' FCFA';
+        }
+
+        return $this->delivery_pricing === 'unknown' ? 'À déterminer' : ($this->delivery_fee > 0
+            ? number_format($this->delivery_fee, 0, ',', ' ').' FCFA enregistrés — à vérifier' : 'Non précisée — à vérifier');
+    }
+
+    public function deliveryNotice(): string
+    {
+        return $this->delivery_pricing === 'unknown'
+            ? 'Les frais de livraison ne sont pas inclus. Notre équipe doit vous communiquer les frais et le montant final, puis obtenir votre accord avant tout paiement.'
+            : 'La livraison et le caractère définitif de ce montant ne sont pas documentés pour cette commande. Contactez notre équipe avant tout nouveau paiement. Les montants et paiements enregistrés restent conservés.';
     }
 
     /** @param  Builder<self>  $query */

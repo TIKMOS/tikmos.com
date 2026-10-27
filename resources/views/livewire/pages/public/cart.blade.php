@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\DeliveryPricing;
 use App\Services\CartService;
 use App\Settings\GeneralSettings;
 use App\Settings\ShopSettings;
@@ -34,13 +35,15 @@ new #[Layout('components.layouts.public')] class extends Component
         $cart = app(CartService::class);
         $items = $cart->items();
         $subtotal = $cart->subtotal();
-        $deliveryFee = app(ShopSettings::class)->default_delivery_fee;
+        $shop = app(ShopSettings::class);
+        $deliveryFee = $shop->deliveryFee();
+        $deliveryPricing = $shop->deliveryPricing();
 
         // Message WhatsApp pré-rempli avec le détail de la commande.
         $whatsappHref = null;
         if ($items->isNotEmpty()) {
             $lines = $items->map(fn ($i) => '- '.$i['product']->name.($i['size'] ? ' (Taille '.$i['size'].')' : '').' x'.$i['qty'])->implode("\n");
-            $message = 'Bonjour '.config('app.name').", je souhaite commander :\n".$lines."\nTotal estimé : ".number_format($subtotal + $deliveryFee, 0, ',', ' ').' FCFA';
+            $message = 'Bonjour '.config('app.name').", je souhaite commander :\n".$lines."\n".($deliveryPricing === DeliveryPricing::Unknown ? 'Total hors livraison : ' : 'Total : ').number_format($subtotal + $deliveryFee, 0, ',', ' ').' FCFA'.($deliveryPricing === DeliveryPricing::Unknown ? "\nFrais et montant final à valider avec votre équipe avant paiement." : '');
             $number = preg_replace('/\D/', '', app(GeneralSettings::class)->whatsapp_number);
             $whatsappHref = 'https://wa.me/'.$number.'?text='.rawurlencode($message);
         }
@@ -49,6 +52,7 @@ new #[Layout('components.layouts.public')] class extends Component
             'items' => $items,
             'subtotal' => $subtotal,
             'deliveryFee' => $deliveryFee,
+            'deliveryPricing' => $deliveryPricing,
             'whatsappHref' => $whatsappHref,
         ];
     }
@@ -96,11 +100,7 @@ new #[Layout('components.layouts.public')] class extends Component
                 <div>
                     <div class="rounded-card border border-line bg-surface p-6">
                         <h2 class="font-display text-lg font-bold text-content">Récapitulatif</h2>
-                        <dl class="mt-4 space-y-2 text-sm">
-                            <div class="flex justify-between"><dt class="text-muted">Sous-total</dt><dd class="font-medium text-content">{{ number_format($subtotal, 0, ',', ' ') }} FCFA</dd></div>
-                            <div class="flex justify-between"><dt class="text-muted">Livraison</dt><dd class="font-medium text-content">{{ $deliveryFee > 0 ? number_format($deliveryFee, 0, ',', ' ').' FCFA' : 'À convenir' }}</dd></div>
-                            <div class="flex justify-between border-t border-line pt-2 text-base"><dt class="font-bold text-content">Total</dt><dd class="font-display font-bold text-content">{{ number_format($subtotal + $deliveryFee, 0, ',', ' ') }} FCFA</dd></div>
-                        </dl>
+                        <x-tk.delivery-summary :subtotal="$subtotal" :fee="$deliveryFee" :pricing="$deliveryPricing" />
                         <x-tk.button wire:click="checkout" variant="primary" size="lg" icon="arrow-right" :iconRight="true" class="mt-5 w-full">Commander</x-tk.button>
                         @if ($whatsappHref)
                             <x-tk.button href="{{ $whatsappHref }}" target="_blank" variant="whatsapp" size="lg" class="mt-3 w-full">Commander sur WhatsApp</x-tk.button>

@@ -2,8 +2,9 @@
 
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
-use App\Models\Order;
 use App\Enums\PaymentMethod;
+use App\Models\Order;
+use App\Notifications\OrderStatusChanged;
 use App\Services\OrderReservationService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -68,7 +69,7 @@ new #[Layout('components.layouts.admin')] class extends Component
             return;
         }
 
-        $order->user?->notify(new \App\Notifications\OrderStatusChanged($order));
+        $order->user?->notify(new OrderStatusChanged($order));
         $this->dispatch('tk-toast', type: 'success', message: 'Statut mis à jour : '.$target->label());
     }
 
@@ -114,7 +115,7 @@ new #[Layout('components.layouts.admin')] class extends Component
             <button wire:key="ord-{{ $order->id }}" wire:click="open({{ $order->id }})" class="flex w-full items-center justify-between gap-4 border-b border-line py-3.5 text-left hover:bg-tk-50">
                 <div>
                     <p class="font-mono text-sm font-bold text-content">{{ $order->number }}</p>
-                    <p class="text-xs text-muted">{{ $order->user?->name }} · {{ $order->items_count }} art. · {{ $order->totalLabel() }}</p>
+                    <p class="text-xs text-muted">{{ $order->user?->name }} · {{ $order->items_count }} art. · {{ $order->totalHeading() }} : {{ $order->totalLabel() }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <x-tk.badge :tone="$order->payment_status->tone()">{{ $order->payment_status->label() }}</x-tk.badge>
@@ -160,13 +161,15 @@ new #[Layout('components.layouts.admin')] class extends Component
                             <span class="font-medium text-content">{{ $item->lineTotalLabel() }}</span>
                         </div>
                     @endforeach
-                    <div class="flex justify-between py-2 text-base"><span class="font-bold text-content">Total</span><span class="font-display font-bold text-content">{{ $order->totalLabel() }}</span></div>
+                    <div class="flex justify-between py-2 text-base"><span class="font-bold text-content">{{ $order->totalHeading() }}</span><span class="font-display font-bold text-content">{{ $order->totalLabel() }}</span></div>
                 </div>
 
+                <p class="mt-3 text-sm text-content">Livraison : {{ $order->deliveryLabel() }}</p>
+                @if (! $order->deliveryIsFinal())<x-tk.delivery-notice :message="$order->deliveryNotice()" />@endif
                 @can('shop.orders.update')
                     <div class="mt-6 space-y-3 border-t border-line pt-4">
                         @if ($order->payment_review_required)
-                            <p role="status" class="text-sm text-content">Paiement reçu après libération du stock ou annulation. Vérifiez la transaction et contactez le client pour convenir de la suite. Aucun remboursement automatique. La préparation reste bloquée.</p>
+                            <p role="status" class="text-sm text-content">Paiement reçu avec une livraison, une réservation ou un état de commande à vérifier. Vérifiez la transaction et contactez le client pour convenir de la suite. Aucun remboursement automatique. La préparation reste bloquée.</p>
                         @endif
                         @if (! empty($order->status->nextStates()))
                             <div>

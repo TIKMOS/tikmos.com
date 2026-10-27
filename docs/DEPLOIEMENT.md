@@ -366,3 +366,39 @@ Vérifier séparément les liens éditoriaux et corps riches CMS qui proposeraie
 encore un devis vers `/contact`. Les URLs des boutons des vues ont été corrigées ;
 les données réelles du CMS n'ont pas été remplacées. Les anciens messages restent
 des Leads et ne doivent pas être convertis silencieusement.
+
+## Livraison et total final — correction 13
+
+Lors d'un futur déploiement autorisé, sauvegarder et livrer ensemble le code,
+`DeliverySettings`, son enregistrement dans `config/settings.php`, les deux
+migrations du 27 octobre à 03:00/03:01 et les assets compilés. Appliquer les
+migrations avant de rouvrir les commandes ; ne pas publier ce code seul sur un
+schéma dépourvu de `orders.delivery_pricing` ou du setting `delivery.mode`.
+Aucune migration ni commande de cache habituelle n'a été exécutée pendant A.
+
+L'installation conserve l'ancien tarif : entier positif → mode `fixed` pour
+les commandes futures ; zéro/ambigu → `unknown`, jamais une gratuité implicite.
+Choisir volontairement **Réglages → Livraison → Livraison gratuite** si tel est
+le choix commercial. Un tarif fixe doit être un entier positif en FCFA.
+Vérifier le mode de paiement configuré : avec des frais inconnus et uniquement
+du paiement en ligne, la commande est indisponible et le client est orienté vers
+le contact. La sélection COD reste possible si elle est activée.
+
+Les anciennes commandes gardent leurs montants et leur métadonnée `NULL`, sans
+rattrapage automatique. Elles ne peuvent pas reprendre un paiement en ligne sans
+preuve de montant final. Examiner séparément leur livraison et les paiements en
+attente ; ne pas remplir en masse `free` pour réactiver un bouton. Une confirmation
+bancaire ancienne reçue reste comptabilisée, avec revue manuelle et préparation
+bloquée. Aucun paiement existant n'est annulé ou remboursé automatiquement.
+
+Pour les nouvelles commandes à frais inconnus, l'équipe communique les frais et
+le montant final et recueille l'accord avant tout paiement. L'outil ne fournit pas
+de workflow de révision/approbation par commande ; cette opération reste manuelle,
+à convenir avec le métier. Un changement des réglages ne modifie jamais une
+commande déjà créée. Conserver les protections de réservation/expiration existantes.
+
+Vérifier migration, cache des settings/configuration, concurrence MySQL, SMTP et
+KKiaPay sandbox avant production : **non validés** par cette recette SQLite isolée.
+Un rollback retire les nouvelles métadonnées ; ce n'est pas un retour de tarif.
+Voir [règles fonctionnelles](03-cadre-fonctionnel.md#livraison-annoncée-avant-confirmation--correction-13-27-octobre-2026)
+et [validation 13](validations/2026-10-27-livraison/README.md).

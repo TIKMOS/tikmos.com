@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\DeliveryPricing;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
@@ -28,9 +29,9 @@ class OrderService
      *
      * @param  array{contact_name: string, contact_phone: string, delivery_address: string, delivery_city?: string|null, notes?: string|null}  $data
      */
-    public function place(User $user, array $data, PaymentMethod $method = PaymentMethod::Cod, ?string $checkoutToken = null): Order
+    public function place(User $user, array $data, PaymentMethod $method = PaymentMethod::Cod, ?string $checkoutToken = null, ?string $deliveryQuoteKey = null): Order
     {
-        $order = DB::transaction(function () use ($user, $data, $method, $checkoutToken): Order {
+        $order = DB::transaction(function () use ($user, $data, $method, $checkoutToken, $deliveryQuoteKey): Order {
             // Écriture et verrou annuel avant toute lecture (SQLite DEFERRED compris).
             $numbers = app(OrderNumberAllocator::class);
             $year = $numbers->lockCurrentYear();
@@ -40,6 +41,14 @@ class OrderService
                 abort_unless($existing->user_id === $user->id, 403);
 
                 return $existing;
+            }
+            $shop = app(ShopSettings::class);
+            $pricing = $shop->deliveryPricing();
+            if ($deliveryQuoteKey !== null && ! hash_equals($shop->deliveryQuoteKey(), $deliveryQuoteKey)) {
+                throw ValidationException::withMessages(['delivery' => 'Les conditions de livraison ont changé. Vérifiez le nouveau récapitulatif, puis confirmez à nouveau.']);
+            }
+            if ($method === PaymentMethod::Online && $pricing === DeliveryPricing::Unknown) {
+                throw ValidationException::withMessages(['payment_method' => 'Le paiement en ligne est indisponible tant que les frais de livraison et le montant final ne sont pas validés. Choisissez la commande avec validation commerciale ou contactez notre équipe.']);
             }
             if ($method === PaymentMethod::Online && ! app(PaymentSettings::class)->onlineEnabled()) {
                 throw ValidationException::withMessages(['payment_method' => 'Le paiement en ligne est indisponible. Choisissez un autre mode ou contactez l’équipe.']);
@@ -70,7 +79,7 @@ class OrderService
             }
 
             $subtotal = (int) $items->sum('line_total');
-            $deliveryFee = app(ShopSettings::class)->default_delivery_fee;
+            $deliveryFee = $shop->deliveryFee();
             $total = $subtotal + $deliveryFee;
 
             $order = Order::create([
@@ -81,6 +90,7 @@ class OrderService
                 'payment_status' => OrderPaymentStatus::Unpaid,
                 'subtotal' => $subtotal,
                 'delivery_fee' => $deliveryFee,
+                'delivery_pricing' => $pricing->value,
                 'total' => $total,
                 'contact_name' => $data['contact_name'],
                 'contact_phone' => $data['contact_phone'],

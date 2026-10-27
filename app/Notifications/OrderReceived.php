@@ -25,12 +25,18 @@ class OrderReceived extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $message = (new MailMessage)
             ->subject('Nouvelle commande — '.$this->order->number)
             ->greeting('Nouvelle commande boutique')
             ->line('Client : '.$this->order->contact_name)
-            ->line('Total : '.number_format($this->order->total, 0, ',', ' ').' FCFA')
-            ->line('Paiement à la livraison.')
+            ->line($this->order->totalHeading().' : '.$this->order->totalLabel())
+            ->line('Livraison : '.$this->order->deliveryLabel())
+            ->line($this->order->payment_method->label().'.')
             ->action('Voir la commande', route('admin.boutique.orders'));
+        if (! $this->order->deliveryIsFinal()) {
+            $message->line($this->order->deliveryNotice());
+        }
+
+        return $message;
     }
 }

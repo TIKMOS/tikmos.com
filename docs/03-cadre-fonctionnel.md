@@ -292,3 +292,37 @@ Le contenu effectivement déployé n'a pas été examiné.
 
 Installation et limites : [déploiement](DEPLOIEMENT.md#devis-suivi-et-recus-denvoi--correction-12).
 Preuves : [validation 12](validations/2026-10-27-parcours-devis/README.md).
+
+### Livraison annoncée avant confirmation — correction 13, 27 octobre 2026
+
+Dans **Réglages → Livraison**, un compte disposant de `settings.manage` choisit
+explicitement l'un des trois états. « Livraison gratuite » annonce zéro frais ;
+« Tarif fixe connu » exige un entier strictement positif en FCFA ; « Frais à
+déterminer » annonce **Total hors livraison**, explique la validation commerciale
+et propose le contact existant. Aucune zone ou grille tarifaire n'est créée.
+Une configuration incohérente est traitée comme inconnue, sans gratuité supposée.
+
+Le panier, le checkout, les commandes client/admin et l'email de commande reprennent
+ces indications. Sur mobile, le récapitulatif précède le formulaire. Lorsque les
+frais sont inconnus, le bouton transmet une commande pour validation ; le paiement
+en ligne est indisponible, y compris par appel direct ou reprise. Le paiement à
+la livraison reste proposé s'il est activé. Si seul le paiement en ligne est
+configuré, le formulaire explique l'indisponibilité et propose de contacter l'équipe.
+
+Les prix proviennent du serveur. Un changement des conditions entre ouverture et
+confirmation interrompt la création et demande de relire le nouveau récapitulatif,
+puis de confirmer à nouveau. Chaque nouvelle commande conserve son état de
+livraison, ses frais et son total ; un changement de réglage ne les recalcule pas.
+Les commandes historiques sans cette information restent « Montant enregistré »
+et « livraison à vérifier » : aucun zéro historique n'est déclaré gratuit.
+
+Pour une commande à livraison inconnue, **l'équipe doit encore communiquer les
+frais et le montant final, puis recueillir l'accord du client avant paiement**.
+Cette étape reste manuelle. Aucun parcours d'approbation de frais par commande,
+de conversion automatique vers le paiement en ligne ou de facturation complémentaire
+n'est ajouté. La gestion COD et le stock associés restent ceux du fonctionnement
+existant. Les montants et paiements historiques sont conservés.
+
+Voir [déploiement](DEPLOIEMENT.md#livraison-et-total-final--correction-13),
+[paiements](30-systeme-paiement.md#livraison-et-paiement--correction-13) et
+[preuves de validation](validations/2026-10-27-livraison/README.md).

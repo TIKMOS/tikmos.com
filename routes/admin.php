@@ -40,6 +40,7 @@ Route::middleware(['auth', 'approved', 'role:'.$staffRoles])->group(function ():
     Volt::route('reglages/pages', 'pages.admin.reglages.pages')->middleware('permission:cms.pages.manage')->name('reglages.pages');
     Volt::route('reglages/partenaires', 'pages.admin.reglages.partners')->middleware('permission:partners.manage')->name('reglages.partners');
     Volt::route('reglages/equipe', 'pages.admin.reglages.team')->middleware('permission:team.manage')->name('reglages.team');
+    Volt::route('reglages/livraison', 'pages.admin.reglages.delivery')->middleware('permission:settings.manage')->name('reglages.delivery');
     Volt::route('reglages/paiements', 'pages.admin.reglages.payments')->middleware('permission:settings.manage')->name('reglages.payments');
     Volt::route('reglages/medias', 'pages.admin.reglages.media')->middleware('permission:settings.manage')->name('reglages.media');
     Volt::route('reglages/fonctionnalites', 'pages.admin.reglages.features')->middleware('permission:settings.manage')->name('reglages.features');

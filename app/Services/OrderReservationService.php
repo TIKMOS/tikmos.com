@@ -53,7 +53,8 @@ class OrderReservationService
     public function paymentSucceeded(Order $order, Payment $payment): void
     {
         $this->releaseIfDue($order);
-        $review = $order->reservation_released_at !== null || $order->status === OrderStatus::Cancelled
+        $deliveryReview = ! $order->deliveryIsFinal();
+        $review = $deliveryReview || $order->reservation_released_at !== null || $order->status === OrderStatus::Cancelled
             || $order->payment_review_required;
         $order->update([
             'payment_status' => OrderPaymentStatus::Paid,
@@ -61,6 +62,6 @@ class OrderReservationService
             'confirmed_at' => $review ? $order->confirmed_at : ($order->confirmed_at ?? now()),
             'status' => ! $review && $order->status === OrderStatus::Pending ? OrderStatus::Confirmed : $order->status,
         ]);
-        $payment->recordEvent($review ? 'stock_review_required' : 'stock_consumed', $payment->state);
+        $payment->recordEvent($deliveryReview ? 'delivery_review_required' : ($review ? 'stock_review_required' : 'stock_consumed'), $payment->state);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Payments\Enums\PaymentProvider;
@@ -54,8 +55,8 @@ new #[Layout('components.layouts.app')] class extends Component
         $payments->verify($payment, $transactionId);
         $this->order->refresh()->load('items');
         $this->paymentMessage = $this->order->payment_review_required
-            ? 'Paiement reçu après libération du stock : vérification manuelle nécessaire. Ne payez pas à nouveau.'
-            : ($this->order->payment_status === \App\Enums\OrderPaymentStatus::Paid
+            ? 'Paiement reçu : vérification manuelle de la livraison ou de la réservation nécessaire. Ne payez pas à nouveau.'
+            : ($this->order->payment_status === OrderPaymentStatus::Paid
                 ? 'Paiement confirmé. Merci pour votre commande.'
                 : 'Vérification non concluante. Aucun succès confirmé. Si vous avez été débité, contactez l’équipe avant tout nouvel essai.');
     }
@@ -100,7 +101,7 @@ new #[Layout('components.layouts.app')] class extends Component
             <h2 id="payment-heading" class="font-display text-xl font-bold text-content">Paiement de votre commande</h2>
             @if ($order->payment_review_required)
                 <p class="mt-2 font-medium text-content">Paiement reçu — vérification nécessaire</p>
-                <p class="mt-2 text-sm text-muted">Le stock a été libéré ou la commande annulée avant la confirmation du paiement. L’équipe doit vérifier la disponibilité et convenir de la suite avec vous. Ne payez pas à nouveau. Aucun remboursement automatique n’a été effectué.</p>
+                <p class="mt-2 text-sm text-muted">La livraison, la réservation ou l’état de la commande nécessite une vérification. L’équipe doit convenir de la suite avec vous. Ne payez pas à nouveau. Aucun remboursement automatique n’a été effectué.</p>
                 <x-tk.button :href="route('contact')" variant="secondary" class="mt-4">Contacter l’équipe</x-tk.button>
             @elseif ($order->payment_status === \App\Enums\OrderPaymentStatus::Paid)
                 <p class="mt-2 text-sm text-success-ink">Votre paiement est confirmé.</p>
@@ -156,9 +157,10 @@ new #[Layout('components.layouts.app')] class extends Component
                 </div>
                 <dl class="mt-3 space-y-1.5 border-t border-line pt-3 text-sm">
                     <div class="flex justify-between"><dt class="text-muted">Sous-total</dt><dd class="text-content">{{ number_format($order->subtotal, 0, ',', ' ') }} FCFA</dd></div>
-                    <div class="flex justify-between"><dt class="text-muted">Livraison</dt><dd class="text-content">{{ $order->delivery_fee > 0 ? number_format($order->delivery_fee, 0, ',', ' ').' FCFA' : 'À convenir' }}</dd></div>
-                    <div class="flex justify-between text-base"><dt class="font-bold text-content">Total</dt><dd class="font-display font-bold text-content">{{ $order->totalLabel() }}</dd></div>
+                    <div class="flex justify-between"><dt class="text-muted">Livraison</dt><dd class="text-content">{{ $order->deliveryLabel() }}</dd></div>
+                    <div class="flex justify-between text-base"><dt class="font-bold text-content">{{ $order->totalHeading() }}</dt><dd class="font-display font-bold text-content">{{ $order->totalLabel() }}</dd></div>
                 </dl>
+                @if (! $order->deliveryIsFinal())<x-tk.delivery-notice :message="$order->deliveryNotice()" />@endif
             </x-tk.card>
         </div>
 

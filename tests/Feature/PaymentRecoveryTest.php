@@ -14,7 +14,9 @@ use App\Services\CartService;
 use App\Services\OrderReservationService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
+use App\Settings\DeliverySettings;
 use App\Settings\PaymentSettings;
+use App\Settings\ShopSettings;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -30,6 +32,13 @@ uses(RefreshDatabase::class);
 beforeEach(function (): void {
     Http::preventStrayRequests();
     Notification::fake();
+    // Ces réservations nominales portent sur un total final, livraison gratuite explicite.
+    $shop = app(ShopSettings::class);
+    $delivery = app(DeliverySettings::class);
+    $delivery->mode = 'free';
+    $delivery->save();
+    $shop->default_delivery_fee = 0;
+    $shop->save();
     $this->seed(RolePermissionSeeder::class);
     $this->travelTo(now()->startOfSecond());
     config(['payments.gateways.kkiapay' => [

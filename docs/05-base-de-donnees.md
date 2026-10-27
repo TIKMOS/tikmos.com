@@ -239,3 +239,24 @@ Les besoins sur mesure utilisent le `service_requests.service_id` nullable
 existant, sans service factice ni changement des relations historiques.
 Voir [validation 12](validations/2026-10-27-parcours-devis/README.md) et
 [déploiement](DEPLOIEMENT.md#devis-suivi-et-recus-denvoi--correction-12).
+
+## État de livraison conservé — correction 13
+
+Deux nouvelles migrations, sans modification des anciennes :
+
+- `database/settings/2026_10_27_030000_add_delivery_pricing_mode.php` ajoute
+  `delivery.mode` dans les settings : un ancien tarif entier positif devient
+  `fixed` pour les **futures** commandes ; zéro ou donnée ambiguë devient `unknown`.
+  La valeur historique `shop.default_delivery_fee` reste intacte.
+- `2026_10_27_030100_add_delivery_pricing_to_orders.php` ajoute
+  `orders.delivery_pricing`, chaîne nullable (`unknown`, `free`, `fixed` pour les
+  nouvelles commandes). Toutes les anciennes lignes gardent `NULL` ; aucun total,
+  frais, paiement ou statut historique n'est réécrit.
+
+`DeliverySettings`, groupe distinct enregistré dans `config/settings.php`, évite
+d'ajouter une propriété obligatoire à `ShopSettings` avant les anciennes migrations
+qui le chargent. Les nouvelles commandes enregistrent l'état et les montants dans
+la transaction existante de commande. Les rollbacks retirent seulement les nouvelles
+métadonnées : ils perdent l'explication de la livraison, sans restaurer un ancien
+prix. Ne pas les employer comme opération commerciale. Migration/rollback vérifiés
+uniquement sur SQLite isolé ; MySQL et concurrence non validés.

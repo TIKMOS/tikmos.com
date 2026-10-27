@@ -65,6 +65,9 @@ class PaymentService
         }, attempts: 3);
         // Refuser après commit pour conserver une restitution devenue nécessaire.
         if ($payment === null) {
+            if (! $order->fresh()->deliveryIsFinal()) {
+                throw ValidationException::withMessages(['payment' => 'Les frais de livraison et le montant final doivent être validés avant un paiement en ligne. Contactez notre équipe avec votre référence de commande.']);
+            }
             throw ValidationException::withMessages(['payment' => 'Paiement indisponible ou réservation expirée. Consultez l’état de la commande et contactez l’équipe si vous avez été débité.']);
         }
 
@@ -73,6 +76,9 @@ class PaymentService
 
     private function openLocked(Payable&Model $payable, PaymentProvider $provider): Payment
     {
+        if ($payable instanceof Order && $provider->isOnline() && ! $payable->deliveryIsFinal()) {
+            throw ValidationException::withMessages(['payment' => 'Les frais de livraison et le montant final doivent être validés avant un paiement en ligne. Contactez notre équipe avec votre référence de commande.']);
+        }
         /** @var Payment|null $existing */
         $existing = $payable->morphMany(Payment::class, 'payable')
             ->where('provider', $provider->value)

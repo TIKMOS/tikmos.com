@@ -11,7 +11,9 @@ use App\Payments\Enums\PaymentProvider;
 use App\Payments\Enums\PaymentState;
 use App\Services\CartService;
 use App\Services\PaymentService;
+use App\Settings\DeliverySettings;
 use App\Settings\PaymentSettings;
+use App\Settings\ShopSettings;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +28,13 @@ uses(RefreshDatabase::class);
 beforeEach(function (): void {
     Http::preventStrayRequests();
     Notification::fake();
+    // Les scénarios nominaux de paiement utilisent un montant final explicite.
+    $shop = app(ShopSettings::class);
+    $delivery = app(DeliverySettings::class);
+    $delivery->mode = 'free';
+    $delivery->save();
+    $shop->default_delivery_fee = 0;
+    $shop->save();
 
     $this->seed(RolePermissionSeeder::class);
 
@@ -74,6 +83,7 @@ function payOrder(int $total = 16000): Order
         'number' => 'TKM-CMD-2026-'.str_pad((string) random_int(1, 99999), 5, '0', STR_PAD_LEFT),
         'user_id' => payBuyer()->id,
         'status' => OrderStatus::Pending,
+        'delivery_pricing' => 'free',
         'subtotal' => $total,
         'total' => $total,
         'payment_method' => 'online',

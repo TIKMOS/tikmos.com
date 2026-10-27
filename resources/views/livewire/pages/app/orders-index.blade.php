@@ -30,7 +30,7 @@ new #[Layout('components.layouts.app')] class extends Component
                class="flex items-center justify-between gap-4 border-b border-line py-4 transition-colors hover:bg-tk-50">
                 <div>
                     <p class="font-mono text-sm font-bold text-content">{{ $order->number }}</p>
-                    <p class="text-xs text-muted">{{ $order->created_at->format('d/m/Y') }} · {{ $order->items_count }} article(s) · {{ $order->totalLabel() }}</p>
+                    <p class="text-xs text-muted">{{ $order->created_at->format('d/m/Y') }} · {{ $order->items_count }} article(s) · {{ $order->totalHeading() }} : {{ $order->totalLabel() }}</p>
                 </div>
                 <x-tk.badge :tone="$order->status->tone()" dot>{{ $order->status->label() }}</x-tk.badge>
             </a>

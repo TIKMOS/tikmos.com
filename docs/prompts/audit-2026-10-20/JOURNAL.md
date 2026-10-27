@@ -20,7 +20,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [10](10-otp-delai-et-experience.md) | Sécuriser et clarifier le challenge 2FA | Validé localement | 27/10/2026 : trois défauts reproduits avant correction. Quotas serveur communs par compte : renvoi après 60 s, 5 envois / 900 s, 3 codes incorrects / 900 s, sans remise à zéro par renvoi ou nouveau challenge. Confiance décochée, erreurs distinctes, code remplacé/consommé sous verrou et protection après perte du bail. Authentification finale : 58 tests, 256 assertions ; suite finale : 521 tests, 2 219 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette mobile/bureau/clavier, sept captures ; utilisateur confirmant confiance décochée et renvoi correct. MySQL, SMTP réel et cache partagé/concurrence distribuée non validés. Base/cache habituels préservés, aucun commit/push lors de A. Voir note 10. |
 | [11](11-suppression-compte-texte.md) | Aligner la suppression de compte avec son fonctionnement réel | Validé localement | 27/10/2026 : écart texte/SoftDeletes et deux refus serveur manquants reproduits avant correction. Fermeture logique annoncée sans promesse d'effacement, mot de passe et confirmation exigés ; accès revérifié avant les actions, autre session et reconnexion refusées. Profil, relations et décisions conservés ; encadré de confidentialité ajouté sans réécrire le CMS. Ciblés : 84 tests, 377 assertions ; suite : 538 tests, 2 315 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi, bundle inchangé. Recette mobile/bureau/clavier, cinq captures ; utilisateur confirmant textes, confirmation et refus de reconnexion. MySQL, SMTP, sessions distribuées et décisions de conservation/effacement non validés. Base/cache/comptes réels inchangés, aucun commit/push lors de A. Voir note 11. |
 | [12](12-parcours-devis-unifie.md) | Unifier le bouton Demander un devis et le suivi client | Validé localement | 27/10/2026 : trois échecs reproduits avant correction. Boutons devis unifiés vers un formulaire suivi avec service publié ou sur-mesure ; contact général distinct créant uniquement un Lead. Référence, suivi connecté et rattachement invité 05 conservés ; quotas 09 et refus des comptes fermés préservés. Reçus transactionnels contre les rejeux, migration additive non appliquée à la base habituelle. Ciblés finaux : 144 tests, 844 assertions ; suite complète : 562 tests, 2 454 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette mobile/bureau/clavier, sept captures ; utilisateur confirmant référence, suivi et contact distinct. MySQL, SMTP et cache partagé/concurrence non validés ; contenus CMS réels à revoir séparément. Aucun commit/push lors de A. Voir note 12. |
-| [13](13-frais-livraison.md) | Annoncer les frais de livraison avant confirmation | À traiter | — |
+| [13](13-frais-livraison.md) | Annoncer les frais de livraison avant confirmation | Validé localement | 27/10/2026 : trois défauts reproduits avant correction. Livraison explicitement gratuite, fixe ou inconnue ; total hors livraison et accord commercial manuel, paiement en ligne incomplet refusé au checkout/ouverture/reprise. Conditions revérifiées avant confirmation, état/frais/total conservés par commande ; historique ambigu non réécrit. Deux migrations additives non appliquées à la base habituelle. Ciblés finaux : 149 tests, 784 assertions ; suite complète : 591 tests, 2 629 assertions. Larastan app/migrations/actions Volt : 0 erreur ; une erreur de dépendance optionnelle préexistante dans l'analyse élargie de config/settings.php reproduite sur HEAD. Pint/syntaxe conformes sur 24 fichiers ; build réussi. Recette mobile/bureau/clavier, huit captures ; utilisateur confirmant les trois parcours et leurs montants. MySQL/concurrence, SMTP, KKiaPay sandbox et cache partagé non validés ; accord commercial inconnu restant manuel. Aucun commit/push lors de A. Voir note 13. |
 | [14](14-libelles-statuts-navigation.md) | Clarifier les statuts de commande et le vocabulaire | À traiter | — |
 | [15](15-carte-alertes-client.md) | Supprimer ou relier la carte Alertes inerte | À traiter | — |
 | [16](16-retour-vers-vitrine.md) | Ajouter un retour clair du client vers la vitrine | À traiter | — |
@@ -654,6 +654,54 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   email/paiement réel, migration ou purge habituelle, ni déploiement. Checkpoint 11
   `26395a1e7f45c7600cc8a5a8d72c9a32135e9cb2` vérifié sur origin/main. Mode étranger
   d'artisan et index préservés. Aucun commit ni push ; correction 13 non commencée.
+
+## Note 13 — Livraison et montant final (27 octobre 2026)
+
+- **Défaut/cause :** zéro frais ne distinguait pas gratuité et livraison à convenir ;
+  le récapitulatif annonçait un total sans réserve et les services pouvaient
+  initialiser son paiement. Trois nouveaux tests d'abord en échec (3 assertions).
+- **Correction :** `DeliveryPricing` et `DeliverySettings` séparé de ShopSettings,
+  réglage autorisé `settings.manage`, migrations additives du setting et de
+  `orders.delivery_pricing`. Gratuité seulement explicite, tarif fixe positif,
+  état inconnu prudent. Sources serveur, empreinte verrouillée des conditions au
+  checkout, refus et nouvelle confirmation si elles changent. Montants et état
+  conservés dans la commande ; anciens zéros non déclarés gratuits. Contrôle
+  serveur à la commande, à l'ouverture et à la reprise ; paiement ancien reçu
+  enregistré avec revue manuelle si livraison ambiguë. COD, stock, réservation,
+  expiration, unicité, montant confirmé et idempotence conservés.
+- **Présentation :** panier, checkout, commande/listes client et admin, email et
+  WhatsApp cohérents. « Total hors livraison », accord avant paiement et contact
+  pour l'inconnu ; « Gratuite » ou frais et total final pour les autres. Sur mobile,
+  récapitulatif avant le formulaire dans le DOM et boutons adaptés. L'étape de
+  communication du montant final et d'accord commercial reste manuelle, sans
+  nouveau workflow d'approbation ni révision automatique des anciennes commandes.
+- **Contrôles :** ciblés finaux (livraison/panier/commande/paiement/reprise/
+  migration réservation/settings) → **149 tests, 784 assertions** ; suite complète
+  → **591 tests, 2 629 assertions**. Suites séparées sur SQLite/cache/sessions
+  isolés, notifications et banque simulées. La suite complète précède les derniers
+  libellés et l'ordre du récapitulatif Blade ; les ciblés ont été relancés sur les
+  vues finales. Larastan séquentiel `--debug` app + migrations + actions Volt
+  concernées → **0 erreur**. Analyse élargie config/settings.php : une référence
+  préexistante à `Spatie\LaravelData\Data` absente, reproduite sur HEAD, non
+  masquée et hors lot. Pint/syntaxe conformes sur 24 fichiers. Build final réussi
+  (11,99 s), manifeste vérifié ; CSS `app-CvatQWas.css` remplace `app-DXEy4714.css`,
+  JavaScript/polices inchangés.
+- **Recette :** [rapport et huit captures](../../validations/2026-10-27-livraison/README.md).
+  Trois parcours fictifs panier → checkout → commande : inconnu hors livraison,
+  gratuit 1 000 FCFA, fixe 1 250 FCFA dont 250 FCFA de livraison. Reprise/succès
+  simulé, commande payée inchangée après nouveaux réglages, formulaire invalide
+  refusé, clavier et 360/1440 px vérifiés ; aucune erreur console observée.
+  L'utilisateur confirme les trois parcours et leurs montants ; les vérifications
+  techniques ne lui sont pas attribuées. Dimensions restaurées, onglets temporaires
+  fermés et seul serveur F13 arrêté.
+- **Limites/état :** MySQL/migrations/concurrence, cache partagé et configuration
+  en production, SMTP/délivrabilité et KKiaPay sandbox **non validés**. Traitement
+  commercial des frais inconnus à convenir et tracer manuellement ; aucun nouveau
+  système d'approbation par commande. Recouvrement mobile ponctuel par WhatsApp
+  préexistant hors lot. Aucun compte/commande/réglage réel modifié, aucune migration
+  ou purge habituelle, aucun paiement/email réel ni déploiement. Checkpoint 12
+  `5a17a0e869795123e40a898c137f776efedef0c2` vérifié sur origin/main. Mode étranger
+  d'artisan et index préservés. Aucun commit ni push ; correction 14 non commencée.
 
 ## Modèle de note à remplir après une intervention
 

@@ -362,5 +362,34 @@ Idem pour Stripe/PayPal (redirection au lieu de widget → `initialize()` renvoi
       (widget+webhook), écart de montant refusé, bascule online/COD. → `tests/Feature/PaymentTest.php` (7 tests)
 - [x] Mode **sandbox** par défaut ; secrets chiffrés (`PaymentSettings::encrypted`) & hors repo (`.env`) ; §9 = guide de copie.
 
+## Livraison et paiement — correction 13
+
+Pour une commande, l'ouverture d'un paiement en ligne exige une livraison
+explicitement `free` avec frais zéro ou `fixed` avec frais positifs, et un total
+cohérent avec sous-total + frais enregistrés. Le checkout contrôle les réglages
+serveur et leur empreinte verrouillée ; `OrderService::place()`,
+`PaymentService::open()` et `resumeOrder()` refusent un montant incomplet avant
+toute nouvelle initialisation. Masquer les boutons n'est pas la protection.
+Les frais/total provenant du client sont ignorés. Un tarif changé demande une
+nouvelle confirmation ; un tarif déjà enregistré dans une commande reste inchangé.
+
+Une commande `unknown` annonce « Total hors livraison » et nécessite un accord
+commercial manuel avant paiement. Les commandes historiques sans métadonnée
+annoncent « Montant enregistré » et demandent une vérification. Aucune gratuité
+ni supplément n'est déduit rétroactivement. Leur reprise en ligne est bloquée.
+Un paiement ancien réellement confirmé par le fournisseur doit néanmoins être
+enregistré : montant et référence restent vérifiés par les protections 01/02,
+puis `payment_review_required` et l'événement `delivery_review_required` empêchent
+une confirmation/préparation automatique en l'absence de livraison documentée.
+Les rejeux ne répètent pas la transition. Aucun remboursement automatique.
+
+La réservation, l'expiration et la restitution du stock de la correction 07
+restent actives. Le contrôle après expiration conserve la restitution nécessaire.
+Le COD et ses actions administratives existantes restent inchangés ; l'accord
+commercial sur les frais inconnus demeure une procédure manuelle à définir et
+tracer par l'équipe, sans nouveau système de tarification par commande.
+SMTP réel, KKiaPay sandbox, MySQL et concurrence non validés.
+
 ## Sources
+
 - [Documentation KKiaPay](https://docs.kkiapay.me/v1) · [SDK PHP](https://docs.kkiapay.me/v1/en-1.0.0/plugin-et-sdk/admin-sdks-server-side/php-admin-sdk) · [SDK JS](https://docs.kkiapay.me/v1/en-1.0.0/plugin-et-sdk/sdk-javascript) · [Webhooks](https://docs.kkiapay.me/v1/en-1.0.0/tableau-de-bord/webhook) · [php-sdk (GitHub)](https://github.com/kkiapay/php-sdk)
