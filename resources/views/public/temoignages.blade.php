@@ -36,7 +36,7 @@
 
         <div class="mt-12 flex flex-wrap justify-center gap-3">
             <x-tk.button href="{{ url('/services') }}" variant="primary" icon="arrow-right" :iconRight="true">Découvrir mes services</x-tk.button>
-            <x-tk.button href="{{ url('/contact') }}" variant="gold">Demander un devis</x-tk.button>
+            <x-tk.button href="{{ route('quote-request') }}" variant="gold">Demander un devis</x-tk.button>
         </div>
     </x-tk.section>
 </x-layouts.public>

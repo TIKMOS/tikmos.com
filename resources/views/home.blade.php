@@ -18,7 +18,7 @@
 
                 {{-- CTA principaux --}}
                 <div class="mt-7 flex flex-wrap items-center gap-3">
-                    <x-tk.button href="{{ url('/contact') }}" variant="primary" size="lg" icon="file-text">Demander un devis</x-tk.button>
+                    <x-tk.button href="{{ route('quote-request') }}" variant="primary" size="lg" icon="file-text">Demander un devis</x-tk.button>
                     <x-tk.button href="{{ url('/services') }}" variant="gold" size="lg" icon="arrow-right" :iconRight="true">Découvrir mes services</x-tk.button>
                 </div>
 
@@ -66,7 +66,7 @@
             <h2 class="mt-5 font-display text-3xl font-black text-content md:text-5xl">{{ $homepage->cta_title }}</h2>
             <p class="mt-3 max-w-md text-muted">{{ $homepage->cta_text }}</p>
             <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
-                <x-tk.button href="{{ url('/contact') }}" variant="primary" size="lg" icon="file-text">Demander un devis</x-tk.button>
+                <x-tk.button href="{{ route('quote-request') }}" variant="primary" size="lg" icon="file-text">Demander un devis</x-tk.button>
                 <x-tk.whatsapp-button :floating="false" />
             </div>
         </div>

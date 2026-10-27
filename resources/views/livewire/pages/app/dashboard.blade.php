@@ -31,7 +31,7 @@ new #[Layout('components.layouts.app')] class extends Component
             <x-tk.kicker>Espace client</x-tk.kicker>
             <h1 class="mt-2 font-display text-3xl font-extrabold text-content">Bonjour {{ auth()->user()->name }}</h1>
         </div>
-        <x-tk.button href="{{ url('/services') }}" variant="primary" icon="plus">Demander un devis</x-tk.button>
+        <x-tk.button href="{{ route('quote-request') }}" variant="primary" icon="plus">Demander un devis</x-tk.button>
     </div>
 
     <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

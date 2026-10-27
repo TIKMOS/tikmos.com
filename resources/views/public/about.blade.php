@@ -68,7 +68,7 @@
             <x-tk.divider-gold />
             <h2 class="mt-5 font-display text-3xl font-extrabold text-content md:text-4xl">Travaillons ensemble.</h2>
             <div class="mt-7 flex flex-wrap justify-center gap-3">
-                <x-tk.button href="{{ url('/contact') }}" variant="primary" size="lg" icon="file-text">Demander un devis</x-tk.button>
+                <x-tk.button href="{{ route('quote-request') }}" variant="primary" size="lg" icon="file-text">Demander un devis</x-tk.button>
                 <x-tk.button href="{{ url('/services') }}" variant="gold" size="lg">Mes services</x-tk.button>
             </div>
         </div>

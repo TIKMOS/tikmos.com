@@ -1,8 +1,9 @@
 <?php
 
-use App\Models\Lead;
-use App\Services\PublicFormSubmissionLimiter;
+use App\Services\PublicFormSubmissionService;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 
@@ -18,17 +19,25 @@ new #[Layout('components.layouts.public')] class extends Component
     public string $email = '';
 
     #[Validate('required|string|max:40')]
-    public string $subject = 'Demande de devis';
+    public string $subject = 'Question générale';
 
     #[Validate('required|string|max:3000')]
     public string $message = '';
 
     public bool $sent = false;
 
+    #[Locked]
+    public string $submissionKey = '';
+
+    public function mount(): void
+    {
+        $this->submissionKey = (string) Str::uuid();
+    }
+
     /** @return array<int, string> */
     public function subjects(): array
     {
-        return ['Demande de devis', 'Formation', 'Solution informatique', 'Boutique', 'Autre'];
+        return ['Question générale', 'Formation', 'Solution informatique', 'Boutique', 'Autre'];
     }
 
     public function submit(): void
@@ -43,18 +52,14 @@ new #[Layout('components.layouts.public')] class extends Component
             return;
         }
 
-        app(PublicFormSubmissionLimiter::class)->ensureAllowed(request(), $this->email, $this->phone);
-
-        Lead::create([
-            'name' => $this->name,
-            'phone' => $this->phone ?: null,
-            'email' => $this->email ?: null,
-            'message' => '['.$this->subject.'] '.$this->message,
-            'source' => 'site',
+        app(PublicFormSubmissionService::class)->contact($this->submissionKey, [
+            'name' => $this->name, 'email' => $this->email, 'phone' => $this->phone,
+            'subject' => $this->subject, 'message' => $this->message,
         ]);
+        $this->submissionKey = (string) Str::uuid();
 
         $this->reset(['name', 'phone', 'email', 'message']);
-        $this->subject = 'Demande de devis';
+        $this->subject = 'Question générale';
         $this->sent = true;
         $this->dispatch('tk-toast', type: 'success', message: 'Message envoyé. Nous vous répondons très vite.');
     }
@@ -62,16 +67,17 @@ new #[Layout('components.layouts.public')] class extends Component
 
 <div>
     @push('meta')
-        <x-tk.seo title="Contact" description="Contactez Tikmos : services, formations, solutions data/IA et boutique. Réponse rapide, devis clair." />
+        <x-tk.seo title="Contact" description="Contactez Tikmos pour une question générale ou un message concernant nos services et la boutique." />
     @endpush
 
     <x-tk.section tone="canvas">
         <div class="mx-auto max-w-2xl text-center reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
             <x-tk.kicker class="justify-center">Contact</x-tk.kicker>
-            <h1 class="mt-3 font-display text-4xl font-black leading-[1] tracking-[-0.02em] text-content md:text-5xl">Parlons de votre projet.</h1>
-            <p class="mx-auto mt-4 max-w-lg text-lg text-muted">Écrivez-nous ou passez directement par WhatsApp — réponse rapide, devis clair.</p>
+            <h1 class="mt-3 font-display text-4xl font-black leading-[1] tracking-[-0.02em] text-content md:text-5xl">Contact général</h1>
+            <p class="mx-auto mt-4 max-w-lg text-lg text-muted">Une question, une information ou un message ? Ce formulaire ne crée pas de demande de devis suivie.</p>
         </div>
 
+        <div class="mt-5 text-center"><a href="{{ route('quote-request') }}" wire:navigate class="inline-block min-h-11 font-medium text-content underline underline-offset-2">Pour un projet : demander un devis suivi</a></div>
         <div class="mt-12 grid gap-6 lg:grid-cols-5 lg:gap-8">
             {{-- Colonne infos --}}
             @php($general = app(\App\Settings\GeneralSettings::class))
@@ -128,8 +134,8 @@ new #[Layout('components.layouts.public')] class extends Component
                             </x-tk.field>
                         </div>
 
-                        <x-tk.field label="Téléphone / WhatsApp" :error="$errors->first('phone')">
-                            <x-tk.phone wire:model="phone" :invalid="$errors->has('phone')" />
+                        <x-tk.field label="Téléphone / WhatsApp" for="contact-phone" :error="$errors->first('phone')">
+                            <x-tk.phone id="contact-phone" wire:model="phone" :invalid="$errors->has('phone')" />
                         </x-tk.field>
 
                         <x-tk.field label="Sujet" for="subject" :error="$errors->first('subject')">

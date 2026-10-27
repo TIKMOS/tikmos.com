@@ -223,3 +223,19 @@ Le socle copié contient des tables/métier **sezy** non utilisés ici : `parcel
 `review_requests`… → **migrations de suppression** au lot concerné (ou ignorer si non migrées).
 Conserver : users/auth, spatie (permission/settings/medialibrary/activitylog), testimonials,
 faq_items, legal_documents, team_members (repalettisés).
+## Reçus de formulaires publics — correction 12
+
+Migration additive : `2026_10_27_020000_create_public_form_submissions_table.php`.
+Table `public_form_submissions` : `key` (empreinte du jeton, clé primaire),
+`actor_hash` (HMAC compte/session), `kind` (`quote` ou `contact`),
+`service_request_id`/`lead_id` (FK nullables, `nullOnDelete`) et timestamps.
+Un seul lien métier est renseigné par le service selon l'intention. Réservation
+du reçu, création métier et événement de demande partagent la transaction.
+Un reçu dont la donnée a disparu empêche une nouvelle création silencieuse.
+Pas de rattrapage historique, de purge automatique ou de migration de la base
+habituelle pendant la validation locale.
+
+Les besoins sur mesure utilisent le `service_requests.service_id` nullable
+existant, sans service factice ni changement des relations historiques.
+Voir [validation 12](validations/2026-10-27-parcours-devis/README.md) et
+[déploiement](DEPLOIEMENT.md#devis-suivi-et-recus-denvoi--correction-12).

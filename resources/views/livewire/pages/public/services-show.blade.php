@@ -1,22 +1,28 @@
 <?php
 
 use App\Enums\Publication;
-use App\Enums\ServiceRequestStatus;
 use App\Models\Service;
-use App\Models\ServiceRequest;
-use App\Notifications\ServiceRequestReceived;
-use App\Notifications\ServiceRequestSubmitted;
-use App\Services\PublicFormSubmissionLimiter;
-use App\Settings\GeneralSettings;
+use App\Services\PublicFormSubmissionService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 
 new #[Layout('components.layouts.public')] class extends Component
 {
-    public Service $service;
+    #[Locked]
+    public ?Service $service = null;
+
+    public string $serviceId = '';
+
+    #[Locked]
+    public string $submissionKey = '';
+
+    #[Locked]
+    public ?int $submittedUserId = null;
 
     #[Validate('required|string|max:255')]
     public string $name = '';
@@ -39,12 +45,14 @@ new #[Layout('components.layouts.public')] class extends Component
     // Anti-spam (honeypot) — doit rester vide.
     public string $website = '';
 
+    #[Locked]
     public ?string $reference = null;
 
-    public function mount(Service $service): void
+    public function mount(?Service $service = null): void
     {
-        abort_unless($service->status === Publication::Published, 404);
-        $this->service = $service;
+        $this->service = $service?->exists ? $service : null;
+        abort_if($this->service && $this->service->status !== Publication::Published, 404);
+        $this->submissionKey = (string) Str::uuid();
 
         if ($user = Auth::user()) {
             $this->name = $user->name;
@@ -69,51 +77,48 @@ new #[Layout('components.layouts.public')] class extends Component
             return;
         }
 
-        app(PublicFormSubmissionLimiter::class)->ensureAllowed(request(), $this->email, $this->phone);
-
-        $request = ServiceRequest::create([
-            'user_id' => Auth::id(),
-            'service_id' => $this->service->id,
-            'name' => $this->name,
-            'email' => $this->email ?: null,
-            'phone' => $this->phone ?: null,
-            'company' => $this->company ?: null,
-            'message' => $this->message,
-            'budget_hint' => $this->budget_hint ?: null,
-            'status' => ServiceRequestStatus::Sent,
-        ]);
-
-        $request->events()->create([
-            'from_status' => null,
-            'to_status' => ServiceRequestStatus::Sent->value,
-            'note' => 'Demande créée depuis la fiche service.',
-            'user_id' => Auth::id(),
-        ]);
-
-        // Notifications : alerte équipe + accusé de réception client.
-        $teamEmail = app(GeneralSettings::class)->emails['contact'] ?? null;
-        if ($teamEmail) {
-            Notification::route('mail', $teamEmail)->notify(new ServiceRequestReceived($request));
+        if ($this->service) {
+            $serviceId = $this->service->id;
+        } else {
+            $this->validate(['serviceId' => ['nullable', 'integer', Rule::exists('services', 'id')->where('status', Publication::Published->value)]]);
+            $serviceId = $this->serviceId === '' ? null : (int) $this->serviceId;
         }
-        if ($request->email) {
-            Notification::route('mail', $request->email)->notify(new ServiceRequestSubmitted($request));
-        }
+        $request = app(PublicFormSubmissionService::class)->quote($this->submissionKey, [
+            'name' => $this->name, 'email' => $this->email, 'phone' => $this->phone,
+            'company' => $this->company, 'message' => $this->message, 'budget_hint' => $this->budget_hint,
+        ], $serviceId);
+        $this->submittedUserId = $request->user_id;
+        $this->submissionKey = (string) Str::uuid();
 
         $this->reference = $request->reference;
         $this->reset(['phone', 'company', 'message', 'budget_hint']);
         $this->dispatch('tk-toast', type: 'success', message: 'Demande envoyée. Référence : '.$request->reference);
     }
+
+    /** @return array<string, mixed> */
+    public function with(): array
+    {
+        return ['availableServices' => $this->service ? collect() : Service::where('status', Publication::Published)->orderBy('title')->get()];
+    }
 }; ?>
 
 <div>
     @push('meta')
-        <x-tk.seo :title="$service->seo_title ?: $service->title" :description="$service->seo_description ?: $service->excerpt" />
+        <x-tk.seo :title="$service ? ($service->seo_title ?: $service->title) : 'Demander un devis'" :description="$service ? ($service->seo_description ?: $service->excerpt) : 'Choisissez un service ou décrivez votre besoin sur mesure. Recevez une référence pour suivre votre demande.'" />
     @endpush
 
     <x-tk.section>
         <a href="{{ route('services') }}" wire:navigate class="inline-flex items-center gap-1.5 text-sm text-muted hover:text-content"><x-lucide-arrow-left class="h-4 w-4" /> Tous les services</a>
 
-        <div class="mt-6 grid gap-10 lg:grid-cols-5 lg:gap-12">
+        @unless ($service)
+            <div class="mt-6 max-w-2xl">
+                <h1 class="font-display text-4xl font-black tracking-tight text-content">Demander un devis</h1>
+                <p class="mt-4 text-muted">Choisissez un service ou décrivez un besoin sur mesure. Votre demande sera transmise à notre équipe avec une référence de suivi.</p>
+                <a href="{{ route('contact') }}" wire:navigate class="mt-3 inline-block text-sm font-medium text-content underline">Pour une question générale : nous contacter</a>
+            </div>
+        @endunless
+        <div class="mt-6 grid gap-10 {{ $service ? 'lg:grid-cols-5 lg:gap-12' : 'mx-auto max-w-2xl' }}">
+            @if ($service)
             {{-- Détail service --}}
             <div class="lg:col-span-3 reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
                 <p class="font-mono text-xs uppercase tracking-[0.18em] text-gold-600">{{ $service->category->label() }}</p>
@@ -129,22 +134,40 @@ new #[Layout('components.layouts.public')] class extends Component
                 <div class="prose prose-tk mt-6 max-w-none text-content/80">{!! $service->body !!}</div>
             </div>
 
+            @endif
             {{-- Formulaire de devis --}}
-            <div class="lg:col-span-2 reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
+            <div class="{{ $service ? 'lg:col-span-2' : '' }} reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
                 <div class="sticky top-24 rounded-[24px] border border-line bg-surface p-6 shadow-lg" id="devis">
                     <x-tk.kicker>Demander un devis</x-tk.kicker>
-                    <p class="mt-2 text-sm text-muted">Pour <strong class="text-content">{{ $service->title }}</strong>. Réponse rapide, sans engagement.</p>
+                    @if ($service)
+                        <p class="mt-2 text-sm text-muted">Pour <strong class="text-content">{{ $service->title }}</strong>. Réponse rapide, sans engagement.</p>
+                    @endif
 
                     @if ($reference)
-                        <div class="mt-5 rounded-tile bg-success-soft px-4 py-3 text-sm text-success-ink">
+                        <div role="status" tabindex="-1" x-data x-init="$el.focus()" class="mt-5 rounded-tile bg-success-soft px-4 py-3 text-sm text-success-ink">
                             <p class="flex items-center gap-2 font-medium"><x-lucide-circle-check class="h-5 w-5" /> Demande envoyée !</p>
                             <p class="mt-1">Votre référence : <span class="font-mono font-bold">{{ $reference }}</span></p>
-                            <p class="mt-2">Si vous avez indiqué un email, utilisez le lien reçu pour retrouver votre demande. Sans compte, vous devrez créer un compte et vérifier cette adresse.</p>
-                            <a href="{{ route('request-recovery.renew') }}" class="mt-2 inline-block font-medium underline">Recevoir un nouveau lien</a>
+                            @if ($submittedUserId && auth()->id() === $submittedUserId)
+                                <p class="mt-2">Notre équipe étudiera votre besoin. Retrouvez les prochaines étapes dans votre espace client.</p>
+                                <a href="{{ route('app.requests.show', $reference) }}" wire:navigate class="mt-2 inline-block font-medium underline">Suivre ma demande</a>
+                            @else
+                                <p class="mt-2">Avec un email, utilisez le lien reçu pour retrouver votre demande : connexion ou inscription, vérification de cette adresse, puis confirmation du rattachement. Avec un téléphone seul, notre équipe vous recontactera ; conservez votre référence.</p>
+                                <a href="{{ route('request-recovery.renew') }}" class="mt-2 inline-block font-medium underline">Recevoir un nouveau lien par email</a>
+                            @endif
                         </div>
                     @endif
 
                     <form wire:submit="submit" class="mt-5 space-y-4">
+                        @unless ($service)
+                            <x-tk.field label="Service souhaité" for="service-choice" :error="$errors->first('serviceId')">
+                                <select id="service-choice" wire:model="serviceId" aria-invalid="{{ $errors->has('serviceId') ? 'true' : 'false' }}" class="min-h-11 w-full rounded-input border border-tk-300 bg-surface px-3 text-content focus:ring-2 focus:ring-ink">
+                                    <option value="">Besoin sur mesure / Je ne sais pas encore</option>
+                                    @foreach ($availableServices as $option)
+                                        <option value="{{ $option->id }}">{{ $option->title }}</option>
+                                    @endforeach
+                                </select>
+                            </x-tk.field>
+                        @endunless
                         {{-- Honeypot --}}
                         <input type="text" wire:model="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
 
@@ -154,8 +177,8 @@ new #[Layout('components.layouts.public')] class extends Component
                         <x-tk.field label="Email" for="email" :error="$errors->first('email')">
                             <x-tk.input wire:model="email" id="email" type="email" icon="mail" placeholder="vous@exemple.com" :invalid="$errors->has('email')" />
                         </x-tk.field>
-                        <x-tk.field label="Téléphone / WhatsApp" :error="$errors->first('phone')">
-                            <x-tk.phone wire:model="phone" :invalid="$errors->has('phone')" />
+                        <x-tk.field label="Téléphone / WhatsApp" for="quote-phone" :error="$errors->first('phone')">
+                            <x-tk.phone id="quote-phone" wire:model="phone" :invalid="$errors->has('phone')" />
                         </x-tk.field>
                         <x-tk.field label="Entreprise (optionnel)" for="company">
                             <x-tk.input wire:model="company" id="company" icon="building-2" placeholder="Votre société" />

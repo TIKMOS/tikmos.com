@@ -39,6 +39,8 @@ Route::view('cgv', 'public.cgv')->name('cgv');
 Route::view('confidentialite', 'public.privacy')->name('privacy');
 Route::view('cookies', 'public.cookies')->name('cookies');
 
+Volt::route('demander-un-devis', 'pages.public.services-show')->name('quote-request');
+
 Volt::route('contact', 'pages.public.contact')->name('contact');
 
 // Webhooks de paiement (signés, hors CSRF — voir bootstrap/app.php)

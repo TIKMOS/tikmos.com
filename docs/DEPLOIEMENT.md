@@ -327,3 +327,42 @@ et la recette fichier ne constituent pas une validation distribuée ou MySQL.
 Garder `APP_ENV=production`, `APP_DEBUG=false` ; le code de développement ne doit
 jamais apparaître sur le challenge. Aucun compte ou appareil déjà déployé n'a été
 modifié dans cette correction.
+
+## Devis suivi et reçus d'envoi — correction 12
+
+La nouvelle migration `2026_10_27_020000_create_public_form_submissions_table.php`
+ajoute uniquement une table de reçus ; aucun Lead ni demande historique n'est
+transformé. Le besoin sur mesure utilise le `service_id` nullable existant.
+Lors d'un futur déploiement autorisé, sauvegarder et appliquer cette migration
+avant de servir les nouveaux formulaires. Ne pas publier le code seul sur une
+installation dépourvue de cette table. Cette migration n'a été appliquée qu'aux
+bases isolées de validation, jamais à la base habituelle.
+
+Chaque reçu contient l'empreinte SHA-256 du jeton aléatoire de formulaire, une
+empreinte HMAC de l'acteur (compte/session), le type d'envoi, une référence vers
+la donnée métier et les dates techniques. Ni jeton brut, ni email, ni contenu du
+message n'y sont copiés. La clé primaire empêche deux créations pour le même jeton.
+Reçu et donnée métier sont écrits dans la même transaction ; les notifications
+sont déclenchées ensuite uniquement pour une nouvelle demande. Il n'existe pas
+de garantie de livraison exactement une fois : une panne après commit et avant
+remise à la queue peut empêcher l'envoi. Un rejeu ne tente pas de livrer à nouveau.
+Vérifier le transport et la supervision des notifications séparément.
+
+Partager la même base d'écriture et les conditions du cache de quotas décrites
+pour la correction 09 sur tous les serveurs. Le reçu est lié à son acteur initial :
+un changement de session invité ou une connexion entre envoi et rejeu est refusé,
+sans accorder de droit sur la demande ; utiliser le parcours de récupération.
+Une nouvelle clé après succès ou rechargement représente une nouvelle soumission,
+toujours soumise aux quotas. Une erreur ultérieure à la réservation de quota peut
+consommer une tentative, sans donnée métier partiellement créée.
+
+Pas de purge automatique des reçus dans cette correction. Leur suppression ou
+un rollback de cette table retire la mémoire des rejeux ; ne pas en faire une
+opération de maintenance implicite. Les décisions de conservation et d'exploitation
+restent à examiner séparément. Avant production, vérifier migration et concurrence
+MySQL, cache partagé, queue et SMTP : **non validés** par les tests locaux SQLite.
+
+Vérifier séparément les liens éditoriaux et corps riches CMS qui proposeraient
+encore un devis vers `/contact`. Les URLs des boutons des vues ont été corrigées ;
+les données réelles du CMS n'ont pas été remplacées. Les anciens messages restent
+des Leads et ne doivent pas être convertis silencieusement.

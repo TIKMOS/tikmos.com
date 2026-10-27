@@ -24,7 +24,7 @@ new #[Layout('components.layouts.app')] class extends Component
             <x-tk.kicker>Espace client</x-tk.kicker>
             <h1 class="mt-2 font-display text-3xl font-extrabold text-content">Mes demandes & devis</h1>
         </div>
-        <x-tk.button href="{{ url('/services') }}" variant="primary" icon="plus">Demander un devis</x-tk.button>
+        <x-tk.button href="{{ route('quote-request') }}" variant="primary" icon="plus">Demander un devis</x-tk.button>
     </div>
 
     <p class="mt-6 text-sm text-muted">Une demande déposée sans compte manque ici ? <a href="{{ route('request-recovery.renew') }}" class="font-medium text-content underline underline-offset-2">Retrouver une demande</a></p>

@@ -19,7 +19,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [09](09-anti-abus-formulaires.md) | Limiter les abus des formulaires publics | Validé localement | 27/10/2026 : quatrième appel direct accepté avant correction sur les deux formulaires, puis refus serveur sans enregistrement/notification supplémentaire. Quotas communs : 3 par session/compte et 20 par IP sur 10 min ; 5 par coordonnée déclarée sur 30 min. Réservation sous verrou, clés HMAC, champs conservés et délai affiché ; validation, honeypot et récupération invitée préservés. Ciblés finaux : 91 tests, 493 assertions ; suite : 491 tests, 2 048 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette navigateur 360/1440 px et clavier réalisée, cinq captures ; utilisateur confirmant refus, texte conservé et reprise. MySQL, SMTP et cache partagé entre processus/serveurs non validés. Base/cache habituels préservés, aucun commit/push lors de A. Voir note 09. |
 | [10](10-otp-delai-et-experience.md) | Sécuriser et clarifier le challenge 2FA | Validé localement | 27/10/2026 : trois défauts reproduits avant correction. Quotas serveur communs par compte : renvoi après 60 s, 5 envois / 900 s, 3 codes incorrects / 900 s, sans remise à zéro par renvoi ou nouveau challenge. Confiance décochée, erreurs distinctes, code remplacé/consommé sous verrou et protection après perte du bail. Authentification finale : 58 tests, 256 assertions ; suite finale : 521 tests, 2 219 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette mobile/bureau/clavier, sept captures ; utilisateur confirmant confiance décochée et renvoi correct. MySQL, SMTP réel et cache partagé/concurrence distribuée non validés. Base/cache habituels préservés, aucun commit/push lors de A. Voir note 10. |
 | [11](11-suppression-compte-texte.md) | Aligner la suppression de compte avec son fonctionnement réel | Validé localement | 27/10/2026 : écart texte/SoftDeletes et deux refus serveur manquants reproduits avant correction. Fermeture logique annoncée sans promesse d'effacement, mot de passe et confirmation exigés ; accès revérifié avant les actions, autre session et reconnexion refusées. Profil, relations et décisions conservés ; encadré de confidentialité ajouté sans réécrire le CMS. Ciblés : 84 tests, 377 assertions ; suite : 538 tests, 2 315 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi, bundle inchangé. Recette mobile/bureau/clavier, cinq captures ; utilisateur confirmant textes, confirmation et refus de reconnexion. MySQL, SMTP, sessions distribuées et décisions de conservation/effacement non validés. Base/cache/comptes réels inchangés, aucun commit/push lors de A. Voir note 11. |
-| [12](12-parcours-devis-unifie.md) | Unifier le bouton Demander un devis et le suivi client | À traiter | — |
+| [12](12-parcours-devis-unifie.md) | Unifier le bouton Demander un devis et le suivi client | Validé localement | 27/10/2026 : trois échecs reproduits avant correction. Boutons devis unifiés vers un formulaire suivi avec service publié ou sur-mesure ; contact général distinct créant uniquement un Lead. Référence, suivi connecté et rattachement invité 05 conservés ; quotas 09 et refus des comptes fermés préservés. Reçus transactionnels contre les rejeux, migration additive non appliquée à la base habituelle. Ciblés finaux : 144 tests, 844 assertions ; suite complète : 562 tests, 2 454 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette mobile/bureau/clavier, sept captures ; utilisateur confirmant référence, suivi et contact distinct. MySQL, SMTP et cache partagé/concurrence non validés ; contenus CMS réels à revoir séparément. Aucun commit/push lors de A. Voir note 12. |
 | [13](13-frais-livraison.md) | Annoncer les frais de livraison avant confirmation | À traiter | — |
 | [14](14-libelles-statuts-navigation.md) | Clarifier les statuts de commande et le vocabulaire | À traiter | — |
 | [15](15-carte-alertes-client.md) | Supprimer ou relier la carte Alertes inerte | À traiter | — |
@@ -599,6 +599,61 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   purge ou déploiement. Checkpoint 10 `49b7ae245654fc87562a9a7ecfd54bf349339234`
   vérifié sur origin/main. Mode étranger d'artisan et index préservés.
   Aucun commit ni push ; correction 12 non commencée.
+
+## Note 12 — 27 octobre 2026
+
+- **Cause/reproduction :** boutons de devis vers le contact créant un Lead plutôt
+  qu'une demande suivie, sujet initial ambigu. Trois tests exigeant l'entrée suivie,
+  sa route publique et le refus d'une identité fermée déjà chargée échouaient avant
+  correction : **3 échecs, 4 assertions**. Le dernier cas n'est pas présenté comme
+  un contournement HTTP du middleware. Audit historique inchangé.
+- **Parcours/fichiers :** nouvelle route `/demander-un-devis` réutilisant la vue
+  services-show, choix d'un service publié ou `service_id=null` pour le sur-mesure.
+  Référence et prochaine étape visibles ; lien de suivi du propriétaire connecté,
+  rattachement invité 05 conservé sans confiance dans un email déclaré. Contact
+  général produisant uniquement un Lead, sujet initial Question générale. Boutons
+  de l'accueil/layout public, À propos/témoignages, catalogues services/réalisations
+  et espace client unifiés. Validations, honeypot, quotas 09, montants, décisions
+  et droits préservés. `PublicFormSubmissionService`, nouvelle migration de reçus,
+  `QuoteRequestEntryTest`, documentation fonctionnelle/schéma/déploiement et présente
+  ligne/note. Aucun ancien message converti ni contenu CMS réel remplacé.
+- **Rejeux :** jeton serveur verrouillé, empreinte unique en base et HMAC de l'acteur
+  compte/session. Reçu, donnée métier et événement dans une transaction ; même
+  jeton/acteur retournant le même résultat sans nouvelle notification ou quota.
+  Autre acteur refusé, compte fermé/inactif revérifié. Nouveau jeton après succès
+  pour un nouvel envoi volontaire. Pas de déduplication des textes entre jetons,
+  de relivraison automatique après panne de notification ou de purge des reçus.
+  Migration additive testée sur structure historique fictive ; base habituelle
+  non migrée. Le besoin sur mesure utilisait déjà une FK service nullable.
+- **Validation :** premières reproductions + services/anti-abus → **48 tests,
+  314 assertions** ; ciblés élargis → **144 tests, 844 assertions** ; suite complète
+  → **562 tests, 2 454 assertions**. Après normalisation Pint de quatre vues à CTA,
+  ciblés finaux → **144 tests, 844 assertions**, tous réussis. Aucun changement de
+  logique métier après la suite complète. Pest séquentiel sur ressources isolées,
+  notifications simulées et HTTP imprévu interdit dans les nouveaux tests. Cas de
+  rejeu, acteur différent, quotas, services retirés, validation/honeypot, pipeline,
+  récupération et rollback de l'historique. Larastan app + actions Volt + migration
+  séquentiel `--debug` → **0 erreur** ; Pint et syntaxe conformes sur 14 fichiers
+  PHP/Blade. Build réussi (4,70 s), manifeste cohérent ; CSS `app-DXEy4714.css`
+  remplaçant `app-DpDeyuAx.css`, JavaScript/polices inchangés.
+- **Recette :** [rapport et sept captures](../../validations/2026-10-27-parcours-devis/README.md).
+  Instance SQLite/cache fichier/sessions/stockage fictifs dédiés, aucun email réel.
+  Accueil → service choisi → demande → référence/suivi connecté au clavier ; invité
+  sur-mesure, texte conservé après refus sans coordonnées, contact général séparé,
+  rattachement invité par lien signé et compte destinataire vérifié, pipeline admin.
+  Mobile 360 px et bureau 1440 px, aucun débordement horizontal ni erreur console
+  observé. Avant essai personnel : 3 demandes, 1 message. L'utilisateur confirme
+  référence, suivi et contact distinct ; les autres cas techniques ne lui sont pas
+  attribués. Dimensions restaurées, onglets fermés et seul serveur F12 arrêté.
+- **Limites/état :** MySQL/migration/concurrence, SMTP/délivrabilité, cache partagé
+  entre processus/serveurs et charge de production **non validés**. Une panne entre
+  commit et mise en queue peut empêcher une notification, sans relivraison au rejeu.
+  Contenus CMS réels non examinés ; liens éditoriaux annonçant un devis vers le
+  contact à revoir séparément. Recouvrement WhatsApp mobile et représentation
+  locale du téléphone après reset serveur préexistants, hors lot. Aucun compte réel,
+  email/paiement réel, migration ou purge habituelle, ni déploiement. Checkpoint 11
+  `26395a1e7f45c7600cc8a5a8d72c9a32135e9cb2` vérifié sur origin/main. Mode étranger
+  d'artisan et index préservés. Aucun commit ni push ; correction 13 non commencée.
 
 ## Modèle de note à remplir après une intervention
 

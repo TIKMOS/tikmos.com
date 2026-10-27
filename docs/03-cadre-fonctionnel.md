@@ -248,3 +248,47 @@ modifiés ni audités dans cette intervention.
 
 Cette description est technique et ne constitue pas une validation juridique.
 Preuves, parcours et limites : [validation 11](validations/2026-10-27-compte/README.md).
+
+### Devis suivi et contact général — correction 12, 27 octobre 2026
+
+Les boutons « Demander un devis » de l'accueil, du menu public, d'À propos,
+des témoignages, des catalogues services/réalisations et de l'espace client mènent
+à `/demander-un-devis` (`quote-request`). Ce parcours réutilise le formulaire et
+le pipeline des fiches service. Le visiteur peut choisir un service publié ou
+garder « Besoin sur mesure / Je ne sais pas encore » (`service_id=null`, déjà
+autorisé par le schéma). Une fiche service garde son service présélectionné et sa
+publication est revérifiée à l'envoi. Aucun service artificiel n'est créé.
+
+Un devis produit uniquement une `ServiceRequest` avec son événement et les
+notifications équipe/client existantes. La confirmation affiche sa référence,
+puis « Suivre ma demande » pour son propriétaire connecté. Un visiteur reçoit les
+instructions du rattachement signé de la correction 05 : email destinataire,
+connexion/inscription, vérification de cette adresse et confirmation. Aucun droit
+n'est accordé par simple égalité d'emails déclarés. Avec téléphone seul, la
+référence reste visible et l'équipe recontacte le visiteur ; pas de promesse de
+suivi automatique par email. Les validations et le honeypot sont conservés.
+
+`/contact` est un « Contact général », avec le sujet initial « Question générale ».
+Il continue à créer uniquement un `Lead`, sans notification nouvelle. Un lien
+distinct propose le parcours de devis avant de remplir le contact. Les messages
+et demandes historiques ne sont ni convertis ni réaffectés.
+
+Les deux intentions partagent les quotas de la correction 09. Chaque formulaire
+possède aussi un jeton serveur verrouillé et un reçu persistant dans
+`public_form_submissions`. Le reçu, la donnée métier et l'événement de demande
+sont validés dans une même transaction. Un rejeu du même jeton par le même acteur
+retourne le résultat existant, sans réécriture, nouveau quota ni notification.
+Le compte ou la session de l'acteur est vérifié, jamais l'email déclaré. Un autre
+acteur ne peut pas récupérer ce reçu. Après succès, un nouveau jeton permet une
+nouvelle demande volontaire ; ce mécanisme ne déduplique pas des textes identiques
+envoyés depuis de nouveaux formulaires. Les comptes fermés ou inactifs sont refusés
+même si leur identité était déjà chargée.
+
+Les liens explicites des vues sont corrigés sans modifier le contenu CMS réel.
+Les titres/textes de la section finale restent issus de `HomepageSettings` ; les
+corps riches et liens éditoriaux éventuellement présents en base doivent être
+revus séparément s'ils annoncent un devis tout en menant à `/contact`.
+Le contenu effectivement déployé n'a pas été examiné.
+
+Installation et limites : [déploiement](DEPLOIEMENT.md#devis-suivi-et-recus-denvoi--correction-12).
+Preuves : [validation 12](validations/2026-10-27-parcours-devis/README.md).

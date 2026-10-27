@@ -2,6 +2,7 @@
 
 use App\Enums\ServiceCategory;
 use App\Models\Service;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
@@ -11,7 +12,7 @@ new #[Layout('components.layouts.public')] class extends Component
     #[Url(as: 'cat')]
     public string $category = '';
 
-    /** @return \Illuminate\Support\Collection<int, Service> */
+    /** @return Collection<int, Service> */
     public function with(): array
     {
         $query = Service::query()->published();
@@ -65,7 +66,7 @@ new #[Layout('components.layouts.public')] class extends Component
                 <p class="font-display text-lg font-bold text-content">Un besoin sur mesure ?</p>
                 <p class="text-sm text-muted">Décrivez votre projet, je vous réponds avec un devis clair.</p>
             </div>
-            <x-tk.button href="{{ url('/contact') }}" variant="primary" icon="file-text">Demander un devis</x-tk.button>
+            <x-tk.button href="{{ route('quote-request') }}" variant="primary" icon="file-text">Demander un devis</x-tk.button>
             <x-tk.whatsapp-button :floating="false" />
         </div>
     </x-tk.section>

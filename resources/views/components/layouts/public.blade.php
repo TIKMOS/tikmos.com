@@ -90,7 +90,7 @@
                 <div class="hidden items-center gap-2 sm:flex">
                     @guest
                         <x-tk.button href="{{ route('login') }}" variant="secondary" size="sm">Connexion</x-tk.button>
-                        <x-tk.button href="{{ url('/contact') }}" variant="primary" size="sm" icon="file-text">Demander un devis</x-tk.button>
+                        <x-tk.button href="{{ route('quote-request') }}" variant="primary" size="sm" icon="file-text">Demander un devis</x-tk.button>
                     @else
                         <div class="relative" x-data="{ acc: false }">
                             <button @click="acc = !acc" class="flex items-center gap-2 rounded-pill py-1 pl-1 pr-2.5 transition-colors hover:bg-tk-100" aria-label="Mon compte">
@@ -135,7 +135,7 @@
                 <div class="mt-2 flex gap-2 border-t border-line pt-3">
                     @guest
                         <x-tk.button href="{{ route('login') }}" variant="secondary" size="sm" class="flex-1">Connexion</x-tk.button>
-                        <x-tk.button href="{{ url('/contact') }}" variant="primary" size="sm" icon="file-text" class="flex-1">Devis</x-tk.button>
+                        <x-tk.button href="{{ route('quote-request') }}" variant="primary" size="sm" icon="file-text" class="flex-1">Devis</x-tk.button>
                     @else
                         <form method="POST" action="{{ route('logout') }}" class="flex-1">@csrf
                             <x-tk.button type="submit" variant="primary" size="sm" icon="log-out" class="w-full">Déconnexion</x-tk.button>

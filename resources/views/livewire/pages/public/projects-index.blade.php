@@ -62,7 +62,7 @@ new #[Layout('components.layouts.public')] class extends Component
 
         <div class="mt-12 flex flex-wrap items-center gap-3 rounded-card border border-line bg-surface p-6">
             <p class="mr-auto font-display text-lg font-bold text-content">Un projet similaire en tête ?</p>
-            <x-tk.button href="{{ url('/contact') }}" variant="primary" icon="file-text">Demander un devis</x-tk.button>
+            <x-tk.button href="{{ route('quote-request') }}" variant="primary" icon="file-text">Demander un devis</x-tk.button>
         </div>
     </x-tk.section>
 </div>
