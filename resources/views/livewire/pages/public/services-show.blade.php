@@ -6,6 +6,7 @@ use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Notifications\ServiceRequestReceived;
 use App\Notifications\ServiceRequestSubmitted;
+use App\Services\PublicFormSubmissionLimiter;
 use App\Settings\GeneralSettings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
@@ -53,6 +54,8 @@ new #[Layout('components.layouts.public')] class extends Component
 
     public function submit(): void
     {
+        $this->reference = null;
+        $this->resetValidation('submission');
         $this->validate();
 
         // Honeypot : un bot remplit ce champ caché.
@@ -65,6 +68,8 @@ new #[Layout('components.layouts.public')] class extends Component
 
             return;
         }
+
+        app(PublicFormSubmissionLimiter::class)->ensureAllowed(request(), $this->email, $this->phone);
 
         $request = ServiceRequest::create([
             'user_id' => Auth::id(),
@@ -163,7 +168,9 @@ new #[Layout('components.layouts.public')] class extends Component
                             <x-tk.input wire:model="budget_hint" id="budget_hint" icon="wallet" placeholder="ex. 500k – 2M XOF" />
                         </x-tk.field>
 
-                        <x-tk.button type="submit" variant="primary" size="lg" icon="send" class="w-full">
+                        <x-tk.submission-error />
+
+                        <x-tk.button type="submit" variant="primary" size="lg" icon="send" class="w-full" wire:loading.attr="disabled" wire:target="submit">
                             <span wire:loading.remove wire:target="submit">Envoyer ma demande</span>
                             <span wire:loading wire:target="submit">Envoi…</span>
                         </x-tk.button>

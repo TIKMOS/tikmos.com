@@ -16,7 +16,7 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
 | [06](06-creation-administrateur.md) | Supprimer les identifiants administrateur de repli | Validé localement | 24/10/2026 : F06 reproduit (0 compte attendu, 3 créés sans configuration). Seeding courant sans compte ; provisionnement initial explicite d'un seul SuperAdmin, configuration obligatoire sans repli, secret validé et non affiché. Comptes existants conservés sans réinitialisation ni promotion ; transaction et refus des collisions. Provisionnement : 40 tests, 174 assertions ; ciblés gestion/auth : 76 tests, 283 assertions ; démonstration : 1 test, 18 assertions ; suite finale : 395 tests, 1 530 assertions. Larastan app + seeders/config : 0 erreur en séquentiel ; Pint conforme. MySQL/concurrence, SMTP et configuration/comptes déployés non validés. Base habituelle, comptes réels et cache de l'application inchangés. Aucun commit/push lors de A. Voir note 06. |
 | [07](07-reprise-paiement-reservation.md) | Gérer l’abandon et la reprise du paiement | Validé localement | 26/10/2026 : F07 reproduit (stock retiré sans échéance). Réservation en ligne 15 minutes, reprise sur même commande/paiement, jeton de checkout contre les rejeux, restitution unique, paiement tardif enregistré avec revue manuelle et préparation bloquée. Config en ligne contrôlée, COD préservé. Ciblés : 116 tests, 597 assertions ; suite complète : 428 tests, 1 719 assertions ; JavaScript : 5 tests ; Larastan : 0 erreur ; Pint conforme ; build réussi. Recette 360/1440 px, utilisateur confirmant fermeture/reprise/succès simulé. MySQL/concurrence, migration MySQL, KKiaPay sandbox, SMTP et cron réel non validés. Migration non appliquée à la base habituelle ; aucun commit/push lors de A. Voir note 07. |
 | [08](08-numerotation-commandes.md) | Rendre la numérotation des commandes atomique | Validé localement | 26/10/2026 : collision de count()+1 reproduite sur historique troué ; compteur annuel persistant, verrouillé et incrémenté dans la transaction de commande. Format/anciens numéros/URLs conservés, changement d'année dans le fuseau applicatif, suppression sans recul du compteur et rollback couverts. Initialisation historique exigeant des plafonds vérifiés, aucune renumérotation. Ciblés : 157 tests, 746 assertions ; suite finale : 469 tests, 1 868 assertions ; concurrence SQLite : 3 tests, 32 assertions, avec quatre processus distincts dans deux scénarios. Larastan : 0 erreur ; Pint/syntaxe conformes sur huit fichiers PHP. Migration et concurrence MySQL non validées ; base habituelle inchangée, aucun paiement/email réel ni commit/push lors de A. Voir note 08. |
-| [09](09-anti-abus-formulaires.md) | Limiter les abus des formulaires publics | À traiter | — |
+| [09](09-anti-abus-formulaires.md) | Limiter les abus des formulaires publics | Validé localement | 27/10/2026 : quatrième appel direct accepté avant correction sur les deux formulaires, puis refus serveur sans enregistrement/notification supplémentaire. Quotas communs : 3 par session/compte et 20 par IP sur 10 min ; 5 par coordonnée déclarée sur 30 min. Réservation sous verrou, clés HMAC, champs conservés et délai affiché ; validation, honeypot et récupération invitée préservés. Ciblés finaux : 91 tests, 493 assertions ; suite : 491 tests, 2 048 assertions ; Larastan : 0 erreur ; Pint/syntaxe conformes ; build réussi. Recette navigateur 360/1440 px et clavier réalisée, cinq captures ; utilisateur confirmant refus, texte conservé et reprise. MySQL, SMTP et cache partagé entre processus/serveurs non validés. Base/cache habituels préservés, aucun commit/push lors de A. Voir note 09. |
 | [10](10-otp-delai-et-experience.md) | Sécuriser et clarifier le challenge 2FA | À traiter | — |
 | [11](11-suppression-compte-texte.md) | Aligner la suppression de compte avec son fonctionnement réel | À traiter | — |
 | [12](12-parcours-devis-unifie.md) | Unifier le bouton Demander un devis et le suivi client | À traiter | — |
@@ -446,6 +446,64 @@ La publication est contrôlée par le prompt B et attestée par son reçu (branc
   variables administrateur/plafond vides et ajouts revus sans secret. Aucun code,
   asset ou schéma habituel modifié lors de cette revalidation ; limites externes
   conservées. Seuls les treize fichiers de la fiche sont destinés au commit.
+
+## Note 09 — 27 octobre 2026
+
+- **Cause et reproduction :** actions Livewire contact/service sans limitation
+  métier. Deux nouveaux tests exigeant le refus du quatrième appel après trois
+  envois valides avec emails différents échouaient avant correction : composant
+  sans erreur. Ils passent après correction : **2 tests, 20 assertions**. Audit
+  historique inchangé ; aucune notification réelle.
+- **Quotas et garanties :** communs au contact et à toutes les fiches : 3 tentatives
+  valides par session serveur ou compte / 600 s, 20 par IP / 600 s, 5 par email et
+  téléphone déclarés / 1 800 s. Fenêtres fixes sans prolongation au refus ; compte
+  identifié côté serveur, aucune identité déduite d'un email non vérifié. HMAC des
+  dimensions dans les clés ; changement d'email ou de fiche sans remise à zéro.
+  Visiteurs distincts sur IP commune gardant leur quota dans le plafond réseau.
+- **Ordre :** validations et honeypot existants, puis contrôle/réservation de tous
+  les compteurs sous verrou commun de 10 s, puis effets métier. Aucun email ou
+  écriture métier sous ce verrou. Refus sans nouveau compteur métier, événement
+  ou notification ; tentative admise potentiellement consommée si un échec métier
+  suit. Quota : plus long délai bloquant ; contention : 2 s ; cache indisponible :
+  refus avec délai de 30 s, journalisation du seul type d'exception. Coordonnées
+  de notification et récupération 05 inchangées.
+- **Interface/fichiers :** nouveau `PublicFormSubmissionLimiter`, composant
+  `submission-error`, vues/actions contact et services-show, nouveaux tests
+  `PublicFormSubmissionTest`. Alerte focalisée, tous les champs conservés, reprise
+  sur page ouverte, ancienne confirmation retirée en cas de nouvel échec. Cadre
+  fonctionnel, déploiement, présente ligne/note et [rapport et cinq captures](../../validations/2026-10-27-formulaires/README.md).
+  Manifeste et CSS `app-r-zsVh6O.css` remplaçant `app-Cz4owPm2.css` ; JS/polices inchangés.
+- **Contrôles :** ciblés formulaires/vitrine/services/récupération → **91 tests,
+  493 assertions** sur vues finales ; suite complète → **491 tests, 2 048 assertions**,
+  tous réussis. Larastan app séquentiel `--debug` → **0 erreur** ; Pint et syntaxe
+  conformes sur quatre fichiers PHP ; build réussi et manifeste cohérent. Bases
+  SQLite et caches isolés, notifications simulées et HTTP imprévu interdit. Tests
+  de seuils, délais exacts, validation/honeypot, champs conservés, session/IP/compte,
+  normalisation, verrou, panne de cache et absence de coordonnées brutes dans les
+  clés. Cache database SQLite avec recréation d'adaptateur testé, sans prétendre
+  à une concurrence partagée entre processus.
+- **Recette :** nouvelle SQLite, cache fichier/sessions/stockage hors dépôt et
+  serveur 8015 ; horloge figée réglable, aucune livraison email. Cookies de recette
+  sans date absolue après diagnostic d'expiration lié à l'horloge figée. Contact :
+  refus du quatrième, champs conservés, focus alerte, puis succès Tab/Entrée après
+  +600 s sans recharger. Service : quota commun confirmé, refus sans événement
+  supplémentaire, besoin/entreprise/budget conservés, puis reprise après +600 s.
+  Captures à 360/1440 px, aucun débordement horizontal ni erreur console observé.
+  WhatsApp flottant historique pouvant recouvrir du texte à certaines positions
+  mobiles, signalé dans le rapport ; aucune autre correction engagée. Dimensions
+  restaurées, onglet de contrôle fermé ; guide et instance conservés temporairement
+  pour l'essai personnel, puis seul serveur 8015 arrêté après confirmation de
+  l'utilisateur, sans arrêt des autres instances. Celui-ci confirme le refus, le
+  texte conservé et la reprise ; les autres cas techniques ne sont pas présentés
+  comme personnellement validés par lui. Quotas rendus disponibles par avance
+  d'horloge de 30 minutes avant cet essai, sans purge.
+- **Limites/état :** MySQL, SMTP/délivrabilité, cache partagé entre processus ou
+  serveurs, autres pilotes de cache et charge de production **non validés**.
+  Conditions de partage, sessions et proxies documentées. Aucun compte réel,
+  paiement/email réel, migration ou purge du cache habituel. Checkpoint 08
+  `23c49870a0e3b3c0c9ac68e210a55628cf428e1a` vérifié sur origin/main. Mode étranger
+  d'artisan et index préservés. Validé localement sans commit ni push ; aucune
+  autre fiche commencée.
 
 ## Modèle de note à remplir après une intervention
 

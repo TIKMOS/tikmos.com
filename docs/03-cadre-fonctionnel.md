@@ -170,3 +170,36 @@ légales, coordonnées, liens réseaux, numéro WhatsApp, SEO par page. Impléme
 - **États vides/erreur/chargement** soignés partout (composants partagés).
 - **Scoping client** : un client ne voit jamais les données d'un autre (Policies).
 - **i18n-ready** : tous les textes via `lang/fr/` (clés), prêts pour l'EN.
+
+### Formulaires publics — correction 09, 27 octobre 2026
+
+Le contact et toutes les fiches service partagent les quotas suivants :
+
+| Dimension | Plafond | Fenêtre fixe depuis la première tentative admise |
+|---|---|---|
+| Visiteur (session serveur) ou compte connecté | 3 | 10 minutes |
+| Adresse IP réseau | 20 | 10 minutes |
+| Chaque email ou téléphone déclaré | 5 | 30 minutes |
+
+Un utilisateur connecté est identifié par son compte serveur, jamais par l'email
+déclaré dans le formulaire. L'adresse de contact reste une donnée non vérifiée :
+son quota protège les destinataires, il ne donne aucun droit d'accès. Deux visiteurs
+distincts partageant une IP ont leur propre quota de session, dans la limite réseau.
+Changer d'email, de fiche service ou passer au contact ne réinitialise pas ce quota.
+Supprimer les cookies peut changer le visiteur invité ; le plafond réseau reste actif.
+
+Les validations et le honeypot existant précèdent le contrôle. Une tentative valide
+admise réserve ses quotas avant toute écriture ou notification ; un échec métier
+ultérieur peut donc consommer cette tentative. Aucun remboursement automatique de
+quota. Un refus ne consomme pas d'autre quota et ne prolonge pas la fenêtre.
+
+Le délai affiché correspond au plus long quota actuellement bloquant. Les champs
+restent renseignés, l'alerte reçoit le focus et le formulaire peut être soumis à
+nouveau après le délai, y compris si la page était déjà ouverte. Les appels Livewire
+directs passent par le même contrôle serveur. Aucun CAPTCHA ni service tiers ajouté.
+Le contact continue à créer un `Lead` sans nouvel email ; les demandes conservent
+leur événement et leurs notifications équipe/client, ainsi que la récupération
+sécurisée introduite en 05.
+
+Cache, verrous et conditions de partage : [déploiement](DEPLOIEMENT.md#protection-des-formulaires-publics--correction-09).
+Preuves et limites : [validation 09](validations/2026-10-27-formulaires/README.md).

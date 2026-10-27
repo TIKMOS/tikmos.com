@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Lead;
+use App\Services\PublicFormSubmissionLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
@@ -32,6 +33,8 @@ new #[Layout('components.layouts.public')] class extends Component
 
     public function submit(): void
     {
+        $this->sent = false;
+        $this->resetValidation('submission');
         $this->validate();
 
         if (trim($this->phone) === '' && trim($this->email) === '') {
@@ -39,6 +42,8 @@ new #[Layout('components.layouts.public')] class extends Component
 
             return;
         }
+
+        app(PublicFormSubmissionLimiter::class)->ensureAllowed(request(), $this->email, $this->phone);
 
         Lead::create([
             'name' => $this->name,
@@ -145,7 +150,9 @@ new #[Layout('components.layouts.public')] class extends Component
                                       class="w-full rounded-input border bg-surface px-4 py-3 text-[15px] text-content placeholder:text-tk-400 transition-colors focus:outline-none focus:ring-4 focus:ring-ink/10 {{ $errors->has('message') ? 'border-danger' : 'border-tk-300 focus:border-ink' }}"></textarea>
                         </x-tk.field>
 
-                        <x-tk.button type="submit" variant="primary" size="lg" icon="send" class="w-full">
+                        <x-tk.submission-error />
+
+                        <x-tk.button type="submit" variant="primary" size="lg" icon="send" class="w-full" wire:loading.attr="disabled" wire:target="submit">
                             <span wire:loading.remove wire:target="submit">Envoyer le message</span>
                             <span wire:loading wire:target="submit">Envoi…</span>
                         </x-tk.button>

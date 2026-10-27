@@ -211,6 +211,51 @@ des commandes.
 La migration et la concurrence MySQL restent **non validées** ; la concurrence
 réellement testée concerne SQLite avec des processus indépendants.
 
+### Protection des formulaires publics — correction 09
+
+`PublicFormSubmissionLimiter` utilise `cache.limiter` si défini, sinon
+`cache.default` (configuration initiale : `database`). Aucun service tiers ou
+nouveau schéma requis : le pilote database utilise les tables existantes `cache`
+et `cache_locks`. Aucune migration ni purge du cache habituel n'a été exécutée
+pendant cette correction.
+
+Avant utilisation sur la cible, vérifier séparément :
+
+- Un cache persistant prenant en charge les verrous Laravel. Pilotes acceptés :
+  database, file, Redis, Memcached ou DynamoDB. Array est autorisé uniquement sous
+  l'environnement `testing` ; null, failover et les pilotes non admis sont refusés.
+- Tous les processus et serveurs doivent partager le même stockage de compteurs
+  **et** de verrous, le même préfixe d'application et la même `APP_KEY`. Un cache
+  fichier local convient seulement aux processus utilisant réellement le même
+  volume avec des verrous fiables ; des disques locaux indépendants ne constituent
+  pas un cache partagé. Les pilotes distribués non testés restent à recetter.
+- Les sessions des visiteurs doivent être persistantes et correctement transmises
+  par les cookies. Sur plusieurs serveurs, partager également les sessions ou
+  utiliser une configuration de routage adaptée ; les comptes restent identifiés
+  par leur identifiant authentifié.
+- L'IP est fournie par `Request::ip()` : vérifier les mandataires de confiance sur
+  la cible, sans accepter aveuglément un en-tête client. Cette correction ne modifie
+  pas la configuration des proxies. Synchroniser les horloges des serveurs.
+
+Les clés `public-forms:v1:*` contiennent des HMAC, sans email, téléphone, IP ou
+identifiant de session en clair. La rotation de clé ou un changement de préfixe
+réinitialise de fait ces quotas : ne pas les utiliser comme mesure comptable.
+Les fenêtres expirent après 10 ou 30 minutes ; elles ne sont pas glissantes.
+
+Un verrou commun de 10 secondes protège uniquement la lecture et la réservation
+des compteurs, jamais la création métier ni les notifications. Le plafond peut
+causer une sérialisation brève ; sous contention, un refus demande de réessayer
+dans 2 secondes sans perdre les champs. Une panne ou une configuration de cache
+inadaptée refuse l'envoi avec un délai de 30 secondes et journalise seulement le
+type d'exception, sans détails de connexion ni coordonnées. Ne pas purger le cache
+de production pour lever arbitrairement un quota.
+
+[Règles fonctionnelles](03-cadre-fonctionnel.md#formulaires-publics--correction-09-27-octobre-2026)
+et [rapport de validation](validations/2026-10-27-formulaires/README.md).
+MySQL, SMTP réel, cache partagé entre processus/serveurs et comportement sous charge
+de production restent **non validés**. Les tests database de ce lot utilisent SQLite
+isolé et recréent un adaptateur ; ils ne prouvent pas une concurrence distribuée.
+
 ## 6. Vérifications live (smoke)
 
 ### Réservations de stock en ligne — correction 07
