@@ -131,12 +131,12 @@ new #[Layout('components.layouts.admin')] class extends Component
                     @else
                     <form wire:submit="saveQuote" class="space-y-4" novalidate>
                         <div class="grid gap-4 sm:grid-cols-3">
-                            <x-tk.field label="Montant" for="quote-amount" :error="$errors->first('amount')"><x-tk.input id="quote-amount" wire:model="amount" type="number" min="0" /></x-tk.field>
-                            <x-tk.field label="Devise" for="quote-currency" :error="$errors->first('currency')"><x-tk.input id="quote-currency" wire:model="currency" /></x-tk.field>
+                            <x-tk.field label="Montant" for="quote-amount" :required="true" :error="$errors->first('amount')"><x-tk.input id="quote-amount" wire:model="amount" type="number" min="0" /></x-tk.field>
+                            <x-tk.field label="Devise" for="quote-currency" :required="true" :error="$errors->first('currency')"><x-tk.input id="quote-currency" wire:model="currency" /></x-tk.field>
                             <x-tk.field label="Valide jusqu'au" for="quote-valid-until" :error="$errors->first('validUntil')" :hint="'Date incluse ('.config('app.timezone').'). Sans date : aucune échéance.'"><x-tk.input id="quote-valid-until" wire:model="validUntil" type="date" :min="now(config('app.timezone'))->toDateString()" /></x-tk.field>
                         </div>
                         <x-tk.field label="Détail / conditions" for="quote-body">
-                            <textarea id="quote-body" wire:model="quoteBody" rows="3" class="w-full rounded-input border border-tk-300 bg-surface px-4 py-3 text-[15px] text-content focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/10"></textarea>
+                            <textarea id="quote-body" wire:model="quoteBody" rows="3" class="w-full rounded-input border border-control-line bg-surface px-4 py-3 text-[15px] text-content focus:border-ink focus:ring-4 focus:ring-ink/10"></textarea>
                         </x-tk.field>
                         <x-tk.button type="submit" variant="primary" icon="send">{{ $request->quote ? 'Mettre à jour & renvoyer' : 'Créer & envoyer le devis' }}</x-tk.button>
                     </form>
@@ -156,7 +156,7 @@ new #[Layout('components.layouts.admin')] class extends Component
                             <div>
                                 <p class="text-sm text-content"><strong>{{ $event->to_status->label() }}</strong>@if ($event->from_status) <span class="text-muted">(depuis {{ $event->from_status->label() }})</span>@endif</p>
                                 @if ($event->note)<p class="text-sm text-muted">{{ $event->note }}</p>@endif
-                                <p class="text-xs text-tk-400">{{ $event->created_at->diffForHumans() }}@if ($event->author) · {{ $event->author->name }}@endif</p>
+                                <p class="text-xs text-muted">{{ $event->created_at->diffForHumans() }}@if ($event->author) · {{ $event->author->name }}@endif</p>
                             </div>
                         </li>
                     @empty
@@ -170,11 +170,11 @@ new #[Layout('components.layouts.admin')] class extends Component
         <div class="space-y-6">
             @can('demande.manage')
                 <x-tk.admin-section title="Changer le statut" icon="git-branch">
-                    <x-tk.field label="Note (optionnelle)"><x-tk.input wire:model="note" placeholder="Commentaire interne" /></x-tk.field>
+                    <x-tk.field label="Note (optionnelle)" for="request-note"><x-tk.input wire:model="note" placeholder="Commentaire interne" /></x-tk.field>
                     <div class="mt-3 flex flex-wrap gap-2">
                         @foreach ($pipeline as $st)
                             @if ($st !== $request->status)
-                                <button wire:click="transition('{{ $st->value }}')" class="rounded-btn border border-tk-300 px-3 py-1.5 text-sm font-medium text-content transition-colors hover:border-ink">{{ $st->label() }}</button>
+                                <button wire:click="transition('{{ $st->value }}')" class="min-h-11 rounded-btn border border-control-line px-3 py-1.5 text-sm font-medium text-content transition-colors hover:border-ink">{{ $st->label() }}</button>
                             @endif
                         @endforeach
                     </div>

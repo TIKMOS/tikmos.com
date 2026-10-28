@@ -16,11 +16,11 @@
         @if ($product->isOutOfStock())<span class="absolute right-3 top-3 rounded-pill bg-surface/90 px-3 py-1 text-xs font-semibold text-content">Épuisé</span>@endif
     </div>
     <div class="flex flex-1 flex-col p-5">
-        @if ($product->brand)<p class="font-mono text-xs uppercase tracking-[0.16em] text-gold-600">{{ $product->brand }}</p>@endif
+        @if ($product->brand)<p class="font-mono text-xs uppercase tracking-[0.16em] text-gold-ink">{{ $product->brand }}</p>@endif
         <h2 class="mt-1 font-display text-lg font-bold text-content">{{ $product->name }}</h2>
         <div class="mt-2 flex items-baseline gap-2">
             <span class="font-display text-lg font-bold text-content">{{ $product->priceLabel() }}</span>
-            @if ($product->compareAtLabel())<span class="text-sm text-tk-400 line-through">{{ $product->compareAtLabel() }}</span>@endif
+            @if ($product->compareAtLabel())<span class="text-sm text-muted line-through">{{ $product->compareAtLabel() }}</span>@endif
         </div>
         <span class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-content group-hover:gap-2">Voir le produit <x-lucide-arrow-right class="h-4 w-4 transition-all" /></span>
     </div>

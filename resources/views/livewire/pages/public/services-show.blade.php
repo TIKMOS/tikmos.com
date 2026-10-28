@@ -121,7 +121,7 @@ new #[Layout('components.layouts.public')] class extends Component
             @if ($service)
             {{-- Détail service --}}
             <div class="lg:col-span-3 reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
-                <p class="font-mono text-xs uppercase tracking-[0.18em] text-gold-600">{{ $service->category->label() }}</p>
+                <p class="font-mono text-xs uppercase tracking-[0.18em] text-gold-ink">{{ $service->category->label() }}</p>
                 <h1 class="mt-2 font-display text-4xl font-black leading-[1.05] tracking-[-0.02em] text-content md:text-5xl">{{ $service->title }}</h1>
                 @if ($service->price_label)
                     <p class="mt-4"><x-tk.badge tone="neutral">{{ $service->price_label }}</x-tk.badge></p>
@@ -160,7 +160,7 @@ new #[Layout('components.layouts.public')] class extends Component
                     <form wire:submit="submit" class="mt-5 space-y-4">
                         @unless ($service)
                             <x-tk.field label="Service souhaité" for="service-choice" :error="$errors->first('serviceId')">
-                                <select id="service-choice" wire:model="serviceId" aria-invalid="{{ $errors->has('serviceId') ? 'true' : 'false' }}" class="min-h-11 w-full rounded-input border border-tk-300 bg-surface px-3 text-content focus:ring-2 focus:ring-ink">
+                                <select id="service-choice" wire:model="serviceId" aria-invalid="{{ $errors->has('serviceId') ? 'true' : 'false' }}" @if ($errors->has('serviceId')) aria-describedby="service-choice-error" @endif class="min-h-11 w-full rounded-input border border-control-line bg-surface px-3 text-content focus:ring-2 focus:ring-ink">
                                     <option value="">Besoin sur mesure / Je ne sais pas encore</option>
                                     @foreach ($availableServices as $option)
                                         <option value="{{ $option->id }}">{{ $option->title }}</option>
@@ -171,21 +171,21 @@ new #[Layout('components.layouts.public')] class extends Component
                         {{-- Honeypot --}}
                         <input type="text" wire:model="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
 
-                        <x-tk.field label="Nom complet" for="name" :error="$errors->first('name')">
+                        <x-tk.field label="Nom complet" for="name" :required="true" :error="$errors->first('name')">
                             <x-tk.input wire:model="name" id="name" icon="user" placeholder="Votre nom" :invalid="$errors->has('name')" />
                         </x-tk.field>
                         <x-tk.field label="Email" for="email" :error="$errors->first('email')">
                             <x-tk.input wire:model="email" id="email" type="email" icon="mail" placeholder="vous@exemple.com" :invalid="$errors->has('email')" />
                         </x-tk.field>
-                        <x-tk.field label="Téléphone / WhatsApp" for="quote-phone" :error="$errors->first('phone')">
+                        <x-tk.field label="Téléphone / WhatsApp" for="quote-phone" hint="Un téléphone ou un email est nécessaire pour vous recontacter." :error="$errors->first('phone')">
                             <x-tk.phone id="quote-phone" wire:model="phone" :invalid="$errors->has('phone')" />
                         </x-tk.field>
                         <x-tk.field label="Entreprise (optionnel)" for="company">
                             <x-tk.input wire:model="company" id="company" icon="building-2" placeholder="Votre société" />
                         </x-tk.field>
-                        <x-tk.field label="Votre besoin" for="message" :error="$errors->first('message')">
-                            <textarea wire:model="message" id="message" rows="4" placeholder="Décrivez votre projet ou votre besoin…"
-                                      class="w-full rounded-input border bg-surface px-4 py-3 text-[15px] text-content placeholder:text-tk-400 transition-colors focus:outline-none focus:ring-4 focus:ring-ink/10 {{ $errors->has('message') ? 'border-danger' : 'border-tk-300 focus:border-ink' }}"></textarea>
+                        <x-tk.field label="Votre besoin" for="message" :required="true" :error="$errors->first('message')">
+                            <textarea wire:model="message" id="message" required aria-required="true" aria-invalid="{{ $errors->has('message') ? 'true' : 'false' }}" @if ($errors->has('message')) aria-describedby="message-error" @endif rows="4" placeholder="Décrivez votre projet ou votre besoin…"
+                                      class="w-full rounded-input border bg-surface px-4 py-3 text-[15px] text-content placeholder:text-muted transition-colors focus:ring-4 focus:ring-ink/10 {{ $errors->has('message') ? 'border-danger' : 'border-control-line focus:border-ink' }}"></textarea>
                         </x-tk.field>
                         <x-tk.field label="Budget indicatif (optionnel)" for="budget_hint">
                             <x-tk.input wire:model="budget_hint" id="budget_hint" icon="wallet" placeholder="ex. 500k – 2M XOF" />

@@ -33,7 +33,7 @@
             <div class="mx-auto mt-10 max-w-3xl space-y-10">
                 @foreach ($groups as $category => $items)
                     <div class="reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
-                        <h2 class="font-mono text-xs uppercase tracking-[0.18em] text-gold-600">{{ $category }}</h2>
+                        <h2 class="font-mono text-xs uppercase tracking-[0.18em] text-gold-ink">{{ $category }}</h2>
                         <x-tk.accordion :items="$items" class="mt-3" />
                     </div>
                 @endforeach

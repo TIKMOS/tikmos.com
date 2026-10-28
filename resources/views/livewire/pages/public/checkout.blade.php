@@ -165,26 +165,26 @@ new #[Layout('components.layouts.public')] class extends Component
                 <x-tk.admin-section title="Livraison" description="Où devons-nous livrer votre commande ?" icon="map-pin">
                     <div class="space-y-4">
                         <div class="grid gap-4 sm:grid-cols-2">
-                            <x-tk.field label="Nom complet" :error="$errors->first('contact_name')"><x-tk.input wire:model="contact_name" icon="user" /></x-tk.field>
-                            <x-tk.field label="Téléphone" :error="$errors->first('contact_phone')"><x-tk.phone wire:model="contact_phone" class="min-w-0" :invalid="$errors->has('contact_phone')" /></x-tk.field>
+                            <x-tk.field label="Nom complet" for="checkout-name" :required="true" :error="$errors->first('contact_name')"><x-tk.input wire:model="contact_name" icon="user" autocomplete="name" /></x-tk.field>
+                            <x-tk.field label="Téléphone" for="checkout-phone" :required="true" :error="$errors->first('contact_phone')"><x-tk.phone wire:model="contact_phone" class="min-w-0" autocomplete="tel-national" :invalid="$errors->has('contact_phone')" /></x-tk.field>
                         </div>
-                        <x-tk.field label="Adresse de livraison" :error="$errors->first('delivery_address')">
-                            <textarea wire:model="delivery_address" rows="2" placeholder="Quartier, rue, repère…" class="w-full rounded-input border border-tk-300 bg-surface px-4 py-3 text-[15px] text-content focus:border-ink focus:outline-none focus:ring-4 focus:ring-ink/10"></textarea>
+                        <x-tk.field label="Adresse de livraison" for="checkout-address" :required="true" :error="$errors->first('delivery_address')">
+                            <textarea id="checkout-address" wire:model="delivery_address" required aria-required="true" aria-invalid="{{ $errors->has('delivery_address') ? 'true' : 'false' }}" @if ($errors->has('delivery_address')) aria-describedby="checkout-address-error" @endif rows="2" autocomplete="street-address" placeholder="Quartier, rue, repère…" class="w-full rounded-input border border-control-line bg-surface px-4 py-3 text-[15px] text-content placeholder:text-muted focus:border-ink focus:ring-4 focus:ring-ink/10"></textarea>
                         </x-tk.field>
-                        <x-tk.field label="Ville" :error="$errors->first('delivery_city')"><x-tk.input wire:model="delivery_city" icon="map-pin" /></x-tk.field>
-                        <x-tk.field label="Notes (optionnel)" :error="$errors->first('notes')"><x-tk.input wire:model="notes" placeholder="Précisions de livraison…" /></x-tk.field>
+                        <x-tk.field label="Ville" for="checkout-city" :error="$errors->first('delivery_city')"><x-tk.input wire:model="delivery_city" icon="map-pin" autocomplete="address-level2" /></x-tk.field>
+                        <x-tk.field label="Notes (optionnel)" for="checkout-notes" :error="$errors->first('notes')"><x-tk.input wire:model="notes" placeholder="Précisions de livraison…" /></x-tk.field>
                     </div>
                 </x-tk.admin-section>
 
                 <x-tk.admin-section title="Paiement" icon="wallet">
-                    <div class="space-y-3">
+                    <div role="radiogroup" aria-label="Mode de paiement" aria-invalid="{{ $errors->has('payment_method') ? 'true' : 'false' }}" @if ($errors->has('payment_method')) aria-describedby="checkout-payment-error" @endif class="space-y-3">
                         @if (! $onlineEnabled)
                             <p class="text-sm text-muted">{{ $deliveryPricing === \App\Enums\DeliveryPricing::Unknown ? 'Le paiement en ligne est indisponible tant que les frais de livraison et le montant final ne sont pas validés.' : 'Le paiement en ligne est actuellement indisponible.' }}</p>
                         @endif
-                        @error('payment_method')<p role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
+                        @error('payment_method')<p id="checkout-payment-error" role="alert" class="text-sm text-danger">{{ $message }}</p>@enderror
                         @if ($onlineEnabled)
-                            <label class="flex cursor-pointer items-center gap-3 rounded-tile border-2 p-4 transition"
-                                :class="$wire.payment_method === 'online' ? 'border-ink bg-sky/40' : 'border-line hover:border-tk-300'">
+                            <label class="flex cursor-pointer items-center gap-3 rounded-tile border-2 p-4 transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-indigo"
+                                :class="$wire.payment_method === 'online' ? 'border-ink bg-sky/40' : 'border-control-line hover:border-ink'">
                                 <input type="radio" wire:model="payment_method" value="online" class="sr-only" />
                                 <x-lucide-smartphone class="h-6 w-6 text-content" />
                                 <span><span class="block font-medium text-content">Paiement en ligne</span><span class="block text-sm text-muted">Mobile Money (MTN, Moov) ou carte bancaire via KKiaPay — sécurisé.</span></span>
@@ -193,8 +193,8 @@ new #[Layout('components.layouts.public')] class extends Component
                         @endif
 
                         @if ($codEnabled)
-                            <label class="flex cursor-pointer items-center gap-3 rounded-tile border-2 p-4 transition"
-                                :class="$wire.payment_method === 'cod' ? 'border-ink bg-sky/40' : 'border-line hover:border-tk-300'">
+                            <label class="flex cursor-pointer items-center gap-3 rounded-tile border-2 p-4 transition has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-indigo"
+                                :class="$wire.payment_method === 'cod' ? 'border-ink bg-sky/40' : 'border-control-line hover:border-ink'">
                                 <input type="radio" wire:model="payment_method" value="cod" class="sr-only" />
                                 <x-lucide-truck class="h-6 w-6 text-content" />
                                 <span><span class="block font-medium text-content">Paiement à la livraison</span><span class="block text-sm text-muted">Réglez en espèces ou Mobile Money à la réception.</span></span>

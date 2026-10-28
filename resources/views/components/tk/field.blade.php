@@ -10,18 +10,18 @@
     @if ($label)
         <label @if ($for) for="{{ $for }}" @endif class="block text-[13px] font-medium text-content">
             {{ $label }}
-            @if ($required)<span class="text-danger">*</span>@endif
+            @if ($required)<span aria-hidden="true" class="text-danger">*</span>@endif
         </label>
     @endif
 
     {{ $slot }}
 
     @if ($hint && ! $error)
-        <p class="text-xs text-muted">{{ $hint }}</p>
+        <p @if ($for) id="{{ $for }}-hint" @endif class="text-xs text-muted">{{ $hint }}</p>
     @endif
 
     @if ($error)
-        <p class="flex items-center gap-1 text-xs font-medium text-danger">
+        <p @if ($for) id="{{ $for }}-error" @endif role="alert" class="flex items-center gap-1 text-xs font-medium text-danger">
             <x-lucide-circle-alert class="h-3.5 w-3.5" />
             {{ $error }}
         </p>

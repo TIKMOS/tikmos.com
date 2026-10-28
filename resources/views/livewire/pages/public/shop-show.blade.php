@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Product;
+use App\Services\CartService;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
@@ -31,7 +32,7 @@ new #[Layout('components.layouts.public')] class extends Component
             $size = null;
         }
 
-        app(\App\Services\CartService::class)->add($this->product->id, 1, $size);
+        app(CartService::class)->add($this->product->id, 1, $size);
         $this->dispatch('cart-updated');
         $this->dispatch('tk-toast', type: 'success', message: 'Ajouté au panier.'.($size ? ' (Taille '.$size.')' : ''));
     }
@@ -93,12 +94,12 @@ new #[Layout('components.layouts.public')] class extends Component
 
             {{-- Infos --}}
             <div x-data="{ size: null }">
-                @if ($product->brand)<p class="font-mono text-xs uppercase tracking-[0.18em] text-gold-600">{{ $product->brand }}</p>@endif
+                @if ($product->brand)<p class="font-mono text-xs uppercase tracking-[0.18em] text-gold-ink">{{ $product->brand }}</p>@endif
                 @if ($product->category)<x-tk.kicker tone="muted" class="mt-1">{{ $product->category->name }}</x-tk.kicker>@endif
                 <h1 class="mt-3 font-display text-3xl font-black tracking-[-0.02em] text-content md:text-4xl">{{ $product->name }}</h1>
                 <div class="mt-4 flex items-baseline gap-3">
                     <span class="font-display text-3xl font-bold text-content">{{ $product->priceLabel() }}</span>
-                    @if ($product->compareAtLabel())<span class="text-lg text-tk-400 line-through">{{ $product->compareAtLabel() }}</span>@endif
+                    @if ($product->compareAtLabel())<span class="text-lg text-muted line-through">{{ $product->compareAtLabel() }}</span>@endif
                 </div>
 
                 @if ($product->isOutOfStock())
@@ -113,7 +114,7 @@ new #[Layout('components.layouts.public')] class extends Component
                             @foreach ($product->sizeList() as $s)
                                 <button type="button" @click="size = @js($s)"
                                         class="grid h-11 min-w-[44px] place-items-center rounded-tile border px-3 text-sm font-medium transition-colors"
-                                        :class="size === @js($s) ? 'border-ink bg-ink text-paper' : 'border-tk-300 text-content hover:border-ink'">{{ $s }}</button>
+                                        :class="size === @js($s) ? 'border-ink bg-ink text-paper' : 'border-control-line text-content hover:border-ink'">{{ $s }}</button>
                             @endforeach
                         </div>
                         <p x-show="!size" class="mt-2 text-xs text-muted">Sélectionnez votre pointure.</p>

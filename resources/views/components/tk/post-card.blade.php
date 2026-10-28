@@ -13,14 +13,14 @@
     </div>
     <div class="flex flex-1 flex-col p-5">
         <div class="flex items-center gap-2 text-xs">
-            @if ($post->category)<span class="font-mono uppercase tracking-[0.14em] text-gold-600">{{ $post->category->name }}</span>@endif
-            @if ($post->published_at)<span class="text-tk-400">· {{ $post->published_at->translatedFormat('d M Y') }}</span>@endif
+            @if ($post->category)<span class="font-mono uppercase tracking-[0.14em] text-gold-ink">{{ $post->category->name }}</span>@endif
+            @if ($post->published_at)<span class="text-muted">· {{ $post->published_at->translatedFormat('d M Y') }}</span>@endif
         </div>
         <h3 class="mt-1.5 font-display text-lg font-bold text-content">{{ $post->title }}</h3>
         <p class="mt-2 flex-1 text-sm text-muted">{{ $post->excerpt }}</p>
         <span class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-content group-hover:gap-2">
             Lire l'article <x-lucide-arrow-right class="h-4 w-4 transition-all" />
-            @if ($post->reading_time)<span class="ml-auto text-tk-400">{{ $post->reading_time }} min</span>@endif
+            @if ($post->reading_time)<span class="ml-auto text-muted">{{ $post->reading_time }} min</span>@endif
         </span>
     </div>
 </a>

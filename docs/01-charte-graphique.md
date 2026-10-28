@@ -31,14 +31,15 @@
 ink      #0b0b0c   texte, bordures fortes, CTA principal (aplat noir, parcimonieux)
 paper    #ffffff   surfaces / cartes
 ivory    #faf8f3   fond d'app premium (ivoire très doux, plus chaud que le gris)
-canvas   #f5f4f1   alternative de section (légèrement plus marquée que l'ivoire)
-neutres  tk-50…950 (texte muted #6f6f76, bordures #e4e1d9, lignes #ece9e1)
+canvas   #faf8f3   fond principal, alias de l'ivoire ; paper pour les cartes/formulaires
+neutres  tk-50…950 (texte muted #54514a, bordures décoratives #e4e1d9)
 ```
 
 ### Accents de marque
 ```
 gold     #b9975b   Or champagne — filets, soulignés, puces, hover, séparateurs, numéros
-gold-600 #a07f44   Or foncé — texte sur fond clair quand contraste nécessaire (AA)
+gold-600 #a07f44   Accent décoratif — ne garantit pas AA pour les petits textes
+gold-ink #6e5524   Texte or sur blanc/ivoire (7,03:1 / 6,62:1)
 gold-100 #f4ecdd   Or pâle — fond de carte/zone « premium » très léger
 indigo   #1e2a52   Indigo nuit — liens, focus, badges data/IA, accents tech
 indigo-600 #2b3a6b indigo plus clair (hover/lien)
@@ -52,7 +53,7 @@ sand   #f6f1e8   ·  mist  #eef1f6   ·  sage #eef3ee
 
 ### Couleurs de signal (statut système uniquement)
 ```
-success #16a34a · warning #d97706 · danger #dc2626 · info #2b3a6b  (+ variantes soft)
+success #157f52 · warning #b5840a · danger #c0362c · info #1e2a52  (+ variantes soft/ink)
 whatsapp #25D366  (icône & bouton officiels)
 ```
 
@@ -65,16 +66,20 @@ whatsapp #25D366  (icône & bouton officiels)
   --color-ink: #0b0b0c;
   --color-paper: #ffffff;
   --color-ivory: #faf8f3;
-  --color-canvas: #f5f4f1;
+  --color-canvas: #faf8f3;
   --color-gold: #b9975b;
   --color-gold-600: #a07f44;
+  --color-gold-ink: #6e5524;
   --color-gold-100: #f4ecdd;
   --color-indigo: #1e2a52;
   --color-indigo-600: #2b3a6b;
   --color-indigo-50: #eef1f8;
   --color-tk-50:#fbfaf7; --color-tk-100:#f3f1ea; --color-tk-200:#e4e1d9;
-  --color-tk-300:#cfcabd; --color-tk-500:#9a958a; --color-tk-700:#54514a;
-  --color-tk-900:#1c1b18; --color-tk-950:#0f0e0c;
+  --color-tk-300:#cfcabd; --color-tk-400:#9a958a; --color-tk-500:#6f6f76;
+  --color-tk-600:#54514a; --color-tk-700:#3a3a40;
+  --color-tk-900:#161618; --color-tk-950:#0b0b0c;
+  --color-muted:#54514a;
+  --color-control-line: #8a857a; /* contours des contrôles, distincts des filets décoratifs */
   --radius-btn: 10px;
   --radius-card: 16px;
 }
@@ -173,7 +178,8 @@ lecture, jamais le spectacle.
 ## 9. PWA / perf / a11y
 Manifest standalone + SW offline (si PWA activée), icônes du logo officiel, safe-area. Fonts `swap`,
 images lazy/blur-up, **zéro CLS**, Lighthouse mobile **≥ 90**. Contraste **AA** (attention à l'or sur
-blanc : utiliser `gold-600` pour le texte), focus visibles (anneau indigo), cibles tactiles ≥ 44px.
+blanc : `gold-600` n'atteint que 3,74:1 ; employer `gold-ink` pour les petits textes
+sur fonds clairs), focus visibles (indigo sur clair, blanc sur encre), cibles tactiles ≥ 44px.
 
 ---
 
@@ -184,4 +190,51 @@ blanc : utiliser `gold-600` pour le texte), focus visibles (anneau indigo), cibl
 - [ ] Lien/onglet actif = filet or ; CTA encre parcimonieux ; emphase premium = variante `gold`.
 - [ ] Images « mix » (hero/boutique couleur, secondaires n/b doux + hover).
 - [ ] Interactions présentes & sobres ; toasts sur actions ; responsive 360→1440 ; a11y AA.
-- [ ] Or texte = `gold-600` (contraste AA) ; focus indigo visible.
+- [ ] Contraste du texte mesuré sur son fond réel ; `gold-ink` sur clair, focus discernable.
+
+### Ajustement ciblé d'accessibilité — 28 octobre 2026
+
+Les variantes `gold` des boutons et les kickers utilisent `gold-ink`, sans modifier
+l'or décoratif, les logos ou les fonds de marque. Les libellés et glyphes des
+boutons WhatsApp deviennent encre sur le vert imposé : **9,92:1**, contre 1,98:1
+pour le blanc. Les placeholders utiles utilisent `muted` sur leurs surfaces
+blanches (**4,99:1**). Les contours de champs emploient `control-line` : **3,67:1**
+sur blanc et **3,46:1** sur ivoire, contre 1,64:1 / 1,54:1 pour `tk-300`.
+Les filets de carte décoratifs gardent le token `line`.
+
+Le focus utilise l'indigo sur fond clair (**13,92:1** sur blanc) et une bordure
+blanche dans les navigations encre (**19,67:1**). Les choix de paiement masqués
+visuellement exposent leur focus sur la carte qui les contient. Les états inactifs
+ne sont pas assimilés aux états actifs. Les tons opt-in `.dark` sont préservés,
+mais cette recette ne valide pas globalement le mode sombre.
+
+Ces mesures concernent les parcours essentiels, pas une certification WCAG de
+toutes les vues ou de tous les contenus CMS. Selon les références W3C :
+[texte](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html),
+[contrôles et états nécessaires](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html).
+
+### Harmonisation complémentaire de l'interface — 28 octobre 2026
+
+Le texte secondaire `muted` reprend désormais le neutre existant `tk-600`
+(`#54514a`) : **7,92:1** sur blanc, **7,46:1** sur ivoire et **7,04:1** sur sable.
+Les valeurs 4,99:1 indiquées dans le lot précédent décrivent son état historique.
+Les dates, durées et libellés informatifs sur clair utilisent ce texte secondaire,
+les catégories et rôles utilisent `gold-ink`. Ne pas foncer globalement `tk-400` :
+ce gris reste utile sur encre (**6,60:1**), notamment dans les navigations et le footer.
+
+Les liens des contenus riches sont indigo, soulignés en permanence et indigo-600
+au survol. Le rendu produit historique `prose-sz` reçoit le même traitement des
+liens sans changement de sa mise en page. Les titres du footer passent de tk-500
+à tk-400 (**3,95 → 6,60:1**). Les focus sur les surfaces encre sont blancs.
+Les étapes de l'accueil utilisent les pastels existants et des numéros or foncé.
+
+Le panneau photo d'authentification garde son image avec un voile plus opaque
+(encre à 75 % minimum), texte blanc à 85 %, petit texte à 80 %. Les glyphes et
+textes WhatsApp sont encre sur le vert existant, y compris sur la carte de contact.
+Les couleurs de statut et leurs libellés sont conservés. Aucun mode sombre
+automatique, nouveau logo ou contenu réel en base n'est introduit.
+
+Le [rapport couleurs](validations/2026-10-28-couleurs-interface/README.md) détaille
+les mesures, la recette et les réserves CMS/production. Les couleurs intégrées
+aux contenus peuvent primer sur les styles du thème et demandent une revue
+éditoriale séparée. Aucune conformité globale n'est déclarée.

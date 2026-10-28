@@ -151,10 +151,10 @@ new #[Layout('components.layouts.auth')] class extends Component
     @endif
 
     <form wire:submit="verify" class="mt-8 space-y-5">
-        <x-tk.field label="Code de connexion" for="code">
-            <input wire:model="code" id="code" type="text" inputmode="numeric" autocomplete="one-time-code"
+        <x-tk.field label="Code de connexion" for="code" :required="true">
+            <input wire:model="code" id="code" type="text" required aria-required="true" inputmode="numeric" autocomplete="one-time-code"
                    maxlength="6" autofocus placeholder="••••••" aria-describedby="otp-code-help{{ $errors->has('code') ? ' otp-code-error' : '' }}" aria-invalid="{{ $errors->has('code') ? 'true' : 'false' }}"
-                   class="w-full rounded-input border bg-surface text-center font-mono text-2xl tracking-[0.5em] text-content placeholder:text-tk-300 min-h-[56px] px-4 transition-colors focus:outline-none focus:ring-4 focus:ring-ink/10 {{ $errors->has('code') ? 'border-danger' : 'border-tk-300 focus:border-ink' }}">
+                   class="w-full rounded-input border bg-surface text-center font-mono text-2xl tracking-[0.5em] text-content placeholder:text-muted min-h-[56px] px-4 transition-colors focus:ring-4 focus:ring-ink/10 {{ $errors->has('code') ? 'border-danger' : 'border-control-line focus:border-ink' }}">
         </x-tk.field>
         <p id="otp-code-help" class="text-xs text-muted">Ne communiquez jamais ce code. Un renvoi remplace le code précédent.</p>
         @error('code')
@@ -163,7 +163,7 @@ new #[Layout('components.layouts.auth')] class extends Component
         <p x-cloak x-show="verifyRemaining > 0" class="text-sm text-muted" aria-live="off">Validation disponible dans <span x-text="verifyRemaining">{{ $verifyDelay }}</span> secondes.</p>
 
         <label class="flex min-h-11 items-center gap-2 text-sm text-content">
-            <input type="checkbox" wire:model="remember_device" class="h-4 w-4 rounded border-tk-300 text-ink focus:ring-ink/20">
+            <input type="checkbox" wire:model="remember_device" class="h-4 w-4 rounded border-control-line text-ink focus:ring-ink/20">
             Faire confiance à cet appareil pendant {{ (int) config('tikmos.two_factor.remember_days', 30) }} jours
         </label>
 

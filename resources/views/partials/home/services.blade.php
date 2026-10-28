@@ -5,7 +5,7 @@
         <x-tk.divider-gold class="mt-3" />
         <h2 class="mt-3 max-w-2xl font-display text-3xl font-extrabold text-content md:text-4xl">Une expertise rare, mise au service de vos projets.</h2>
     </div>
-    @php($tints = ['bg-sky', 'bg-mint', 'bg-lilac', 'bg-peach'])
+    @php($tints = ['bg-indigo-50', 'bg-gold-100', 'bg-sand', 'bg-mist'])
     <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         @foreach ($homepage->services as $i => $service)
             <div class="reveal" x-data x-intersect.once="setTimeout(() => $el.classList.add('is-revealed'), {{ $i * 80 }})">

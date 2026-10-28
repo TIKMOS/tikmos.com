@@ -2,6 +2,8 @@
 
 use App\Models\Product;
 use App\Models\ProductCategory;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
@@ -17,6 +19,7 @@ new #[Layout('components.layouts.public')] class extends Component
     #[Url]
     public string $sort = 'featured';
 
+    /** @return array{products: LengthAwarePaginator<int, Product>, categories: Collection<int, ProductCategory>} */
     public function with(): array
     {
         $query = Product::active()->with('category');
@@ -58,7 +61,7 @@ new #[Layout('components.layouts.public')] class extends Component
             @foreach ($categories as $c)
                 <button wire:click="$set('cat', '{{ $c->slug }}')" @class(['rounded-pill border px-4 py-1.5 text-sm font-medium transition-colors', 'border-ink bg-ink text-paper' => $cat === $c->slug, 'border-line bg-surface text-content hover:border-ink' => $cat !== $c->slug])>{{ $c->name }}</button>
             @endforeach
-            <select wire:model.live="sort" class="ml-auto min-h-[40px] rounded-input border border-tk-300 bg-surface px-3 text-sm text-content focus:border-ink focus:outline-none">
+            <select wire:model.live="sort" class="ml-auto min-h-[40px] rounded-input border border-control-line bg-surface px-3 text-sm text-content focus:border-ink">
                 <option value="featured">En avant</option>
                 <option value="new">Nouveautés</option>
                 <option value="price_asc">Prix croissant</option>

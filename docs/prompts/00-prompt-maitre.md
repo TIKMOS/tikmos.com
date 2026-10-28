@@ -74,7 +74,8 @@ En cas de doute entre une habitude et la doc : **la doc gagne**. Si la doc est m
   états vides/erreur soignés.
 - **SEO** : meta par page (< 60/160c), canonical, OG/Twitter, **JSON-LD** (`Person` /
   `ProfessionalService` / `Product` / `FAQPage`), sitemap, URLs propres, Hn, `alt`.
-- **Accessibilité (AA)** : contraste ≥ 4.5:1 (**or texte = `gold-600`**), focus indigo visibles,
+- **Accessibilité (AA)** : contraste du texte courant ≥ 4.5:1 sur le fond réel (`gold-ink`
+  sur clair ; `gold-600` ne garantit pas ce ratio), focus indigo sur clair/blanc sur encre,
   ARIA, clavier, `prefers-reduced-motion`.
 - **Sécurité** : validation serveur systématique, `$fillable` explicite, Policies + permissions,
   CSRF/XSS (purifier)/SQLi gérés, rate limiting, uploads hors webroot + URLs signées, audit.

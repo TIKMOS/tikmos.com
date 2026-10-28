@@ -59,7 +59,7 @@ new #[Layout('components.layouts.auth')] class extends Component
     }
 }; ?>
 
-<div>
+<div x-data="{ previousStep: 1 }" x-effect="const step = $wire.step; if (step !== previousStep) { previousStep = step; $nextTick(() => (step === 1 ? $refs.registrationName : $refs.registrationEmail).focus()) }">
     {{-- Progression --}}
     <div class="mb-7">
         <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted">
@@ -77,11 +77,11 @@ new #[Layout('components.layouts.auth')] class extends Component
     {{-- Étape 1 --}}
     <div x-show="$wire.step === 1" x-transition.opacity.duration.300ms>
         <form wire:submit="next" class="mt-8 space-y-5">
-            <x-tk.field label="Nom complet" for="name" :error="$errors->first('name')">
-                <x-tk.input wire:model="name" id="name" type="text" icon="user" placeholder="Votre nom" autocomplete="name" autofocus :invalid="$errors->has('name')" />
+            <x-tk.field label="Nom complet" for="name" :required="true" :error="$errors->first('name')">
+                <x-tk.input x-ref="registrationName" wire:model="name" id="name" type="text" icon="user" placeholder="Votre nom" autocomplete="name" autofocus :invalid="$errors->has('name')" />
             </x-tk.field>
 
-            <x-tk.field label="Téléphone" hint="Facilite le contact WhatsApp" :error="$errors->first('phone')">
+            <x-tk.field label="Téléphone" for="registration-phone" hint="Facilite le contact WhatsApp" :error="$errors->first('phone')">
                 <x-tk.phone wire:model="phone" placeholder="Numéro de téléphone" :invalid="$errors->has('phone')" />
             </x-tk.field>
 
@@ -92,19 +92,19 @@ new #[Layout('components.layouts.auth')] class extends Component
     {{-- Étape 2 --}}
     <div x-show="$wire.step === 2" x-cloak x-transition.opacity.duration.300ms>
         <form wire:submit="register" class="mt-8 space-y-5">
-            <x-tk.field label="Email" for="email" :error="$errors->first('email')">
-                <x-tk.input wire:model="email" id="email" type="email" icon="mail" placeholder="vous@exemple.com" autocomplete="email" :invalid="$errors->has('email')" />
+            <x-tk.field label="Email" for="email" :required="true" :error="$errors->first('email')">
+                <x-tk.input x-ref="registrationEmail" wire:model="email" id="email" type="email" icon="mail" placeholder="vous@exemple.com" autocomplete="email" :invalid="$errors->has('email')" />
             </x-tk.field>
 
-            <x-tk.field label="Mot de passe" for="password" :error="$errors->first('password')">
+            <x-tk.field label="Mot de passe" for="password" :required="true" :error="$errors->first('password')">
                 <x-tk.input wire:model="password" id="password" type="password" icon="lock-keyhole" placeholder="••••••••" autocomplete="new-password" :invalid="$errors->has('password')" />
             </x-tk.field>
 
-            <x-tk.field label="Confirmer le mot de passe" for="password_confirmation">
+            <x-tk.field label="Confirmer le mot de passe" for="password_confirmation" :required="true">
                 <x-tk.input wire:model="password_confirmation" id="password_confirmation" type="password" icon="lock-keyhole" placeholder="••••••••" autocomplete="new-password" />
             </x-tk.field>
 
-            <div class="flex gap-3">
+            <div class="flex flex-col gap-3 sm:flex-row">
                 <x-tk.button type="button" wire:click="back" variant="secondary" size="lg" icon="arrow-left">Retour</x-tk.button>
                 <x-tk.button type="submit" variant="primary" size="lg" class="flex-1">Créer mon compte</x-tk.button>
             </div>

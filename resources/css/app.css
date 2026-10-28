@@ -22,7 +22,8 @@
 
     /* ---------- Accent OR champagne (signature luxe) — alias 'accent-*' conservé pour compat ---------- */
     --color-gold: #b9975b;
-    --color-gold-600: #a07f44; /* or foncé — texte sur fond clair (AA) */
+    --color-gold-600: #a07f44; /* accent décoratif ; ne garantit pas AA pour du petit texte */
+    --color-gold-ink: #6e5524; /* texte or sur les fonds clairs du thème */
     --color-gold-100: #f4ecdd; /* or pâle — fonds de zone/carte premium */
     --color-accent-50: #f7f1e6;
     --color-accent-100: #f4ecdd;
@@ -74,8 +75,9 @@
     --color-canvas: #faf8f3;   /* fond d'app = ivoire */
     --color-surface: #ffffff;
     --color-content: #0b0b0c;
-    --color-muted: #6f6f76;
+    --color-muted: #54514a; /* texte secondaire lisible aussi sur les fonds pastel */
     --color-line: #e4e1d9;
+    --color-control-line: #8a857a; /* contours des contrôles : > 3:1 sur blanc/ivoire */
 
     /* ---------- Rayons (modérés, cohérents) ---------- */
     --radius-tile: 8px;
@@ -99,6 +101,8 @@
     --color-surface: #161618;
     --color-content: #f6f6f7;
     --color-muted: #9a958a;
+    --color-gold-ink: #cdb07a;
+    --color-control-line: #9a958a;
     --color-line: color-mix(in srgb, #ffffff 8%, transparent);
     --color-accent-500: #cdb07a;
     color-scheme: dark;
@@ -125,13 +129,18 @@
     /* Sélection = or champagne (signature) */
     ::selection {
         background-color: var(--color-gold);
-        color: #fff;
+        color: var(--color-ink);
     }
 
     /* Cible de focus = indigo nuit (a11y) */
     :focus-visible {
         outline: 2px solid var(--color-indigo);
         outline-offset: 2px;
+    }
+
+    .bg-ink :focus-visible,
+    .prose-tk pre :focus-visible {
+        outline-color: var(--color-paper);
     }
 
     [x-cloak] {
@@ -218,11 +227,13 @@
     .prose-tk ol { list-style: decimal; }
     .prose-tk li { margin: 0.4em 0; padding-left: 0.25rem; }
     .prose-tk li::marker { color: var(--color-gold); }
-    .prose-tk a {
-        color: var(--color-gold-600); text-decoration: underline;
+    .prose-tk a, .prose-sz a {
+        color: var(--color-indigo); text-decoration: underline;
         text-underline-offset: 2px; font-weight: 500;
     }
-    .prose-tk a:hover { color: var(--color-content); }
+    .prose-tk a:hover, .prose-sz a:hover { color: var(--color-indigo-600); }
+    .dark .prose-tk a, .dark .prose-sz a { color: var(--color-gold-ink); }
+    .dark .prose-tk a:hover, .dark .prose-sz a:hover { color: var(--color-content); }
     .prose-tk strong { font-weight: 700; color: var(--color-content); }
     .prose-tk em { font-style: italic; }
     .prose-tk blockquote {

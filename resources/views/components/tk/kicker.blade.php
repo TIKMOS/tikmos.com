@@ -2,9 +2,9 @@
 
 @php
     $color = match ($tone) {
-        'muted' => 'text-tk-500',
+        'muted' => 'text-muted',
         'accent' => 'text-content',
-        default => 'text-gold-600', // signature : sur-titre or champagne
+        default => 'text-gold-ink', // Or de texte ; l'or décoratif reste inchangé.
     };
 @endphp
 

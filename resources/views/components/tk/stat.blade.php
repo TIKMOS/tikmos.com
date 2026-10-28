@@ -6,7 +6,7 @@
 ])
 
 @php
-    $tints = ['sky' => 'bg-sky', 'mint' => 'bg-mint', 'lilac' => 'bg-lilac', 'peach' => 'bg-peach'];
+    $tints = ['sky' => 'bg-indigo-50', 'mint' => 'bg-sage', 'lilac' => 'bg-mist', 'peach' => 'bg-sand'];
     $cardBg = $tint && isset($tints[$tint]) ? $tints[$tint].' border-line/60' : 'bg-surface border-line';
     $iconBg = $tint && isset($tints[$tint]) ? 'bg-ink text-paper' : 'bg-tk-100 text-tk-600';
 @endphp

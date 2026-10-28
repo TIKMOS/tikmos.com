@@ -147,14 +147,14 @@ new #[Layout('components.layouts.app')] class extends Component
             <x-tk.field label="Nom complet" for="name" :error="$errors->first('name')">
                 <x-tk.input wire:model="name" id="name" icon="user" :invalid="$errors->has('name')" />
             </x-tk.field>
-            <x-tk.field label="Téléphone" :error="$errors->first('phone')">
+            <x-tk.field label="Téléphone" for="profile-phone" :error="$errors->first('phone')">
                 <x-tk.phone wire:model="phone" :invalid="$errors->has('phone')" />
             </x-tk.field>
             <div class="grid gap-5 sm:grid-cols-2">
                 <x-tk.field label="Ville" for="city" :error="$errors->first('city')">
                     <x-tk.input wire:model="city" id="city" icon="map-pin" />
                 </x-tk.field>
-                <x-tk.field label="Email">
+                <x-tk.field label="Email" for="profile-email">
                     <x-tk.input value="{{ auth()->user()->email }}" disabled icon="mail" class="opacity-60" />
                 </x-tk.field>
             </div>
@@ -231,7 +231,7 @@ new #[Layout('components.layouts.app')] class extends Component
                 </x-tk.field>
                 <p id="closure-help" class="text-xs text-muted">Le mot de passe n’est pas modifié. Vous serez déconnecté après confirmation.</p>
                 <label class="flex min-h-11 items-start gap-3 text-sm text-content">
-                    <input type="checkbox" wire:model="closureConfirmed" class="mt-1 h-4 w-4 shrink-0 rounded border-tk-300 text-ink focus:ring-ink/20"
+                    <input type="checkbox" wire:model="closureConfirmed" class="mt-1 h-4 w-4 shrink-0 rounded border-control-line text-ink focus:ring-ink/20"
                         aria-describedby="{{ $errors->has('closurePassword') || $errors->has('closureConfirmed') ? 'closure-error' : 'closure-help' }}" aria-invalid="{{ $errors->has('closureConfirmed') ? 'true' : 'false' }}">
                     <span>Je comprends que mon accès sera désactivé et que mes données ne seront pas automatiquement effacées.</span>
                 </label>

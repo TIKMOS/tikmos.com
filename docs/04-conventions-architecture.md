@@ -147,7 +147,8 @@ Web Push (`minishlink/web-push`) en option. **Décision PWA = question ouverte**
 ---
 
 ## 10. Accessibilité (AA)
-Contraste ≥ 4.5:1 (**or texte = `gold-600`**), focus visibles (anneau indigo), cibles ≥ 44 px,
+Contraste du texte courant ≥ 4.5:1 sur son fond réel (`gold-600` ne le garantit pas ;
+`gold-ink` pour le petit texte or sur clair), focus indigo sur clair/blanc sur encre, cibles ≥ 44 px,
 navigation clavier, ARIA sur composants interactifs, `prefers-reduced-motion`, `alt` partout,
 formulaires labellisés.
 

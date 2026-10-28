@@ -85,13 +85,13 @@ new #[Layout('components.layouts.public')] class extends Component
                                 @if ($item['size'])<p class="text-sm text-content">Taille : <span class="font-medium">{{ $item['size'] }}</span></p>@endif
                                 <p class="text-sm text-muted">{{ $product->priceLabel() }}</p>
                             </div>
-                            <div class="col-span-2 flex w-fit items-center rounded-btn border border-tk-300">
-                                <button wire:click="updateQty('{{ $item['key'] }}', {{ $item['qty'] - 1 }})" class="grid h-9 w-9 place-items-center text-content hover:bg-tk-50" aria-label="Moins"><x-lucide-minus class="h-4 w-4" /></button>
+                            <div class="col-span-2 flex w-fit items-center rounded-btn border border-control-line">
+                                <button wire:click="updateQty('{{ $item['key'] }}', {{ $item['qty'] - 1 }})" class="grid h-11 w-11 place-items-center text-content hover:bg-tk-50" aria-label="Diminuer la quantité de {{ $product->name }}{{ $item['size'] ? ' — taille '.$item['size'] : '' }}"><x-lucide-minus class="h-4 w-4" /></button>
                                 <span class="w-8 text-center text-sm font-medium">{{ $item['qty'] }}</span>
-                                <button wire:click="updateQty('{{ $item['key'] }}', {{ $item['qty'] + 1 }})" class="grid h-9 w-9 place-items-center text-content hover:bg-tk-50" aria-label="Plus"><x-lucide-plus class="h-4 w-4" /></button>
+                                <button wire:click="updateQty('{{ $item['key'] }}', {{ $item['qty'] + 1 }})" class="grid h-11 w-11 place-items-center text-content hover:bg-tk-50" aria-label="Augmenter la quantité de {{ $product->name }}{{ $item['size'] ? ' — taille '.$item['size'] : '' }}"><x-lucide-plus class="h-4 w-4" /></button>
                             </div>
                             <p class="hidden w-28 text-right font-display font-bold text-content sm:block">{{ number_format($item['line_total'], 0, ',', ' ') }} FCFA</p>
-                            <button wire:click="remove('{{ $item['key'] }}')" class="grid h-9 w-9 shrink-0 place-items-center justify-self-end rounded-tile text-tk-400 hover:bg-tk-100 hover:text-danger" aria-label="Retirer"><x-lucide-trash-2 class="h-4 w-4" /></button>
+                            <button wire:click="remove('{{ $item['key'] }}')" class="grid h-11 w-11 shrink-0 place-items-center justify-self-end rounded-tile text-muted hover:bg-tk-100 hover:text-danger" aria-label="Retirer {{ $product->name }}{{ $item['size'] ? ' — taille '.$item['size'] : '' }} du panier"><x-lucide-trash-2 class="h-4 w-4" /></button>
                         </div>
                     @endforeach
                 </div>

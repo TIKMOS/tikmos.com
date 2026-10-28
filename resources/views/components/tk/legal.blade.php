@@ -35,7 +35,7 @@
             @if (! empty($toc))
                 <aside class="hidden lg:block">
                     <nav class="sticky top-24 space-y-1 border-l border-line pl-4 text-sm" aria-label="Sommaire">
-                        <p class="mb-2 -ml-4 pl-4 text-xs font-semibold uppercase tracking-[0.18em] text-tk-400">Sommaire</p>
+                        <p class="mb-2 -ml-4 pl-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted">Sommaire</p>
                         @foreach ($toc as $item)
                             <a href="#{{ $item['id'] }}"
                                class="block rounded-r-btn py-1.5 pl-3 -ml-px border-l-2 transition-colors"

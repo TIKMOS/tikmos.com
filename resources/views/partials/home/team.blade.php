@@ -23,7 +23,7 @@
                         @endif
                     </div>
                     <h3 class="mt-4 font-display text-lg font-bold text-content">{{ $member->name }}</h3>
-                    <p class="mt-0.5 text-sm text-gold-600">{{ $member->role_title }}</p>
+                    <p class="mt-0.5 text-sm text-gold-ink">{{ $member->role_title }}</p>
                 </div>
             @endforeach
         </div>

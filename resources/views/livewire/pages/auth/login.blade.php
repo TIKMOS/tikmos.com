@@ -106,17 +106,17 @@ new #[Layout('components.layouts.auth')] class extends Component
     @endif
 
     <form wire:submit="login" class="mt-8 space-y-5">
-        <x-tk.field label="Email" for="email" :error="$errors->first('email')">
+        <x-tk.field label="Email" for="email" :required="true" :error="$errors->first('email')">
             <x-tk.input wire:model="email" id="email" type="email" icon="mail" placeholder="vous@exemple.com" autocomplete="email" autofocus :invalid="$errors->has('email')" />
         </x-tk.field>
 
-        <x-tk.field label="Mot de passe" for="password" :error="$errors->first('password')">
+        <x-tk.field label="Mot de passe" for="password" :required="true" :error="$errors->first('password')">
             <x-tk.input wire:model="password" id="password" type="password" icon="lock-keyhole" placeholder="••••••••" autocomplete="current-password" :invalid="$errors->has('password')" />
         </x-tk.field>
 
         <div class="flex items-center justify-between">
-            <label class="flex items-center gap-2 text-sm text-content">
-                <input type="checkbox" wire:model="remember" class="h-4 w-4 rounded border-tk-300 text-ink focus:ring-ink/20">
+            <label class="flex min-h-11 items-center gap-2 text-sm text-content">
+                <input type="checkbox" wire:model="remember" class="h-4 w-4 rounded border-control-line text-ink focus:ring-ink/20">
                 Se souvenir de moi
             </label>
             <a href="{{ route('password.request') }}" wire:navigate class="text-sm font-medium text-content underline-offset-2 hover:underline">Mot de passe oublié ?</a>

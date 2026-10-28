@@ -35,9 +35,9 @@ new #[Layout('components.layouts.public')] class extends Component
 
         <div class="mt-6 max-w-3xl reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
             <div class="flex flex-wrap items-center gap-2 text-sm">
-                @if ($project->category)<span class="font-mono uppercase tracking-[0.16em] text-gold-600">{{ $project->category }}</span>@endif
-                @if ($project->year)<span class="text-tk-400">· {{ $project->year }}</span>@endif
-                @if ($project->client_name)<span class="text-tk-400">· {{ $project->client_name }}</span>@endif
+                @if ($project->category)<span class="font-mono uppercase tracking-[0.16em] text-gold-ink">{{ $project->category }}</span>@endif
+                @if ($project->year)<span class="text-muted">· {{ $project->year }}</span>@endif
+                @if ($project->client_name)<span class="text-muted">· {{ $project->client_name }}</span>@endif
             </div>
             <h1 class="mt-2 font-display text-4xl font-black leading-[1.05] tracking-[-0.02em] text-content md:text-5xl">{{ $project->title }}</h1>
             @if ($project->excerpt)<p class="mt-4 text-lg text-muted">{{ $project->excerpt }}</p>@endif

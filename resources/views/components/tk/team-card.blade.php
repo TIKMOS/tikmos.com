@@ -19,7 +19,7 @@
     </div>
     <div class="flex flex-1 flex-col p-5">
         <h2 class="font-display text-xl font-bold text-content">{{ $member->name }}</h2>
-        <p class="text-sm font-medium text-gold-600">{{ $member->role_title }}</p>
+        <p class="text-sm font-medium text-gold-ink">{{ $member->role_title }}</p>
         @if ($member->bio)<p class="mt-3 text-sm leading-relaxed text-content/75">{{ $member->bio }}</p>@endif
 
         @if (! empty($member->funfacts))

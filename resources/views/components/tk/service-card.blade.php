@@ -14,12 +14,12 @@
         </span>
     @endif
 
-    <p class="mt-5 font-mono text-xs uppercase tracking-[0.16em] text-gold-600">{{ $service->category->label() }}</p>
+    <p class="mt-5 font-mono text-xs uppercase tracking-[0.16em] text-gold-ink">{{ $service->category->label() }}</p>
     <h3 class="mt-1.5 font-display text-lg font-bold text-content">{{ $service->title }}</h3>
     <p class="mt-2 flex-1 text-sm text-muted">{{ $service->excerpt }}</p>
 
     <span class="mt-5 inline-flex items-center gap-1 text-sm font-medium text-content group-hover:gap-2">
-        @if ($service->price_label)<span class="mr-auto text-gold-600">{{ $service->price_label }}</span>@endif
+        @if ($service->price_label)<span class="mr-auto text-gold-ink">{{ $service->price_label }}</span>@endif
         En savoir plus <x-lucide-arrow-right class="h-4 w-4 transition-all" />
     </span>
 </a>

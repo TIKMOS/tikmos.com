@@ -10,10 +10,10 @@
             $dot = match ($state) {
                 'done' => 'bg-ink text-paper',
                 'current' => 'bg-ink text-white ring-4 ring-ink/10',
-                default => 'bg-tk-100 text-tk-400',
+                default => 'bg-tk-100 text-muted',
             };
             $line = $state === 'todo' ? 'bg-tk-200' : 'bg-ink';
-            $labelColor = $state === 'todo' ? 'text-tk-400' : 'text-content';
+            $labelColor = $state === 'todo' ? 'text-muted' : 'text-content';
         @endphp
         <li class="relative flex gap-4 pb-6 last:pb-0">
             @unless ($isLast)
@@ -25,7 +25,7 @@
                 @elseif ($state === 'current')
                     <span class="h-2 w-2 rounded-full bg-white"></span>
                 @else
-                    <span class="h-2 w-2 rounded-full bg-tk-400"></span>
+                    <span class="h-2 w-2 rounded-full bg-control-line"></span>
                 @endif
             </span>
             <div class="-mt-0.5 flex-1">

@@ -104,15 +104,15 @@ new #[Layout('components.layouts.admin')] class extends Component
     </div>
 
     <div class="mt-6 flex flex-wrap gap-2">
-        <button wire:click="$set('filter', '')" @class(['rounded-pill border px-4 py-1.5 text-sm font-medium', 'border-ink bg-ink text-paper' => $filter === '', 'border-line bg-surface text-content hover:border-ink' => $filter !== ''])>Toutes</button>
+        <button wire:click="$set('filter', '')" @class(['min-h-11 rounded-pill border px-4 py-1.5 text-sm font-medium', 'border-ink bg-ink text-paper' => $filter === '', 'border-line bg-surface text-content hover:border-ink' => $filter !== ''])>Toutes</button>
         @foreach ($statuses as $s)
-            <button wire:click="$set('filter', '{{ $s->value }}')" @class(['rounded-pill border px-4 py-1.5 text-sm font-medium', 'border-ink bg-ink text-paper' => $filter === $s->value, 'border-line bg-surface text-content hover:border-ink' => $filter !== $s->value])>{{ $s->label() }}</button>
+            <button wire:click="$set('filter', '{{ $s->value }}')" @class(['min-h-11 rounded-pill border px-4 py-1.5 text-sm font-medium', 'border-ink bg-ink text-paper' => $filter === $s->value, 'border-line bg-surface text-content hover:border-ink' => $filter !== $s->value])>{{ $s->label() }}</button>
         @endforeach
     </div>
 
     <div class="mt-6">
         @forelse ($orders as $order)
-            <button wire:key="ord-{{ $order->id }}" wire:click="open({{ $order->id }})" class="flex w-full items-center justify-between gap-4 border-b border-line py-3.5 text-left hover:bg-tk-50">
+            <button id="order-trigger-{{ $order->id }}" aria-haspopup="dialog" aria-expanded="{{ $selectedId === $order->id ? 'true' : 'false' }}" wire:key="ord-{{ $order->id }}" wire:click="open({{ $order->id }})" class="flex w-full items-center justify-between gap-4 border-b border-line py-3.5 text-left hover:bg-tk-50">
                 <div>
                     <p class="font-mono text-sm font-bold text-content">{{ $order->number }}</p>
                     <p class="text-xs text-muted">{{ $order->user?->name }} · {{ $order->items_count }} art. · {{ $order->totalHeading() }} : {{ $order->totalLabel() }}</p>
@@ -132,14 +132,14 @@ new #[Layout('components.layouts.admin')] class extends Component
     {{-- Détail --}}
     @php($order = $this->selected())
     @if ($order)
-        <div class="fixed inset-0 z-50 flex justify-end bg-black/40" @keydown.escape.window="$wire.close()">
-            <div @click.outside="$wire.close()" class="h-full w-full max-w-md overflow-y-auto bg-surface p-6 shadow-lift">
+        <div wire:key="order-dialog-{{ $order->id }}" x-data class="fixed inset-0 z-50 flex justify-end bg-black/40">
+            <div role="dialog" aria-modal="true" aria-labelledby="order-panel-title" x-trap.inert.noscroll="true" @keydown.escape.stop.prevent="$wire.close()" @click.outside="$wire.close()" class="h-full w-full max-w-md overflow-y-auto bg-surface p-6 shadow-lift">
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="font-mono font-bold text-content">{{ $order->number }}</p>
+                        <h2 id="order-panel-title" class="font-mono font-bold text-content">{{ $order->number }}</h2>
                         <p class="text-sm text-muted">{{ $order->created_at->format('d/m/Y H:i') }}</p>
                     </div>
-                    <button wire:click="close" class="text-tk-400 hover:text-content"><x-lucide-x class="h-5 w-5" /></button>
+                    <button type="button" wire:click="close" aria-label="Fermer le détail de la commande" class="grid h-11 w-11 shrink-0 place-items-center text-muted hover:text-content"><x-lucide-x class="h-5 w-5" /></button>
                 </div>
 
                 <div class="mt-4 flex gap-2">
@@ -173,7 +173,7 @@ new #[Layout('components.layouts.admin')] class extends Component
                         @endif
                         @if (! empty($order->status->nextStates()))
                             <div>
-                                <p class="mb-1.5 text-xs font-semibold uppercase tracking-wider text-tk-400">Faire avancer</p>
+                                <p class="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted">Faire avancer</p>
                                 <div class="flex flex-wrap gap-2">
                                     @foreach ($order->status->nextStates() as $next)
                                         @continue($next !== \App\Enums\OrderStatus::Cancelled && $order->payment_method === \App\Enums\PaymentMethod::Online && ($order->payment_review_required || $order->payment_status !== \App\Enums\OrderPaymentStatus::Paid))

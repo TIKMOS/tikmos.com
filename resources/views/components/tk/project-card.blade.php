@@ -13,8 +13,8 @@
     </div>
     <div class="flex flex-1 flex-col p-5">
         <div class="flex items-center gap-2 text-xs">
-            @if ($project->category)<span class="font-mono uppercase tracking-[0.14em] text-gold-600">{{ $project->category }}</span>@endif
-            @if ($project->year)<span class="text-tk-400">· {{ $project->year }}</span>@endif
+            @if ($project->category)<span class="font-mono uppercase tracking-[0.14em] text-gold-ink">{{ $project->category }}</span>@endif
+            @if ($project->year)<span class="text-muted">· {{ $project->year }}</span>@endif
         </div>
         <h3 class="mt-1.5 font-display text-lg font-bold text-content">{{ $project->title }}</h3>
         <p class="mt-2 flex-1 text-sm text-muted">{{ $project->excerpt }}</p>

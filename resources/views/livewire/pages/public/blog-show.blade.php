@@ -49,9 +49,9 @@ new #[Layout('components.layouts.public')] class extends Component
 
         <article class="mx-auto mt-6 max-w-3xl">
             <div class="flex flex-wrap items-center gap-2 text-sm">
-                @if ($post->category)<span class="font-mono uppercase tracking-[0.16em] text-gold-600">{{ $post->category->name }}</span>@endif
-                @if ($post->published_at)<span class="text-tk-400">· {{ $post->published_at->translatedFormat('d F Y') }}</span>@endif
-                @if ($post->reading_time)<span class="text-tk-400">· {{ $post->reading_time }} min de lecture</span>@endif
+                @if ($post->category)<span class="font-mono uppercase tracking-[0.16em] text-gold-ink">{{ $post->category->name }}</span>@endif
+                @if ($post->published_at)<span class="text-muted">· {{ $post->published_at->translatedFormat('d F Y') }}</span>@endif
+                @if ($post->reading_time)<span class="text-muted">· {{ $post->reading_time }} min de lecture</span>@endif
             </div>
             <h1 class="mt-3 font-display text-4xl font-black leading-[1.05] tracking-[-0.02em] text-content md:text-5xl">{{ $post->title }}</h1>
             @if ($post->excerpt)<p class="mt-4 text-lg text-muted">{{ $post->excerpt }}</p>@endif

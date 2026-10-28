@@ -37,6 +37,7 @@
     <script type="application/ld+json">{!! $jsonLd !!}</script>
 </head>
 <body class="flex min-h-dvh flex-col">
+    <x-tk.skip-link />
     {{-- Bandeau baseline --}}
     @if ($general->top_bandeau_enabled)
     <div class="bg-ink text-paper">
@@ -57,6 +58,10 @@
     <header
         x-data="{ scrolled: false, open: false }"
         x-on:scroll.window="scrolled = window.scrollY > 8"
+        @keydown.escape.stop.prevent="if (open) { open = false; $refs.mobileTrigger.focus() }"
+        @click.outside="open = false"
+        @focusout="if (!$el.contains($event.relatedTarget)) open = false"
+        @resize.window.debounce.100ms="if (open && window.matchMedia('(min-width: 768px)').matches) { const inside = $refs.mobileNavigation.contains(document.activeElement); open = false; if (inside) $nextTick(() => $refs.desktopNavigation.querySelector('a')?.focus()) }"
         class="sticky top-0 z-30 transition-colors duration-300"
         :class="scrolled ? 'border-b border-line bg-surface/85 backdrop-blur' : ''"
     >
@@ -73,15 +78,15 @@
                     ->values()->all();
             @endphp
 
-            <nav class="hidden items-center gap-1 text-sm font-medium md:flex">
+            <nav x-ref="desktopNavigation" aria-label="Navigation principale" class="hidden items-center gap-1 text-sm font-medium md:flex">
                 @foreach ($navLinks as $link)
                     @php($active = request()->is($link['path']) || request()->is($link['path'].'/*'))
                     <a href="{{ url('/'.$link['path']) }}" wire:navigate @if ($active) aria-current="page" @endif
-                       class="rounded-btn px-3 py-2 transition-colors {{ $active ? 'bg-tk-100 text-content' : 'text-content hover:bg-tk-50' }}">{{ $link['label'] }}</a>
+                       class="inline-flex min-h-11 items-center rounded-btn px-3 py-2 transition-colors {{ $active ? 'bg-tk-100 text-content' : 'text-content hover:bg-tk-50' }}">{{ $link['label'] }}</a>
                 @endforeach
                 @if ($shopEnabled ?? false)
                     @php($shopActive = request()->is('boutique') || request()->is('boutique/*'))
-                    <a href="{{ url('/boutique') }}" wire:navigate class="rounded-btn px-3 py-2 transition-colors {{ $shopActive ? 'bg-tk-100 text-content' : 'text-content hover:bg-tk-50' }}">Boutique</a>
+                    <a href="{{ url('/boutique') }}" wire:navigate class="inline-flex min-h-11 items-center rounded-btn px-3 py-2 transition-colors {{ $shopActive ? 'bg-tk-100 text-content' : 'text-content hover:bg-tk-50' }}">Boutique</a>
                 @endif
             </nav>
 
@@ -92,12 +97,12 @@
                         <x-tk.button href="{{ route('login') }}" variant="secondary" size="sm">Connexion</x-tk.button>
                         <x-tk.button href="{{ route('quote-request') }}" variant="primary" size="sm" icon="file-text">Demander un devis</x-tk.button>
                     @else
-                        <div class="relative" x-data="{ acc: false }">
-                            <button @click="acc = !acc" class="flex items-center gap-2 rounded-pill py-1 pl-1 pr-2.5 transition-colors hover:bg-tk-100" aria-label="Mon compte">
+                        <div class="relative" x-data="{ acc: false }" @keydown.escape.stop.prevent="if (acc) { acc = false; $refs.accountTrigger.focus() }" @focusout="if (!$el.contains($event.relatedTarget)) acc = false">
+                            <button type="button" x-ref="accountTrigger" :aria-expanded="acc" aria-controls="public-account-menu" @click="acc = !acc; if (acc) $nextTick(() => $refs.accountPanel.querySelector('a')?.focus())" class="flex min-h-11 min-w-11 items-center gap-2 rounded-pill py-1 pl-1 pr-2.5 transition-colors hover:bg-tk-100" aria-label="Mon compte">
                                 <x-tk.avatar :name="auth()->user()->name" size="sm" />
                                 <x-lucide-chevron-down class="h-4 w-4 text-tk-500" />
                             </button>
-                            <div x-show="acc" x-cloak @click.outside="acc = false" x-transition.origin.top.right
+                            <div id="public-account-menu" x-ref="accountPanel" x-show="acc" x-cloak @click.outside="acc = false" x-transition.origin.top.right
                                  class="absolute right-0 top-12 z-40 w-52 rounded-card border border-line bg-surface p-1.5 shadow-pop">
                                 <p class="truncate px-3 py-1.5 text-xs text-muted">{{ auth()->user()->name }}</p>
                                 <a href="{{ auth()->user()->homeRoute() }}" wire:navigate class="flex items-center gap-2 rounded-tile px-3 py-2 text-sm text-content hover:bg-tk-100"><x-lucide-layout-dashboard class="h-4 w-4" /> Mon espace</a>
@@ -111,7 +116,7 @@
                         </div>
                     @endguest
                 </div>
-                <button class="grid h-10 w-10 place-items-center rounded-tile text-content md:hidden" @click="open = !open" aria-label="Menu">
+                <button type="button" x-ref="mobileTrigger" :aria-expanded="open" aria-controls="public-mobile-menu" class="grid h-11 w-11 place-items-center rounded-tile text-content md:hidden" @click="open = !open; if (open) $nextTick(() => $refs.mobileNavigation.querySelector('a')?.focus())" aria-label="Menu principal">
                     <x-lucide-menu x-show="!open" class="h-6 w-6" />
                     <x-lucide-x x-show="open" x-cloak class="h-6 w-6" />
                 </button>
@@ -119,18 +124,18 @@
         </div>
 
         {{-- Menu mobile --}}
-        <div x-show="open" x-cloak x-collapse class="border-t border-line bg-surface md:hidden">
-            <nav class="flex flex-col gap-1 px-4 py-3">
+        <div id="public-mobile-menu" x-ref="mobileNavigation" x-show="open" x-cloak x-collapse class="border-t border-line bg-surface md:hidden">
+            <nav aria-label="Navigation mobile" class="flex flex-col gap-1 px-4 py-3">
                 @foreach ($navLinks as $link)
                     @php($active = request()->is($link['path']) || request()->is($link['path'].'/*'))
                     <a href="{{ url('/'.$link['path']) }}" wire:navigate
-                       class="rounded-btn px-3 py-2.5 text-sm font-medium {{ $active ? 'bg-tk-100 text-content' : 'text-content hover:bg-tk-50' }}">{{ $link['label'] }}</a>
+                       class="inline-flex min-h-11 items-center rounded-btn px-3 py-2.5 text-sm font-medium {{ $active ? 'bg-tk-100 text-content' : 'text-content hover:bg-tk-50' }}">{{ $link['label'] }}</a>
                 @endforeach
                 @if ($shopEnabled ?? false)
-                    <a href="{{ url('/boutique') }}" wire:navigate class="rounded-btn px-3 py-2.5 text-sm font-medium text-content hover:bg-tk-50">Boutique</a>
+                    <a href="{{ url('/boutique') }}" wire:navigate class="inline-flex min-h-11 items-center rounded-btn px-3 py-2.5 text-sm font-medium text-content hover:bg-tk-50">Boutique</a>
                 @endif
                 @auth
-                    <a href="{{ auth()->user()->homeRoute() }}" wire:navigate class="rounded-btn px-3 py-2.5 text-sm font-medium text-content hover:bg-tk-50">Mon espace</a>
+                    <a href="{{ auth()->user()->homeRoute() }}" wire:navigate class="inline-flex min-h-11 items-center rounded-btn px-3 py-2.5 text-sm font-medium text-content hover:bg-tk-50">Mon espace</a>
                 @endauth
                 <div class="mt-2 flex gap-2 border-t border-line pt-3">
                     @guest
@@ -146,7 +151,7 @@
         </div>
     </header>
 
-    <main>
+    <main id="main-content" tabindex="-1">
         {{ $slot }}
     </main>
 
@@ -154,7 +159,7 @@
     @if (($footerPartners ?? collect())->isNotEmpty())
         <section class="border-t border-line bg-canvas py-12">
             <div class="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
-                <p class="text-center text-xs font-semibold uppercase tracking-[0.18em] text-tk-400">Ils nous font confiance</p>
+                <p class="text-center text-xs font-semibold uppercase tracking-[0.18em] text-muted">Ils nous font confiance</p>
                 <div class="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
                     @foreach ($footerPartners as $partner)
                         @php($logo = $partner->logoUrl())
@@ -163,7 +168,7 @@
                             @if ($logo)
                                 <img src="{{ $logo }}" alt="{{ $partner->name }}" class="h-9 w-auto opacity-70 transition group-hover:opacity-100">
                             @else
-                                <span class="font-display text-xl font-bold text-tk-400 transition group-hover:text-content">{{ $partner->name }}</span>
+                                <span class="font-display text-xl font-bold text-muted transition group-hover:text-content">{{ $partner->name }}</span>
                             @endif
                         </a>
                     @endforeach
@@ -194,7 +199,7 @@
             </div>
 
             <div class="md:col-span-3">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-500">Liens rapides</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-400">Liens rapides</p>
                 <ul class="mt-4 space-y-2.5 text-sm text-tk-400">
                     <li><a href="{{ url('/a-propos') }}" wire:navigate class="hover:text-white">À propos</a></li>
                     <li><a href="{{ url('/services') }}" wire:navigate class="hover:text-white">Services</a></li>
@@ -204,7 +209,7 @@
             </div>
 
             <div class="md:col-span-2">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-500">Ressources</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-400">Ressources</p>
                 <ul class="mt-4 space-y-2.5 text-sm text-tk-400">
                     <li><a href="{{ url('/cgu') }}" wire:navigate class="hover:text-white">CGU</a></li>
                     <li><a href="{{ url('/cgv') }}" wire:navigate class="hover:text-white">CGV (boutique)</a></li>
@@ -215,7 +220,7 @@
             </div>
 
             <div class="md:col-span-3">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-500">Contact</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-tk-400">Contact</p>
                 <ul class="mt-4 space-y-2.5 text-sm text-tk-400">
                     <li><a href="https://wa.me/{{ $waDigits }}" class="hover:text-white">{{ $general->brand_phone }}</a></li>
                     @if (! empty($general->emails['contact']))
@@ -225,7 +230,7 @@
             </div>
         </div>
         <div class="border-t border-white/10">
-            <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-5 py-5 text-xs text-tk-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-5 py-5 text-xs text-tk-400 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
                 <p>© {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.</p>
             </div>
         </div>

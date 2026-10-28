@@ -14,7 +14,7 @@
     {{-- Affichage : étoiles pleines selon $value --}}
     <div {{ $attributes->whereDoesntStartWith('wire:model')->merge(['class' => 'inline-flex items-center gap-0.5']) }} aria-label="Note {{ $value }}/{{ $max }}">
         @for ($i = 1; $i <= $max; $i++)
-            <x-lucide-star @class([$dim, 'fill-ink text-ink' => $i <= (int) $value, 'text-tk-300' => $i > (int) $value]) />
+            <x-lucide-star @class([$dim, 'fill-ink text-ink' => $i <= (int) $value, 'text-control-line' => $i > (int) $value]) />
         @endfor
     </div>
 @else
@@ -25,10 +25,10 @@
         @for ($i = 1; $i <= $max; $i++)
             <button type="button"
                     @click="value = {{ $i }}" @mouseenter="hover = {{ $i }}" @mouseleave="hover = 0"
-                    class="rounded p-0.5 transition-transform hover:scale-110 focus:outline-none focus-visible:ring-4 focus-visible:ring-ink/15"
+                    class="rounded p-0.5 transition-transform hover:scale-110 focus-visible:ring-4 focus-visible:ring-ink/15"
                     :aria-checked="value === {{ $i }}" role="radio" aria-label="{{ $i }} étoile(s)">
                 <x-lucide-star class="{{ $dim }} transition-colors"
-                    ::class="(hover ? {{ $i }} <= hover : {{ $i }} <= value) ? 'fill-ink text-ink' : 'text-tk-300'" />
+                    ::class="(hover ? {{ $i }} <= hover : {{ $i }} <= value) ? 'fill-ink text-ink' : 'text-control-line'" />
             </button>
         @endfor
     </div>

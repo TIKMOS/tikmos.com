@@ -11,7 +11,7 @@
     $base = 'inline-flex items-center justify-center gap-2 font-medium rounded-btn transition duration-200 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none whitespace-nowrap';
 
     $sizes = [
-        'sm' => 'text-sm px-4 min-h-[40px]',
+        'sm' => 'text-sm px-4 min-h-[44px]',
         'md' => 'text-[15px] px-5 min-h-[46px]',
         'lg' => 'text-base px-6 min-h-[50px]',
     ];
@@ -20,14 +20,14 @@
         // CTA principal — aplat encre (un par zone)
         'primary' => 'bg-ink text-paper hover:bg-tk-800',
         // Emphase premium — blanc + bordure OR champagne (signature luxe)
-        'gold' => 'bg-paper text-gold-600 border border-gold hover:bg-gold-100',
+        'gold' => 'bg-paper text-gold-ink border border-gold hover:bg-gold-100',
         // « accent » = emphase sobre : blanc + bordure encre (compat)
         'accent' => 'bg-paper text-content border border-ink hover:bg-tk-100',
         'secondary' => 'bg-paper text-content border border-tk-300 hover:border-ink hover:bg-tk-50',
         'ghost' => 'bg-transparent text-content hover:bg-tk-100',
         'danger' => 'bg-danger text-white hover:opacity-90',
         // WhatsApp (vert imposé)
-        'whatsapp' => 'bg-whatsapp text-white hover:opacity-90',
+        'whatsapp' => 'bg-whatsapp text-ink hover:opacity-90',
     ];
 
     $classes = $base.' '.($sizes[$size] ?? $sizes['md']).' '.($variants[$variant] ?? $variants['primary']);

@@ -23,6 +23,7 @@
     @livewireStyles
 </head>
 <body class="min-h-dvh bg-canvas pb-24 md:pb-0">
+    <x-tk.skip-link />
     <header class="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur">
         <div class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-6 lg:px-8">
             <div class="flex items-center gap-8">
@@ -35,13 +36,13 @@
                 </nav>
             </div>
 
-            <div class="relative flex items-center gap-3" x-data="{ open: false }">
-                <button class="flex items-center gap-2 rounded-pill py-1 pl-1 pr-3 hover:bg-tk-100" @click="open = !open">
+            <div class="relative flex items-center gap-3" x-data="{ open: false }" @keydown.escape.stop.prevent="if (open) { open = false; $refs.accountTrigger.focus() }" @focusout="if (!$el.contains($event.relatedTarget)) open = false">
+                <button type="button" x-ref="accountTrigger" aria-label="Mon compte" :aria-expanded="open" aria-controls="client-account-menu" class="flex min-h-11 min-w-11 items-center gap-2 rounded-pill py-1 pl-1 pr-3 hover:bg-tk-100" @click="open = !open; if (open) $nextTick(() => $refs.accountPanel.querySelector('a')?.focus())">
                     <x-tk.avatar :name="auth()->user()->name" size="sm" />
                     <span class="hidden text-sm font-medium text-content sm:inline">{{ auth()->user()->name }}</span>
                     <x-lucide-chevron-down class="h-4 w-4 text-tk-400" />
                 </button>
-                <div x-show="open" x-cloak @click.outside="open = false" x-transition.origin.top.right
+                <div id="client-account-menu" x-ref="accountPanel" x-show="open" x-cloak @click.outside="open = false" x-transition.origin.top.right
                      class="absolute right-0 top-12 w-48 rounded-card border border-line bg-surface p-1.5 shadow-pop">
                     <a href="{{ route('app.orders') }}" wire:navigate class="flex items-center gap-2 rounded-tile px-3 py-2 text-sm hover:bg-tk-100"><x-lucide-shopping-bag class="h-4 w-4" /> Mes achats</a>
                     <a href="{{ route('app.compte') }}" wire:navigate class="flex items-center gap-2 rounded-tile px-3 py-2 text-sm hover:bg-tk-100"><x-lucide-user class="h-4 w-4" /> Mon compte</a>
@@ -54,7 +55,7 @@
         </div>
     </header>
 
-    <main class="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 lg:px-8">
+    <main id="main-content" tabindex="-1" class="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 lg:px-8">
         {{ $slot }}
     </main>
 
