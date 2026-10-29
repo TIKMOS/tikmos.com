@@ -27,3 +27,8 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# Private deployment configuration/state must never be committed.
+/deploy/config.sh
+/deploy/*.private
+/deploy/__pycache__/
+/tests/deployment/__pycache__/
