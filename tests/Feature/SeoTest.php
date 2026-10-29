@@ -33,6 +33,15 @@ it('expose des méta et un JSON-LD Person sur l’accueil', function (): void {
         ->assertSee('Moïse TIKO', false);
 });
 
+it('relie la page À propos au profil LinkedIn dans son contenu et ses données structurées', function (): void {
+    $this->get('/a-propos')
+        ->assertOk()
+        ->assertSee('Voir mon profil LinkedIn')
+        ->assertSee('https://www.linkedin.com/in/tiko-moise/', false)
+        ->assertSee('"@type":"ProfilePage"', false)
+        ->assertSee('"sameAs":["https://www.linkedin.com/in/tiko-moise/"', false);
+});
+
 it('fournit un robots.txt statique protégeant les espaces privés', function (): void {
     // Fichier statique servi par le serveur web (hors kernel Laravel) — on vérifie son contenu.
     $robots = file_get_contents(public_path('robots.txt'));

@@ -21,6 +21,10 @@
                     'name' => $seo->person_name,
                     'jobTitle' => $seo->person_job_title,
                     'url' => $seo->person_url ?: url('/'),
+                    'sameAs' => [
+                        'https://www.linkedin.com/in/tiko-moise/',
+                        url('/a-propos'),
+                    ],
                     'worksFor' => ['@type' => 'Organization', 'name' => $seo->organization_name],
                 ],
                 [
