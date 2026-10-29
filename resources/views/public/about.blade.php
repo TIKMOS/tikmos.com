@@ -1,6 +1,28 @@
+@php
+    $profileSchemaJson = json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'ProfilePage',
+        'url' => route('about'),
+        'name' => 'À propos de Moïse TIKO | Tikmos',
+        'mainEntity' => [
+            '@type' => 'Person',
+            '@id' => route('about').'#person',
+            'name' => 'Moïse TIKO',
+            'jobTitle' => 'Professeur certifié en mathématiques et ingénieur Data / IA',
+            'url' => route('about'),
+            'sameAs' => [
+                'https://www.linkedin.com/in/tiko-moise/',
+                url('/'),
+            ],
+            'worksFor' => ['@type' => 'Organization', 'name' => 'Tikmos'],
+        ],
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+@endphp
+
 <x-layouts.public>
     <x-slot:head>
         <x-tk.seo title="À propos" description="Professeur certifié en mathématiques et ingénieur data science & IA : l'expertise qui exécute, au service de vos projets, vos formations et vos achats." />
+        <script type="application/ld+json">{!! $profileSchemaJson !!}</script>
     </x-slot:head>
 
     {{-- Hero --}}
@@ -16,6 +38,10 @@
                     <span class="text-tk-300">·</span>
                     <span class="inline-flex items-center gap-1.5"><x-lucide-cpu class="h-4 w-4 text-gold-600" /> Ingénieur Data / IA</span>
                 </div>
+                <a href="https://www.linkedin.com/in/tiko-moise/" target="_blank" rel="noopener noreferrer" class="mt-6 inline-flex min-h-11 items-center gap-2 rounded-btn border border-line bg-surface px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700">
+                    <span>Voir mon profil LinkedIn</span>
+                    <x-lucide-arrow-up-right class="h-4 w-4" aria-hidden="true" />
+                </a>
             </div>
             <div class="reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
                 <div class="aspect-[5/4] overflow-hidden rounded-[28px] border border-line bg-surface shadow-lg">
@@ -34,6 +60,7 @@
                 <p>Je suis <strong class="text-content">Moïse TIKO</strong>, alias de Tikmos. Tout commence par les <strong class="text-content">mathématiques</strong> : la rigueur, la preuve, l'art de décomposer un problème complexe en étapes claires. Cet état d'esprit, je l'ai porté de l'enseignement vers l'<strong class="text-content">ingénierie data &amp; IA</strong>.</p>
                 <p>Aujourd'hui, je conçois et pilote des <strong class="text-content">solutions informatiques sur mesure</strong>, je <strong class="text-content">forme</strong> les équipes, et j'accompagne entreprises comme particuliers — installation, gestion administrative, orientation. En parallèle, je sélectionne des <strong class="text-content">chaussures de luxe</strong> pour celles et ceux qui aiment l'exigence du beau.</p>
                 <p>Et je ne travaille jamais seul : une <strong class="text-content">équipe</strong> de confiance m'épaule sur chaque projet. Ma promesse : <strong class="text-content">comprendre votre besoin, et le livrer.</strong></p>
+                <p><a href="https://www.linkedin.com/in/tiko-moise/" target="_blank" rel="noopener noreferrer" class="font-semibold text-indigo-700 underline decoration-indigo-300 underline-offset-4 hover:text-indigo-900 focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-700">Retrouver Moïse TIKO sur LinkedIn<span class="sr-only"> (nouvel onglet)</span></a></p>
             </div>
         </div>
     </x-tk.section>
