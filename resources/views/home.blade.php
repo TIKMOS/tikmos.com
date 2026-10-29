@@ -11,10 +11,10 @@
             <div class="reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
                 <x-tk.kicker>{{ $homepage->hero_kicker }}</x-tk.kicker>
                 <x-tk.divider-gold class="mt-3" />
-                <h1 class="mt-4 font-display text-[2.4rem] font-black leading-[1] tracking-[-0.02em] text-content sm:text-[2.9rem] lg:text-5xl xl:text-[3.4rem]">
+                <h1 class="mt-4 max-w-[13ch] font-display text-[2.15rem] font-bold leading-[1.08] tracking-[-0.03em] text-indigo sm:text-[2.65rem] lg:text-[3.1rem] xl:text-[3.35rem]">
                     {{ $homepage->hero_title }}
                 </h1>
-                <p class="mt-5 max-w-md text-lg text-muted">{{ $homepage->hero_subtitle }}</p>
+                <p class="mt-5 max-w-lg text-base leading-7 text-muted sm:text-lg sm:leading-8">{{ $homepage->hero_subtitle }}</p>
 
                 {{-- CTA principaux --}}
                 <div class="mt-7 flex flex-wrap items-center gap-3">
