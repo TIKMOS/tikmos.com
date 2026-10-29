@@ -1,5 +1,10 @@
 # TIKMOS — Déploiement
 
+> Automatisation Hostinger/cPanel sans clé SSH : voir le [nouveau guide](deploiement-hostinger.md).
+> La procédure ci-dessous est historique et manuelle ; ses commandes ne sont pas
+> déclenchées par le nouveau dispositif. La disponibilité réelle de la production
+> doit être vérifiée séparément avant activation.
+
 Guide concret de mise en production sur `tikmos.com`. Le socle est **prod-ready** : tous les caches
 Laravel (`config`/`route`/`view`/`event`) se construisent, aucune closure non-cachable. **Aucun Node
 requis sur le serveur** — `public/build` est versionné.

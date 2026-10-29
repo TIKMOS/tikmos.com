@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      APP_URL: http://localhost
+      APP_KEY: ''
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      DB_URL: ''
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      BROADCAST_CONNECTION: 'null'
+      COMPOSER_NO_INTERACTION: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.3'
+          extensions: ctype, curl, dom, fileinfo, filter, hash, mbstring, openssl, pdo_mysql, pdo_sqlite, session, tokenizer, xml, zip, gd, exif, intl
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Isolate application state
+        run: |
+          state="$RUNNER_TEMP/tikmos-ci"
+          mkdir -p "$state"/{storage/framework/{views,sessions,cache/data,testing},storage/logs,cache}
+          echo "LARAVEL_STORAGE_PATH=$state/storage" >> "$GITHUB_ENV"
+          echo "VIEW_COMPILED_PATH=$state/storage/framework/views" >> "$GITHUB_ENV"
+          for name in CONFIG SERVICES PACKAGES ROUTES EVENTS; do
+            echo "APP_${name}_CACHE=$state/cache/${name,,}.php" >> "$GITHUB_ENV"
+          done
+          echo "APP_KEY=base64:$(php -r 'echo base64_encode(random_bytes(32));')" >> "$GITHUB_ENV"
+      - name: Locked dependencies
+        run: |
+          composer validate --strict --no-check-publish
+          composer install --prefer-dist --no-progress
+          composer check-platform-reqs
+          npm ci --ignore-scripts
+      - name: Deployment safety tests
+        run: python3 -m unittest discover -s tests/deployment -v
+      - name: PHP syntax and static analysis
+        run: |
+          python3 deploy/ci_checks.py syntax
+          php -d memory_limit=1G vendor/bin/phpstan analyse --no-progress --memory-limit=1G --debug
+          php vendor/bin/pint --test deploy/verify.php
+      - name: Build assets before tests
+        run: |
+          npm run build
+          python3 deploy/ci_checks.py assets
+      - name: Pest (blocking, sequential)
+        run: php vendor/bin/pest --compact
+      - name: Laravel production cache smoke test (isolated SQLite)
+        run: |
+          touch "$RUNNER_TEMP/tikmos-ci/database.sqlite"
+          export DB_DATABASE="$RUNNER_TEMP/tikmos-ci/database.sqlite"
+          php artisan migrate --force --no-interaction
+          export APP_ENV=production
+          php artisan config:cache
+          php artisan route:cache
+          php artisan event:cache
+          php artisan view:cache
+          php artisan about --only=environment --no-interaction
+      - name: Build public production archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: python3 deploy/build_release.py --output "$RUNNER_TEMP/release"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          name: release-${{ github.sha }}
+          path: ${{ runner.temp }}/release/tikmos.tar.gz
+          if-no-files-found: error
+          retention-days: 3
+
+  publish:
+    name: publish
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-${{ github.sha }}
+          path: release
+      - name: Publish exact validated archive (no overwrite)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          tag="deploy-${SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gh release create "$tag" release/tikmos.tar.gz --target "$SHA" --prerelease --latest=false \
+            --title "Validated ${SHA}" --notes "CI run ${GITHUB_RUN_ID}, attempt ${GITHUB_RUN_ATTEMPT}."
