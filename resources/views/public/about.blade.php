@@ -1,24 +1,28 @@
+@php
+    $profileSchemaJson = json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'ProfilePage',
+        'url' => route('about'),
+        'name' => 'À propos de Moïse TIKO | Tikmos',
+        'mainEntity' => [
+            '@type' => 'Person',
+            '@id' => route('about').'#person',
+            'name' => 'Moïse TIKO',
+            'jobTitle' => 'Professeur certifié en mathématiques et ingénieur Data / IA',
+            'url' => route('about'),
+            'sameAs' => [
+                'https://www.linkedin.com/in/tiko-moise/',
+                url('/'),
+            ],
+            'worksFor' => ['@type' => 'Organization', 'name' => 'Tikmos'],
+        ],
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+@endphp
+
 <x-layouts.public>
     <x-slot:head>
         <x-tk.seo title="À propos" description="Professeur certifié en mathématiques et ingénieur data science & IA : l'expertise qui exécute, au service de vos projets, vos formations et vos achats." />
-        <script type="application/ld+json">@json([
-            '@context' => 'https://schema.org',
-            '@type' => 'ProfilePage',
-            'url' => route('about'),
-            'name' => 'À propos de '.$seo->person_name.' | Tikmos',
-            'mainEntity' => [
-                '@type' => 'Person',
-                '@id' => route('about').'#person',
-                'name' => $seo->person_name,
-                'jobTitle' => $seo->person_job_title,
-                'url' => route('about'),
-                'sameAs' => [
-                    'https://www.linkedin.com/in/tiko-moise/',
-                    url('/'),
-                ],
-                'worksFor' => ['@type' => 'Organization', 'name' => $seo->organization_name],
-            ],
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
+        <script type="application/ld+json">{!! $profileSchemaJson !!}</script>
     </x-slot:head>
 
     {{-- Hero --}}
