@@ -1,5 +1,6 @@
 <?php
 
+use App\Settings\AboutSettings;
 use App\Settings\DeliverySettings;
 use App\Settings\FeatureSettings;
 use App\Settings\GeneralSettings;
@@ -24,6 +25,7 @@ return [
      */
     'settings' => [
         GeneralSettings::class,
+        AboutSettings::class,
         HomepageSettings::class,
         ReviewsSettings::class,
         ShopSettings::class,

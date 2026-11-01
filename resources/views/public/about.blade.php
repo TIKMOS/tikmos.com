@@ -45,7 +45,7 @@
             </div>
             <div class="reveal" x-data x-intersect.once="$el.classList.add('is-revealed')">
                 <div class="aspect-[5/4] overflow-hidden rounded-[28px] border border-line bg-surface shadow-lg">
-                    <img src="{{ asset('img/about-illustration.svg') }}" alt="Illustration — mathématiques, data science et IA" loading="eager" class="h-full w-full object-cover" />
+                    <img src="{{ $aboutSettings->image ? \Illuminate\Support\Facades\Storage::disk('public')->url($aboutSettings->image) : asset('img/about-illustration.svg') }}" alt="Photo de Moïse TIKO" loading="eager" class="h-full w-full object-cover" />
                 </div>
             </div>
         </div>

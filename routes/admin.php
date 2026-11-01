@@ -36,6 +36,7 @@ Route::middleware(['auth', 'approved', 'role:'.$staffRoles])->group(function ():
     Volt::route('reglages', 'pages.admin.reglages')->middleware('permission:settings.manage')->name('reglages');
     Volt::route('reglages/general', 'pages.admin.reglages.general')->middleware('permission:settings.manage')->name('reglages.general');
     Volt::route('reglages/accueil', 'pages.admin.reglages.homepage')->middleware('permission:cms.homepage.manage')->name('reglages.homepage');
+    Volt::route('reglages/a-propos', 'pages.admin.reglages.about')->middleware('permission:cms.pages.manage')->name('reglages.about');
     Volt::route('reglages/faq', 'pages.admin.reglages.faq')->middleware('permission:cms.faq.manage')->name('reglages.faq');
     Volt::route('reglages/pages', 'pages.admin.reglages.pages')->middleware('permission:cms.pages.manage')->name('reglages.pages');
     Volt::route('reglages/partenaires', 'pages.admin.reglages.partners')->middleware('permission:partners.manage')->name('reglages.partners');
