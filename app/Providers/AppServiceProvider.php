@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\Review;
 use App\Models\TeamMember;
 use App\Payments\PaymentManager;
+use App\Settings\AboutSettings;
 use App\Settings\FeatureSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\HomepageSettings;
@@ -51,6 +52,10 @@ class AppServiceProvider extends ServiceProvider
                 ->with('waDigits', preg_replace('/\D/', '', $general->whatsapp_number))
                 ->with('footerPartners', Partner::active()->get())
                 ->with('shopEnabled', app(ShopSettings::class)->enabled);
+        });
+
+        View::composer('public.about', function (\Illuminate\View\View $view): void {
+            $view->with('aboutSettings', app(AboutSettings::class));
         });
 
         // Données dynamiques de la page d'accueil (contenu éditable + social proof).
