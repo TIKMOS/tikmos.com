@@ -28,6 +28,9 @@ on écrit la spec avant le code, on teste de A à Z.
 | **[31-module-images](31-module-images.md)** | **V3** — module images complet (upload/galerie/médiathèque, WebP/AVIF) |
 | **[32-journal-activite](32-journal-activite.md)** | **V3** — journal d'activité & audit granulaire par acteur |
 | **[33-audit-et-nettoyage](33-audit-et-nettoyage.md)** | **V3** — plan : retrait Sezy, boutique, QA espaces, configurabilité |
+| [Gestion de la page À propos](modules/about-page-management.md) | Administration du contenu, des médias et du SEO de la page profil |
+| [Audit du module À propos](audits/about-admin-audit.md) | Architecture actuelle, écarts et stratégie de complétion |
+| [Prompts admin About](prompts/about-admin/README.md) | Six missions spécialisées pour données, administration, sécurité, tests et livraison |
 | **[prompts/](prompts/README.md)** | **Bibliothèque de prompts 360** : prompt maître + 19 lots (fondations → vitrine → commerce → blog → back-office → SEO/i18n/PWA → prod) |
 | [Audit UI, UX et modules — 20 octobre 2026](audits/2026-10-20/README.md) | Constats, tests, captures et corrections prioritaires |
 | [Prompts de correction de l’audit](prompts/audit-2026-10-20/README.md) | 36 fiches : correction/validation puis commit/push vérifié, une étape à la fois |

@@ -11,7 +11,7 @@ new #[Layout('components.layouts.admin')] class extends Component
         return [
             ['label' => 'Général', 'desc' => 'Contacts, bandeau, réseaux, adresses.', 'icon' => 'settings-2', 'route' => 'admin.reglages.general', 'permission' => 'settings.manage', 'tint' => 'sky'],
             ['label' => 'Accueil', 'desc' => 'Hero, sections, ordre de la page d\'accueil.', 'icon' => 'layout-template', 'route' => 'admin.reglages.homepage', 'permission' => 'cms.homepage.manage', 'tint' => 'mint'],
-            ['label' => 'À propos', 'desc' => 'Photo de présentation de la page À propos.', 'icon' => 'image', 'route' => 'admin.reglages.about', 'permission' => 'cms.pages.manage', 'tint' => 'sky'],
+            ['label' => 'À propos', 'desc' => 'Contenu, valeurs, médias, liens et référencement.', 'icon' => 'user-round', 'route' => 'admin.reglages.about', 'permission' => 'cms.pages.manage', 'tint' => 'sky'],
             ['label' => 'FAQ', 'desc' => 'Questions fréquentes, catégories, publication.', 'icon' => 'circle-help', 'route' => 'admin.reglages.faq', 'permission' => 'cms.faq.manage', 'tint' => 'lilac'],
             ['label' => 'Pages légales', 'desc' => 'CGU, CGV, confidentialité — éditeur riche.', 'icon' => 'file-text', 'route' => 'admin.reglages.pages', 'permission' => 'cms.pages.manage', 'tint' => 'peach'],
             ['label' => 'Partenaires', 'desc' => 'Logos de la zone partenaires (avant le footer).', 'icon' => 'handshake', 'route' => 'admin.reglages.partners', 'permission' => 'partners.manage', 'tint' => 'mint'],

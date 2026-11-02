@@ -44,8 +44,8 @@
     {{-- Texte alternatif (a11y/SEO) --}}
     @if ($alt !== null)
         <div class="mt-3">
-            <label class="mb-1 block text-[13px] font-medium text-content">Texte alternatif <span class="text-muted">(décrit l'image)</span></label>
-            <x-tk.input wire:model="{{ $alt }}" placeholder="Ex. Logo du partenaire DDL" />
+            <label for="{{ $alt }}-alt" class="mb-1 block text-[13px] font-medium text-content">Texte alternatif <span class="text-muted">(décrit l'image)</span></label>
+            <x-tk.input id="{{ $alt }}-alt" wire:model="{{ $alt }}" placeholder="Ex. Logo du partenaire DDL" />
             @error($alt)<p class="mt-1 text-xs text-danger">{{ $message }}</p>@enderror
         </div>
     @endif

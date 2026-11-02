@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\AboutParagraph;
+use App\Models\AboutValue;
 use App\Models\FaqItem;
 use App\Models\Partner;
 use App\Models\Project;
@@ -55,7 +57,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer('public.about', function (\Illuminate\View\View $view): void {
-            $view->with('aboutSettings', app(AboutSettings::class));
+            $view->with([
+                'aboutSettings' => app(AboutSettings::class),
+                'aboutParagraphs' => AboutParagraph::query()->orderBy('sort_order')->orderBy('id')->get(),
+                'aboutValues' => AboutValue::query()->where('is_visible', true)->orderBy('sort_order')->orderBy('id')->get(),
+            ]);
         });
 
         // Données dynamiques de la page d'accueil (contenu éditable + social proof).
