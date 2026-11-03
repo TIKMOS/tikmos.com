@@ -1,5 +1,6 @@
 @props([
     'title' => null,
+    'titleExact' => null,
     'description' => null,
     'image' => null,
     'type' => 'website',
@@ -10,7 +11,7 @@
     $seoSettings = app(\App\Settings\SeoSettings::class);
     $siteName = config('app.name', 'Tikmos');
     $description ??= $seoSettings->default_description;
-    $fullTitle = $title ? $title.' — '.$siteName : $seoSettings->default_title;
+    $fullTitle = $titleExact ?? ($title ? $title.' — '.$siteName : $seoSettings->default_title);
     $canonical = $canonical ?? url()->current();
     $image = $image
         ?? ($seoSettings->og_image ? \Illuminate\Support\Facades\Storage::disk('public')->url($seoSettings->og_image) : asset('icons/og-default.png'));
